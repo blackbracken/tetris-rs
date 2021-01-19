@@ -10,6 +10,12 @@ pub(crate) trait TetrisColor {
 pub(crate) enum ViewColor {
     Air,
     WindowFrame,
+    SomeColor,
+}
+
+pub(crate) struct Pos {
+    pub x: i32,
+    pub y: i32,
 }
 
 impl TetrisColor for ViewColor {
@@ -17,6 +23,7 @@ impl TetrisColor for ViewColor {
         match self {
             ViewColor::Air => 0,
             ViewColor::WindowFrame => 1,
+            ViewColor::SomeColor => 2,
         }
     }
 }
@@ -24,4 +31,5 @@ impl TetrisColor for ViewColor {
 pub(crate) fn prepare_colors() {
     init_pair(ViewColor::Air.to_code(), -1, -1);
     init_pair(ViewColor::WindowFrame.to_code(), COLOR_WHITE, -1);
+    init_pair(ViewColor::SomeColor.to_code(), COLOR_RED, -1);
 }
