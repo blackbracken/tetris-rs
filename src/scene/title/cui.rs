@@ -48,7 +48,7 @@ impl Title for CuiTitle {
             });
     }
 
-    fn wait_input(&mut self) -> InputAction {
+    fn handle_input(&mut self) -> InputAction {
         let key_space = ' ' as i32;
         let key_w = 'w' as i32;
         let key_s = 's' as i32;
@@ -57,7 +57,7 @@ impl Title for CuiTitle {
         let input = getch();
         if key_space == input {
             // TODO: implement
-            InputAction::Go(Destination::Title)
+            InputAction::Go(Destination::Exit)
         } else if KEY_UP == input || key_w == input {
             self.selected.prev().map(|prev| { self.selected = prev });
             InputAction::Nothing

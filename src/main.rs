@@ -21,7 +21,7 @@ fn main() {
         title.render();
         refresh();
 
-        match title.wait_input() {
+        match title.handle_input() {
             InputAction::Go(dest) => match dest {
                 Destination::Title => {}
                 Destination::Exit => break

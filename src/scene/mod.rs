@@ -8,19 +8,19 @@ pub mod title {
 
 pub mod cui;
 
+pub enum InputAction {
+    Go(Destination),
+    Nothing,
+}
+
 pub trait Title {
     fn new() -> Self;
     fn render(&self);
-    fn wait_input(&mut self) -> InputAction;
+    fn handle_input(&mut self) -> InputAction;
 
     fn go_up(&self) -> Self;
     fn go_down(&self) -> Self;
     fn select(&self) -> Option<Destination>;
-}
-
-pub enum InputAction {
-    Go(Destination),
-    Nothing,
 }
 
 #[derive(PartialEq)]
