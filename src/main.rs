@@ -3,14 +3,14 @@ extern crate ncurses;
 use ncurses::{endwin, getch, refresh};
 
 use crate::graphics::cui::init_ncurses;
-use crate::scene::scene::Title;
-use crate::scene::title::CuiTitle;
+use crate::scene::{Title, TitleItem};
+use crate::scene::title::cui::CuiTitle;
 
 mod scene;
 mod graphics;
 
 fn main() {
-    if let None = init_ncurses() {
+    if init_ncurses().is_none() {
         eprintln!("Failed to initialize");
         return;
     }
@@ -20,7 +20,7 @@ fn main() {
     loop {
         title.render();
         refresh();
-        getch();
+        if getch() == (' ' as i32) { break; }
     };
 
     endwin();
