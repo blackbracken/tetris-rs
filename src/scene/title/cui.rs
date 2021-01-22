@@ -1,8 +1,10 @@
-use ncurses::{attrset, mvaddstr, stdscr};
+use std::convert::{TryFrom, TryInto};
+
+use ncurses::{attrset, getch, KEY_DOWN, KEY_UP, mvaddstr, stdscr};
 
 use crate::graphics::color::{CuiColor, ViewColor};
 use crate::graphics::cui::{draw_frame, END_POINT, START_POINT};
-use crate::scene::{Destination, Title, TitleItem};
+use crate::scene::{Destination, InputAction, Title, TitleItem};
 use crate::scene::cui::HasTextForCui;
 
 const TITLE_AA: [&str; 6] = [
@@ -37,16 +39,34 @@ impl Title for CuiTitle {
         TitleItem::all()
             .iter()
             .map(|item| {
-                if &self.selected == item {
-                    "> ".to_owned() + item.convert_into_text().as_str()
-                } else {
-                    item.convert_into_text()
-                }
+                let selector = if &self.selected == item { "> " } else { "  " };
+                selector.to_owned() + item.convert_into_text().as_str()
             })
             .enumerate()
             .for_each(|(idx, item_text)| {
-                mvaddstr(15 + 2 * (idx as i32), 30, item_text.as_str());
+                mvaddstr(15 + 2 * (idx as i32), END_POINT.x / 2 - (item_text.len() as i32) / 2 - 2, item_text.as_str());
             });
+    }
+
+    fn wait_input(&mut self) -> InputAction {
+        let key_space = ' ' as i32;
+        let key_w = 'w' as i32;
+        let key_s = 's' as i32;
+
+        // TODO: write if-arms smarter
+        let input = getch();
+        if key_space == input {
+            // TODO: implement
+            InputAction::Go(Destination::Title)
+        } else if KEY_UP == input || key_w == input {
+            self.selected.prev().map(|prev| { self.selected = prev });
+            InputAction::Nothing
+        } else if KEY_DOWN == input || key_s == input {
+            self.selected.next().map(|next| { self.selected = next });
+            InputAction::Nothing
+        } else {
+            InputAction::Nothing
+        }
     }
 
     fn go_up(&self) -> Self {

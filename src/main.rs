@@ -3,7 +3,7 @@ extern crate ncurses;
 use ncurses::{endwin, getch, refresh};
 
 use crate::graphics::cui::init_ncurses;
-use crate::scene::{Title, TitleItem};
+use crate::scene::{Destination, InputAction, Title, TitleItem};
 use crate::scene::title::cui::CuiTitle;
 
 mod scene;
@@ -15,12 +15,19 @@ fn main() {
         return;
     }
 
-    let title: CuiTitle = Title::new();
+    let mut title: CuiTitle = Title::new();
 
     loop {
         title.render();
         refresh();
-        if getch() == (' ' as i32) { break; }
+
+        match title.wait_input() {
+            InputAction::Go(dest) => match dest {
+                Destination::Title => {}
+                Destination::Exit => break
+            }
+            InputAction::Nothing => {}
+        }
     };
 
     endwin();

@@ -11,10 +11,16 @@ pub mod cui;
 pub trait Title {
     fn new() -> Self;
     fn render(&self);
+    fn wait_input(&mut self) -> InputAction;
 
     fn go_up(&self) -> Self;
     fn go_down(&self) -> Self;
     fn select(&self) -> Option<Destination>;
+}
+
+pub enum InputAction {
+    Go(Destination),
+    Nothing,
 }
 
 #[derive(PartialEq)]
@@ -45,5 +51,6 @@ impl TitleItem {
 
 // TODO: consider this should be implemented here
 pub enum Destination {
-    Title
+    Title,
+    Exit,
 }
