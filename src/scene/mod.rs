@@ -1,5 +1,5 @@
-use crate::graphics::color::ViewColor;
-use crate::graphics::cui::{draw_frame, END_POINT, START_POINT};
+use crate::grap::color::ViewColor;
+use crate::grap::cui::{draw_frame, END_POINT, START_POINT};
 use crate::scene::TitleItem::{Exit, Start40line};
 
 pub mod title {

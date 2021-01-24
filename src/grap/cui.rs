@@ -1,8 +1,8 @@
 use ncurses::{attrset, curs_set, initscr, keypad, mvwaddch, noecho, start_color, stdscr, use_default_colors, WINDOW};
 use ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE;
 
-use crate::graphics::color::{CuiColor, prepare_for_cui};
-use crate::graphics::util::Pos;
+use crate::grap::color::{CuiColor, prepare_for_cui};
+use crate::grap::util::Pos;
 
 pub const START_POINT: Pos = Pos { x: 0, y: 0 };
 pub const END_POINT: Pos = Pos { x: 80, y: 40 };

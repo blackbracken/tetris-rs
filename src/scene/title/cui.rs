@@ -2,8 +2,8 @@ use std::convert::{TryFrom, TryInto};
 
 use ncurses::{attrset, getch, KEY_DOWN, KEY_UP, mvaddstr, stdscr};
 
-use crate::graphics::color::{CuiColor, ViewColor};
-use crate::graphics::cui::{draw_frame, END_POINT, START_POINT};
+use crate::grap::color::{CuiColor, ViewColor};
+use crate::grap::cui::{draw_frame, END_POINT, START_POINT};
 use crate::scene::{Destination, InputAction, Title, TitleItem};
 use crate::scene::cui::HasTextForCui;
 

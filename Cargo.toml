@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 ncurses = "5.100.0"
+ggez = "0.6.0-rc0" # ref. https://github.com/ggez/ggez/issues/646?ts=2
