@@ -1563,17 +1563,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ncurses"
-version = "5.100.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7db07ca287f6f4fb267e8b2ab0f9eb68f5a311a97315aaee845afa98f8a416b"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
-]
-
-[[package]]
 name = "ndk"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2558,7 +2547,6 @@ name = "tetris-rs"
 version = "0.1.0"
 dependencies = [
  "ggez",
- "ncurses",
 ]
 
 [[package]]
