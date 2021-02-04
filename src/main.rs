@@ -1,12 +1,32 @@
+use std::convert::TryFrom;
+
 use ggez::{Context, ContextBuilder, event, GameResult};
+use ggez::conf::{FullscreenType, WindowMode};
 use ggez::event::EventHandler;
 use ggez::graphics;
 use ggez::graphics::Color;
 use ggez::timer;
-use std::convert::TryFrom;
+
+const WIDTH: f32 = 640.0;
+const HEIGHT: f32 = 800.0;
 
 fn main() -> GameResult {
-    let cb = ContextBuilder::new("tetris-rs", "blackbracken");
+    let cb = ContextBuilder::new("tetris-rs", "blackbracken")
+        .window_mode(
+            WindowMode {
+                width: WIDTH,
+                height: HEIGHT,
+                maximized: false,
+                fullscreen_type: FullscreenType::Windowed,
+                borderless: false,
+                min_width: 0.0,
+                min_height: 0.0,
+                max_width: 0.0,
+                max_height: 0.0,
+                resizable: false,
+                visible: true,
+            }
+        );
     let (mut ctx, event_loop) = cb.build()?;
 
     let state = MainState::new(&mut ctx).unwrap();
@@ -47,14 +67,25 @@ impl EventHandler for MainState {
   \ \ \_/\  __/\ \ \_\ \ \/ \ \ \/\__, `\/\______\ \ \//\__, `\
    \ \__\ \____\\ \__\\ \_\  \ \_\/\____/\/______/\ \_\\/\____/
     \/__/\/____/ \/__/ \/_/   \/_/\/___/           \/_/ \/___/";
+        let split: Vec<&str> = ascii.split("\n").collect();
 
-        ascii.split("\n").enumerate()
+        let width = graphics::Text::new(
+            graphics::TextFragment::new(
+                split[4]
+            )
+        ).width(ctx);
+
+        split
+            .iter()
+            .enumerate()
             .map(|(idx, line)| (idx * 15, line))
             .for_each(|(y_addition, line)| {
-                let tex = graphics::Text::new(graphics::TextFragment::new(line));
-                let y = 60f32 + (y_addition as f32);
-                graphics::draw(ctx, &tex, graphics::DrawParam::default().dest([0f32, y]));
+                let text = graphics::Text::new(graphics::TextFragment::new(line.to_owned()));
+                let y = 50.0 + (y_addition as f32);
+
+                graphics::draw(ctx, &text, graphics::DrawParam::default().dest([WIDTH / 2.0 - width / 2.0, y]));
             });
+
         graphics::present(ctx)?;
 
         Ok(())
