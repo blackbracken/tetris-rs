@@ -1,3 +1,4 @@
+use std::{env, path};
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::convert::TryFrom;
@@ -6,7 +7,7 @@ use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, WindowMode};
 use ggez::event::{EventHandler, KeyCode};
 use ggez::graphics;
-use ggez::graphics::Color;
+use ggez::graphics::{Color, DrawMode};
 use ggez::input;
 use ggez::input::keyboard;
 use ggez::timer;
@@ -23,10 +24,10 @@ fn main() -> GameResult {
                 maximized: false,
                 fullscreen_type: FullscreenType::Windowed,
                 borderless: false,
-                min_width: 0.0,
-                min_height: 0.0,
-                max_width: 0.0,
-                max_height: 0.0,
+                min_width: 0.,
+                min_height: 0.,
+                max_width: 0.,
+                max_height: 0.,
                 resizable: false,
                 visible: true,
             }
@@ -42,12 +43,14 @@ struct MainState {
     cursor: usize,
     pressed_w_before: bool,
     pressed_s_before: bool,
+    img_cursor: graphics::Image,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
         let text = graphics::Text::new(graphics::TextFragment::new("Hello, World!").font(font));
+        let img_cursor = graphics::Image::new(ctx, "/cursor.png")?;
 
         Ok(
             MainState {
@@ -55,6 +58,7 @@ impl MainState {
                 cursor: 0,
                 pressed_w_before: false,
                 pressed_s_before: false,
+                img_cursor,
             }
         )
     }
@@ -82,7 +86,7 @@ impl EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, Color::from_rgb(46, 46, 64));
+        graphics::clear(ctx, Color::from_rgb(46, 46, 46));
 
         let ascii = r" __           __
 /\ \__       /\ \__         __
@@ -102,12 +106,19 @@ impl EventHandler for MainState {
         split
             .iter()
             .enumerate()
-            .map(|(idx, line)| (idx * 15, line))
-            .for_each(|(y_addition, line)| {
+            .for_each(|(idx, line)| {
                 let text = graphics::Text::new(graphics::TextFragment::new(line.to_owned()));
-                let y = 50.0 + (y_addition as f32);
+                let y = 50.0 + (15 * idx) as f32;
 
-                graphics::draw(ctx, &text, graphics::DrawParam::default().dest([WIDTH / 2.0 - width / 2.0, y]));
+                graphics::draw(ctx, &text, graphics::DrawParam::default().dest([WIDTH / 2. - width / 2., y]));
+
+                if idx == self.cursor {
+                    graphics::draw(
+                        ctx,
+                        &self.img_cursor,
+                        graphics::DrawParam::default().dest([WIDTH / 2. - width / 2. - 64., y]),
+                    );
+                }
             });
 
         let raw_text = format!("the cursor is at {}", self.cursor);
