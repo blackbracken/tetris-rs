@@ -1,19 +1,19 @@
 use std::{env, path};
 use std::cmp::{max, min};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, WindowMode};
 use ggez::event::{EventHandler, KeyCode};
 use ggez::graphics;
-use ggez::graphics::{Color, DrawMode};
+use ggez::graphics::{Color, DrawMode, PxScale};
 use ggez::input;
 use ggez::input::keyboard;
 use ggez::timer;
 
-const WIDTH: f32 = 640.0;
-const HEIGHT: f32 = 800.0;
+const WIDTH: f32 = 640.;
+const HEIGHT: f32 = 800.;
 
 fn main() -> GameResult {
     let cb = ContextBuilder::new("tetris-rs", "blackbracken")
@@ -39,26 +39,32 @@ fn main() -> GameResult {
 }
 
 struct MainState {
-    text: graphics::Text,
-    cursor: usize,
+    cursor: TitleItem,
     pressed_w_before: bool,
     pressed_s_before: bool,
     img_cursor: graphics::Image,
+    text_hash: HashMap<TitleItem, graphics::Text>,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
-        let text = graphics::Text::new(graphics::TextFragment::new("Hello, World!").font(font));
         let img_cursor = graphics::Image::new(ctx, "/cursor.png")?;
+
+        let mut text_hash: HashMap<TitleItem, graphics::Text> = HashMap::new();
+        TitleItem::all().into_iter().for_each(|item: TitleItem| {
+            let text = item.text().to_owned();
+
+            text_hash.insert(item, graphics::Text::new(graphics::TextFragment::new(text).font(font).scale(PxScale::from(32.))));
+        });
 
         Ok(
             MainState {
-                text,
-                cursor: 0,
+                cursor: TitleItem::Play40Line,
                 pressed_w_before: false,
                 pressed_s_before: false,
                 img_cursor,
+                text_hash,
             }
         )
     }
@@ -71,13 +77,17 @@ impl EventHandler for MainState {
         while timer::check_update_time(ctx, FPS) {
             let pressed_w = keyboard::is_key_pressed(ctx, KeyCode::W);
             if pressed_w && !self.pressed_w_before {
-                self.cursor = self.cursor.saturating_sub(1);
+                if let Some(prev) = self.cursor.prev() {
+                    self.cursor = prev;
+                }
             }
             self.pressed_w_before = pressed_w;
 
             let pressed_s = keyboard::is_key_pressed(ctx, KeyCode::S);
             if pressed_s && !self.pressed_s_before {
-                self.cursor = self.cursor.saturating_add(1);
+                if let Some(next) = self.cursor.next() {
+                    self.cursor = next;
+                }
             }
             self.pressed_s_before = pressed_s;
         }
@@ -108,20 +118,33 @@ impl EventHandler for MainState {
             .enumerate()
             .for_each(|(idx, line)| {
                 let text = graphics::Text::new(graphics::TextFragment::new(line.to_owned()));
-                let y = 50.0 + (15 * idx) as f32;
+                let x = WIDTH / 2. - width / 2.;
+                let y = 50. + (15 * idx) as f32;
 
-                graphics::draw(ctx, &text, graphics::DrawParam::default().dest([WIDTH / 2. - width / 2., y]));
+                graphics::draw(ctx, &text, graphics::DrawParam::default().dest([x, y]));
+            });
 
-                if idx == self.cursor {
-                    graphics::draw(
-                        ctx,
-                        &self.img_cursor,
-                        graphics::DrawParam::default().dest([WIDTH / 2. - width / 2. - 64., y]),
-                    );
+        TitleItem::all()
+            .iter()
+            .enumerate()
+            .for_each(|(idx, item)| {
+                if let Some(text) = self.text_hash.get(item) {
+                    let x = WIDTH / 2. - text.width(ctx) / 2.;
+                    let y = HEIGHT / 3. + (50 * idx) as f32;
+
+                    graphics::draw(ctx, text, graphics::DrawParam::default().dest([x, y]));
+
+                    if item == &self.cursor {
+                        graphics::draw(
+                            ctx,
+                            &self.img_cursor,
+                            graphics::DrawParam::default().dest([x - 30., y + text.height(ctx) / 2. - f32::from(self.img_cursor.height()) * 0.5 / 2.]).scale([0.5, 0.5]),
+                        );
+                    }
                 }
             });
 
-        let raw_text = format!("the cursor is at {}", self.cursor);
+        let raw_text = format!("the cursor is at {:?}", self.cursor);
         let text = graphics::Text::new(graphics::TextFragment::new(raw_text));
         graphics::draw(ctx, &text, graphics::DrawParam::default());
 
@@ -130,3 +153,37 @@ impl EventHandler for MainState {
         Ok(())
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+enum TitleItem {
+    Play40Line,
+    Exit,
+}
+
+impl TitleItem {
+    fn next(&self) -> Option<TitleItem> {
+        match &self {
+            TitleItem::Play40Line => Some(TitleItem::Exit),
+            TitleItem::Exit => None,
+        }
+    }
+
+    fn prev(&self) -> Option<TitleItem> {
+        match &self {
+            TitleItem::Play40Line => None,
+            TitleItem::Exit => Some(TitleItem::Play40Line),
+        }
+    }
+
+    fn text(&self) -> &str {
+        match &self {
+            TitleItem::Play40Line => "Play 40LINE",
+            TitleItem::Exit => "Exit",
+        }
+    }
+
+    fn all() -> Vec<TitleItem> {
+        vec![TitleItem::Play40Line, TitleItem::Exit]
+    }
+}
+
