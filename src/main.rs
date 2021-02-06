@@ -1,10 +1,14 @@
+use std::cmp::{max, min};
+use std::collections::HashSet;
 use std::convert::TryFrom;
 
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, WindowMode};
-use ggez::event::EventHandler;
+use ggez::event::{EventHandler, KeyCode};
 use ggez::graphics;
 use ggez::graphics::Color;
+use ggez::input;
+use ggez::input::keyboard;
 use ggez::timer;
 
 const WIDTH: f32 = 640.0;
@@ -35,6 +39,9 @@ fn main() -> GameResult {
 
 struct MainState {
     text: graphics::Text,
+    cursor: usize,
+    pressed_w_before: bool,
+    pressed_s_before: bool,
 }
 
 impl MainState {
@@ -42,7 +49,14 @@ impl MainState {
         let font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
         let text = graphics::Text::new(graphics::TextFragment::new("Hello, World!").font(font));
 
-        Ok(MainState { text })
+        Ok(
+            MainState {
+                text,
+                cursor: 0,
+                pressed_w_before: false,
+                pressed_s_before: false,
+            }
+        )
     }
 }
 
@@ -51,7 +65,17 @@ impl EventHandler for MainState {
         const FPS: u32 = 30;
 
         while timer::check_update_time(ctx, FPS) {
-            // some
+            let pressed_w = keyboard::is_key_pressed(ctx, KeyCode::W);
+            if pressed_w && !self.pressed_w_before {
+                self.cursor = self.cursor.saturating_sub(1);
+            }
+            self.pressed_w_before = pressed_w;
+
+            let pressed_s = keyboard::is_key_pressed(ctx, KeyCode::S);
+            if pressed_s && !self.pressed_s_before {
+                self.cursor = self.cursor.saturating_add(1);
+            }
+            self.pressed_s_before = pressed_s;
         }
 
         Ok(())
@@ -85,6 +109,10 @@ impl EventHandler for MainState {
 
                 graphics::draw(ctx, &text, graphics::DrawParam::default().dest([WIDTH / 2.0 - width / 2.0, y]));
             });
+
+        let raw_text = format!("the cursor is at {}", self.cursor);
+        let text = graphics::Text::new(graphics::TextFragment::new(raw_text));
+        graphics::draw(ctx, &text, graphics::DrawParam::default());
 
         graphics::present(ctx)?;
 
