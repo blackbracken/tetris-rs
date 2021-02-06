@@ -1,14 +1,9 @@
-use std::{env, path};
-use std::cmp::{max, min};
-use std::collections::{HashMap, HashSet};
-use std::convert::TryFrom;
-
+use std::collections::{HashMap};
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, WindowMode};
 use ggez::event::{EventHandler, KeyCode};
 use ggez::graphics;
-use ggez::graphics::{Color, DrawMode, PxScale};
-use ggez::input;
+use ggez::graphics::{Color, PxScale};
 use ggez::input::keyboard;
 use ggez::timer;
 
