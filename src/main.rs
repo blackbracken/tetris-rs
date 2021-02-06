@@ -1,6 +1,7 @@
-use std::collections::{HashMap};
+use std::collections::HashMap;
+
 use ggez::{Context, ContextBuilder, event, GameResult};
-use ggez::conf::{FullscreenType, WindowMode};
+use ggez::conf::{FullscreenType, WindowMode, WindowSetup, NumSamples};
 use ggez::event::{EventHandler, KeyCode};
 use ggez::graphics;
 use ggez::graphics::{Color, PxScale};
@@ -26,6 +27,15 @@ fn main() -> GameResult {
                 resizable: false,
                 visible: true,
             }
+        )
+        .window_setup(
+            WindowSetup {
+                title: "tetris-rs".to_owned(),
+                samples: NumSamples::Zero,
+                vsync: true,
+                icon: "".to_owned(),
+                srgb: false,
+            }
         );
     let (mut ctx, event_loop) = cb.build()?;
 
@@ -37,29 +47,54 @@ struct MainState {
     cursor: TitleItem,
     pressed_w_before: bool,
     pressed_s_before: bool,
+    texts_ascii: Vec<graphics::Text>,
     img_cursor: graphics::Image,
-    text_hash: HashMap<TitleItem, graphics::Text>,
+    items_text_hash: HashMap<TitleItem, graphics::Text>,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
+
+        let ascii: Vec<&str> = r" __           __
+/\ \__       /\ \__         __
+\ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
+ \ \ \/  /'__`\ \ \/ /\`'__\/\ \  /',__\  _______/\`'__\/',__\
+  \ \ \_/\  __/\ \ \_\ \ \/ \ \ \/\__, `\/\______\ \ \//\__, `\
+   \ \__\ \____\\ \__\\ \_\  \ \_\/\____/\/______/\ \_\\/\____/
+    \/__/\/____/ \/__/ \/_/   \/_/\/___/           \/_/ \/___/"
+            .split("\n")
+            .collect();
+        let texts_ascii: Vec<graphics::Text> = ascii.into_iter()
+            .map(|line| graphics::Text::new(graphics::TextFragment::from(line)))
+            .collect();
+
         let img_cursor = graphics::Image::new(ctx, "/cursor.png")?;
 
-        let mut text_hash: HashMap<TitleItem, graphics::Text> = HashMap::new();
-        TitleItem::all().into_iter().for_each(|item: TitleItem| {
-            let text = item.text().to_owned();
+        let items_text_hash: HashMap<TitleItem, graphics::Text> = TitleItem::all()
+            .into_iter()
+            .map(|item| {
+                let str = item.text().to_owned();
 
-            text_hash.insert(item, graphics::Text::new(graphics::TextFragment::new(text).font(font).scale(PxScale::from(32.))));
-        });
+                (
+                    item,
+                    graphics::Text::new(
+                        graphics::TextFragment::new(str)
+                            .font(font)
+                            .scale(PxScale::from(32.))
+                    )
+                )
+            })
+            .collect();
 
         Ok(
             MainState {
                 cursor: TitleItem::Play40Line,
                 pressed_w_before: false,
                 pressed_s_before: false,
+                texts_ascii,
                 img_cursor,
-                text_hash,
+                items_text_hash,
             }
         )
     }
@@ -93,55 +128,41 @@ impl EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::from_rgb(46, 46, 46));
 
-        let ascii = r" __           __
-/\ \__       /\ \__         __
-\ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
- \ \ \/  /'__`\ \ \/ /\`'__\/\ \  /',__\  _______/\`'__\/',__\
-  \ \ \_/\  __/\ \ \_\ \ \/ \ \ \/\__, `\/\______\ \ \//\__, `\
-   \ \__\ \____\\ \__\\ \_\  \ \_\/\____/\/______/\ \_\\/\____/
-    \/__/\/____/ \/__/ \/_/   \/_/\/___/           \/_/ \/___/";
-        let split: Vec<&str> = ascii.split("\n").collect();
+        let ascii_width = self.texts_ascii.get(4).unwrap().width(ctx);
+        for (idx, text) in self.texts_ascii.iter().enumerate() {
+            let x = WIDTH / 2. - ascii_width / 2.;
+            let y = 50. + (15 * idx) as f32;
 
-        let width = graphics::Text::new(
-            graphics::TextFragment::new(
-                split[4]
-            )
-        ).width(ctx);
+            graphics::draw(ctx, text, graphics::DrawParam::default().dest([x, y]))?;
+        }
 
-        split
-            .iter()
-            .enumerate()
-            .for_each(|(idx, line)| {
-                let text = graphics::Text::new(graphics::TextFragment::new(line.to_owned()));
-                let x = WIDTH / 2. - width / 2.;
-                let y = 50. + (15 * idx) as f32;
+        for (idx, item) in TitleItem::all().iter().enumerate() {
+            if let Some(text) = self.items_text_hash.get(item) {
+                let x = WIDTH / 2. - text.width(ctx) / 2.;
+                let y = HEIGHT / 3. + (50 * idx) as f32;
 
-                graphics::draw(ctx, &text, graphics::DrawParam::default().dest([x, y]));
-            });
+                graphics::draw(ctx, text, graphics::DrawParam::default().dest([x, y]))?;
 
-        TitleItem::all()
-            .iter()
-            .enumerate()
-            .for_each(|(idx, item)| {
-                if let Some(text) = self.text_hash.get(item) {
-                    let x = WIDTH / 2. - text.width(ctx) / 2.;
-                    let y = HEIGHT / 3. + (50 * idx) as f32;
+                if item == &self.cursor {
+                    let cursor_scale = 0.5f32;
+                    let cursor_x = x - 30.;
+                    let cursor_y = y + text.height(ctx) / 2. - f32::from(self.img_cursor.height()) * cursor_scale / 2.;
 
-                    graphics::draw(ctx, text, graphics::DrawParam::default().dest([x, y]));
-
-                    if item == &self.cursor {
-                        graphics::draw(
-                            ctx,
-                            &self.img_cursor,
-                            graphics::DrawParam::default().dest([x - 30., y + text.height(ctx) / 2. - f32::from(self.img_cursor.height()) * 0.5 / 2.]).scale([0.5, 0.5]),
-                        );
-                    }
+                    graphics::draw(
+                        ctx,
+                        &self.img_cursor,
+                        graphics::DrawParam::default()
+                            .dest([cursor_x, cursor_y])
+                            .scale([cursor_scale, cursor_scale]),
+                    )?;
                 }
-            });
+            }
+        }
 
-        let raw_text = format!("the cursor is at {:?}", self.cursor);
-        let text = graphics::Text::new(graphics::TextFragment::new(raw_text));
-        graphics::draw(ctx, &text, graphics::DrawParam::default());
+        let dbg_text = graphics::Text::new(graphics::TextFragment::new(
+            format!("the cursor is at {:?}", self.cursor)
+        ));
+        graphics::draw(ctx, &dbg_text, graphics::DrawParam::default())?;
 
         graphics::present(ctx)?;
 
@@ -181,4 +202,3 @@ impl TitleItem {
         vec![TitleItem::Play40Line, TitleItem::Exit]
     }
 }
-
