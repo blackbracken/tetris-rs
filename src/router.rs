@@ -1,24 +1,39 @@
+use ggez::Context;
+
+use crate::router::Next::{Continue, Transit};
 use crate::router::ViewState::Title;
 use crate::view::title::TitleState;
 
-enum ViewState {
+pub enum ViewState {
     Title { state: TitleState }
 }
 
-enum Ticket {
+pub enum Ticket {
+    ShowTitle,
     Play40Line,
 }
 
 impl Ticket {
-    fn go(&self) -> ViewState {
+    pub fn go(&self, ctx: &mut Context) -> ViewState {
         match &self {
-            Ticket::Play40Line => Title { state: TitleState {} } // TODO: implement
+            Ticket::ShowTitle => Title { state: TitleState::new(ctx).unwrap() }, // TODO: error handling
+            Ticket::Play40Line => unimplemented!(),
         }
     }
 }
 
-enum Next {
+pub enum Next {
     Continue { state: ViewState },
     Transit { ticket: Ticket },
     Exit,
+}
+
+impl Next {
+    pub fn do_continue(state: ViewState) -> Next {
+        Continue { state }
+    }
+
+    pub fn transit(ticket: Ticket) -> Next {
+        Transit { ticket }
+    }
 }
