@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 
 use ggez::{Context, ContextBuilder, event, GameResult};
-use ggez::conf::{FullscreenType, WindowMode, WindowSetup, NumSamples};
+use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::{EventHandler, KeyCode};
 use ggez::graphics;
 use ggez::graphics::{Color, PxScale};
 use ggez::input::keyboard;
 use ggez::timer;
+
+mod view;
+mod router;
 
 const WIDTH: f32 = 640.;
 const HEIGHT: f32 = 800.;
