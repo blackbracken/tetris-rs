@@ -1,11 +1,6 @@
-use std::collections::HashMap;
-
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
-use ggez::event::{EventHandler, KeyCode};
-use ggez::graphics;
-use ggez::graphics::{Color, PxScale};
-use ggez::input::keyboard;
+use ggez::event::EventHandler;
 use ggez::timer;
 
 use crate::router::{Next, Ticket, ViewState};
@@ -54,7 +49,7 @@ struct MainState {
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        Ok(MainState { view_state: Ticket::ShowTitle.go(ctx) })
+        Ok(MainState { view_state: Ticket::ShowTitle.go(ctx)? })
     }
 }
 
@@ -72,7 +67,9 @@ impl EventHandler for MainState {
                     self.view_state = state;
                 }
                 Next::Transit { .. } => unimplemented!(),
-                Next::Exit => unimplemented!(),
+                Next::Exit => {
+                    event::quit(ctx);
+                }
             }
         }
 
@@ -81,7 +78,7 @@ impl EventHandler for MainState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match &self.view_state {
-            ViewState::ForTitle { state } => { view::title::draw(ctx, state); }
+            ViewState::ForTitle { state } => { view::title::draw(ctx, state)?; }
         }
 
         Ok(())

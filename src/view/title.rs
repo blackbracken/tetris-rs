@@ -32,7 +32,8 @@ impl TitleState {
     \/__/\/____/ \/__/ \/_/   \/_/\/___/           \/_/ \/___/"
             .split("\n")
             .collect();
-        let texts_ascii: Vec<graphics::Text> = ascii.into_iter()
+        let texts_ascii: Vec<graphics::Text> = ascii
+            .into_iter()
             .map(|line| graphics::Text::new(graphics::TextFragment::from(line)))
             .collect();
 
@@ -68,10 +69,11 @@ impl TitleState {
 }
 
 pub fn update(ctx: &Context, state: &TitleState) -> Next {
-    // TODO: refactor to remove mutable actions
     let mut new_state = state.clone();
 
-    let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W);
+    let pressed_up = [KeyCode::W, KeyCode::Up]
+        .iter()
+        .any(|key| keyboard::is_key_pressed(ctx, *key));
     if pressed_up && !state.pressed_up_before {
         if let Some(prev) = state.cursor.prev() {
             new_state.cursor = prev;
@@ -79,7 +81,9 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
     }
     new_state.pressed_up_before = pressed_up;
 
-    let pressed_down = keyboard::is_key_pressed(ctx, KeyCode::S);
+    let pressed_down = [KeyCode::S, KeyCode::Down]
+        .iter()
+        .any(|key| keyboard::is_key_pressed(ctx, *key));
     if pressed_down && !new_state.pressed_down_before {
         if let Some(next) = new_state.cursor.next() {
             new_state.cursor = next;
@@ -87,7 +91,14 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
     }
     new_state.pressed_down_before = pressed_down;
 
-    Next::do_continue(ForTitle { state: new_state })
+    if keyboard::is_key_pressed(ctx, KeyCode::Space) {
+        match state.cursor {
+            TitleItem::Play40Line => unimplemented!(),
+            TitleItem::Exit => Next::Exit,
+        }
+    } else {
+        Next::do_continue(ForTitle { state: new_state })
+    }
 }
 
 pub fn draw(ctx: &mut Context, state: &TitleState) -> GameResult {
