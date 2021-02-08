@@ -1,11 +1,11 @@
 use ggez::Context;
 
 use crate::router::Next::{Continue, Transit};
-use crate::router::ViewState::Title;
+use crate::router::ViewState::ForTitle;
 use crate::view::title::TitleState;
 
 pub enum ViewState {
-    Title { state: TitleState }
+    ForTitle { state: TitleState }
 }
 
 pub enum Ticket {
@@ -16,7 +16,7 @@ pub enum Ticket {
 impl Ticket {
     pub fn go(&self, ctx: &mut Context) -> ViewState {
         match &self {
-            Ticket::ShowTitle => Title { state: TitleState::new(ctx).unwrap() }, // TODO: error handling
+            Ticket::ShowTitle => ForTitle { state: TitleState::new(ctx).unwrap() }, // TODO: error handling
             Ticket::Play40Line => unimplemented!(),
         }
     }

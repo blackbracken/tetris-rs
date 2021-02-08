@@ -64,7 +64,7 @@ impl EventHandler for MainState {
 
         while timer::check_update_time(ctx, FPS) {
             let next: Next = match &self.view_state {
-                ViewState::Title { state } => view::title::update(ctx, state),
+                ViewState::ForTitle { state } => view::title::update(ctx, state),
             };
 
             match next {
@@ -81,7 +81,7 @@ impl EventHandler for MainState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match &self.view_state {
-            ViewState::Title { state } => { view::title::draw(ctx, state); }
+            ViewState::ForTitle { state } => { view::title::draw(ctx, state); }
         }
 
         Ok(())

@@ -7,7 +7,7 @@ use ggez::input::keyboard::KeyCode;
 
 use crate::{HEIGHT, WIDTH};
 use crate::router::Next;
-use crate::router::ViewState::Title;
+use crate::router::ViewState::ForTitle;
 
 #[derive(Clone)]
 pub struct TitleState {
@@ -87,7 +87,7 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
     }
     new_state.pressed_down_before = pressed_down;
 
-    Next::do_continue(Title { state: new_state })
+    Next::do_continue(ForTitle { state: new_state })
 }
 
 pub fn draw(ctx: &mut Context, state: &TitleState) -> GameResult {
