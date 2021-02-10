@@ -6,8 +6,8 @@ use ggez::input::keyboard;
 use ggez::input::keyboard::KeyCode;
 
 use crate::{HEIGHT, WIDTH};
-use crate::resource::Resource;
-use crate::router::Next;
+use crate::resource::SharedResource;
+use crate::router::{Next, Ticket};
 use crate::router::ViewState::ForTitle;
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ pub struct TitleState {
 }
 
 impl TitleState {
-    pub fn new(_ctx: &mut Context, resource: &Resource) -> GameResult<TitleState> {
+    pub fn new(_ctx: &mut Context, resource: &SharedResource) -> GameResult<TitleState> {
         let ascii: Vec<&str> = r" __           __
 /\ \__       /\ \__         __
 \ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
@@ -88,7 +88,7 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
 
     if keyboard::is_key_pressed(ctx, KeyCode::Space) {
         match state.cursor {
-            TitleItem::Play40Line => unimplemented!(),
+            TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
             TitleItem::Exit => Next::Exit,
         }
     } else {
@@ -96,8 +96,8 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
     }
 }
 
-pub fn draw(ctx: &mut Context, state: &TitleState, resource: &Resource) -> GameResult {
-    graphics::clear(ctx, Color::from_rgb(46, 46, 46));
+pub fn draw(ctx: &mut Context, state: &TitleState, resource: &SharedResource) -> GameResult {
+    graphics::clear(ctx, resource.background_color);
 
     let ascii_width = state.texts_ascii.get(4).unwrap().width(ctx);
     for (idx, text) in state.texts_ascii.iter().enumerate() {

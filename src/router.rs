@@ -1,12 +1,14 @@
 use ggez::{Context, GameResult};
 
+use crate::resource::SharedResource;
 use crate::router::Next::{Continue, Transit};
-use crate::router::ViewState::ForTitle;
+use crate::router::ViewState::{ForPlay40Line, ForTitle};
+use crate::view::play40line::Play40LineState;
 use crate::view::title::TitleState;
-use crate::resource::Resource;
 
 pub enum ViewState {
-    ForTitle { state: TitleState }
+    ForTitle { state: TitleState },
+    ForPlay40Line { state: Play40LineState },
 }
 
 pub enum Ticket {
@@ -15,10 +17,10 @@ pub enum Ticket {
 }
 
 impl Ticket {
-    pub fn go(&self, ctx: &mut Context, resource: &Resource) -> GameResult<ViewState> {
+    pub fn go(&self, ctx: &mut Context, resource: &SharedResource) -> GameResult<ViewState> {
         match &self {
             Ticket::ShowTitle => TitleState::new(ctx, resource).map(|state| ForTitle { state }),
-            Ticket::Play40Line => unimplemented!(),
+            Ticket::Play40Line => Play40LineState::new(ctx).map(|state| ForPlay40Line { state }),
         }
     }
 }

@@ -3,7 +3,7 @@ use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::EventHandler;
 use ggez::timer;
 
-use crate::resource::Resource;
+use crate::resource::SharedResource;
 use crate::router::{Next, Ticket, ViewState};
 
 mod view;
@@ -39,26 +39,28 @@ fn main() -> GameResult {
                 srgb: false,
             }
         );
+    
     let (mut ctx, event_loop) = cb.build()?;
+    let state = MainState::new(&mut ctx)?;
 
-    let state = MainState::new(&mut ctx).unwrap();
     event::run(ctx, event_loop, state);
 }
 
 struct MainState {
     view_state: ViewState,
-    resource: Resource,
+    resource: Box<SharedResource>,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let resource = Resource::load(ctx)?;
+        let resource = SharedResource::load(ctx)?;
 
         Ok(
             MainState {
                 view_state: Ticket::ShowTitle.go(ctx, &resource)?,
                 resource,
-            })
+            }
+        )
     }
 }
 
@@ -69,13 +71,16 @@ impl EventHandler for MainState {
         while timer::check_update_time(ctx, FPS) {
             let next: Next = match &self.view_state {
                 ViewState::ForTitle { state } => view::title::update(ctx, state),
+                ViewState::ForPlay40Line { state } => view::play40line::update(ctx, state),
             };
 
             match next {
                 Next::Continue { state } => {
                     self.view_state = state;
                 }
-                Next::Transit { .. } => unimplemented!(),
+                Next::Transit { ticket } => {
+                    self.view_state = ticket.go(ctx, &self.resource)?;
+                }
                 Next::Exit => {
                     event::quit(ctx);
                 }
@@ -88,6 +93,7 @@ impl EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match &self.view_state {
             ViewState::ForTitle { state } => { view::title::draw(ctx, state, &self.resource)?; }
+            ViewState::ForPlay40Line { state } => { view::play40line::draw(ctx, state, &self.resource)?; }
         }
 
         Ok(())
