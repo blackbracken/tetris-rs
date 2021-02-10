@@ -18,8 +18,10 @@ impl SharedResource {
             .iter()
             .enumerate()
             .map(|(idx, value)| match idx % 4 {
-                1 => 255u8,
-                _ => value.saturating_sub(30)
+                0 => value.saturating_add(64),
+                1 | 2 => value.saturating_sub(64),
+                3 => 255u8,
+                _ => *value,
             })
             .collect();
         block_image = graphics::Image::from_rgba8(ctx, block_image.height(), block_image.width(), x.as_ref())?;
