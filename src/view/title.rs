@@ -6,6 +6,7 @@ use ggez::input::keyboard;
 use ggez::input::keyboard::KeyCode;
 
 use crate::{HEIGHT, WIDTH};
+use crate::resource::Resource;
 use crate::router::Next;
 use crate::router::ViewState::ForTitle;
 
@@ -15,14 +16,11 @@ pub struct TitleState {
     pressed_up_before: bool,
     pressed_down_before: bool,
     texts_ascii: Vec<graphics::Text>,
-    img_cursor: graphics::Image,
     items_text_hash: HashMap<TitleItem, graphics::Text>,
 }
 
 impl TitleState {
-    pub fn new(ctx: &mut Context) -> GameResult<TitleState> {
-        let font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
-
+    pub fn new(_ctx: &mut Context, resource: &Resource) -> GameResult<TitleState> {
         let ascii: Vec<&str> = r" __           __
 /\ \__       /\ \__         __
 \ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
@@ -37,8 +35,6 @@ impl TitleState {
             .map(|line| graphics::Text::new(graphics::TextFragment::from(line)))
             .collect();
 
-        let img_cursor = graphics::Image::new(ctx, "/cursor.png")?;
-
         let items_text_hash: HashMap<TitleItem, graphics::Text> = TitleItem::all()
             .into_iter()
             .map(|item| {
@@ -48,7 +44,7 @@ impl TitleState {
                     item,
                     graphics::Text::new(
                         graphics::TextFragment::new(str)
-                            .font(font)
+                            .font(resource.default_font)
                             .scale(PxScale::from(32.))
                     )
                 )
@@ -61,7 +57,6 @@ impl TitleState {
                 pressed_up_before: false,
                 pressed_down_before: false,
                 texts_ascii,
-                img_cursor,
                 items_text_hash,
             }
         )
@@ -101,7 +96,7 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
     }
 }
 
-pub fn draw(ctx: &mut Context, state: &TitleState) -> GameResult {
+pub fn draw(ctx: &mut Context, state: &TitleState, resource: &Resource) -> GameResult {
     graphics::clear(ctx, Color::from_rgb(46, 46, 46));
 
     let ascii_width = state.texts_ascii.get(4).unwrap().width(ctx);
@@ -122,11 +117,11 @@ pub fn draw(ctx: &mut Context, state: &TitleState) -> GameResult {
             if item == &state.cursor {
                 let cursor_scale = 0.5f32;
                 let cursor_x = x - 30.;
-                let cursor_y = y + text.height(ctx) / 2. - f32::from(state.img_cursor.height()) * cursor_scale / 2.;
+                let cursor_y = y + text.height(ctx) / 2. - f32::from(resource.cursor_image.height()) * cursor_scale / 2.;
 
                 graphics::draw(
                     ctx,
-                    &state.img_cursor,
+                    &resource.cursor_image,
                     graphics::DrawParam::default()
                         .dest([cursor_x, cursor_y])
                         .scale([cursor_scale, cursor_scale]),

@@ -3,6 +3,7 @@ use ggez::{Context, GameResult};
 use crate::router::Next::{Continue, Transit};
 use crate::router::ViewState::ForTitle;
 use crate::view::title::TitleState;
+use crate::resource::Resource;
 
 pub enum ViewState {
     ForTitle { state: TitleState }
@@ -14,9 +15,9 @@ pub enum Ticket {
 }
 
 impl Ticket {
-    pub fn go(&self, ctx: &mut Context) -> GameResult<ViewState> {
+    pub fn go(&self, ctx: &mut Context, resource: &Resource) -> GameResult<ViewState> {
         match &self {
-            Ticket::ShowTitle => TitleState::new(ctx).map(|state| ForTitle { state }),
+            Ticket::ShowTitle => TitleState::new(ctx, resource).map(|state| ForTitle { state }),
             Ticket::Play40Line => unimplemented!(),
         }
     }

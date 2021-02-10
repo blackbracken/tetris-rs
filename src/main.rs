@@ -3,10 +3,12 @@ use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::EventHandler;
 use ggez::timer;
 
+use crate::resource::Resource;
 use crate::router::{Next, Ticket, ViewState};
 
 mod view;
 mod router;
+mod resource;
 
 pub const WIDTH: f32 = 640.;
 pub const HEIGHT: f32 = 800.;
@@ -44,12 +46,19 @@ fn main() -> GameResult {
 }
 
 struct MainState {
-    view_state: ViewState
+    view_state: ViewState,
+    resource: Resource,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        Ok(MainState { view_state: Ticket::ShowTitle.go(ctx)? })
+        let resource = Resource::load(ctx)?;
+
+        Ok(
+            MainState {
+                view_state: Ticket::ShowTitle.go(ctx, &resource)?,
+                resource,
+            })
     }
 }
 
@@ -78,7 +87,7 @@ impl EventHandler for MainState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match &self.view_state {
-            ViewState::ForTitle { state } => { view::title::draw(ctx, state)?; }
+            ViewState::ForTitle { state } => { view::title::draw(ctx, state, &self.resource)?; }
         }
 
         Ok(())
