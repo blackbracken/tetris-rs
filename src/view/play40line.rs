@@ -22,6 +22,8 @@ pub fn update(_ctx: &mut Context, state: &Play40LineState) -> Next {
 pub fn draw(ctx: &mut Context, state: &Play40LineState, resource: &SharedResource) -> GameResult {
     graphics::clear(ctx, resource.background_color);
 
+    graphics::draw(ctx, &resource.block_image, graphics::DrawParam::default());
+
     graphics::present(ctx)?;
 
     Ok(())
