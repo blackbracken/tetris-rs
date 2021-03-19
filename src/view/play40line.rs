@@ -4,6 +4,11 @@ use ggez::graphics::Color;
 use crate::resource::SharedResource;
 use crate::router::{Next, ViewState};
 use crate::router::ViewState::ForPlay40Line;
+use rand::Rng;
+
+trait UnitSpace {
+
+}
 
 #[derive(Clone)]
 pub struct Play40LineState {}
@@ -22,7 +27,15 @@ pub fn update(_ctx: &mut Context, state: &Play40LineState) -> Next {
 pub fn draw(ctx: &mut Context, state: &Play40LineState, resource: &SharedResource) -> GameResult {
     graphics::clear(ctx, resource.background_color);
 
-    graphics::draw(ctx, &resource.block_image, graphics::DrawParam::default());
+    for y in 0..20 {
+        for x in 0..10 {
+            if rand::random::<u8>() % 10u8 == 0 {
+                graphics::draw(ctx, &resource.red_block_image, graphics::DrawParam::default().dest([(x * 32) as f32, (y * 32) as f32]));
+            } else {
+                graphics::draw(ctx, &resource.block_image, graphics::DrawParam::default().dest([(x * 32) as f32, (y * 32) as f32]));
+            }
+        }
+    }
 
     graphics::present(ctx)?;
 
