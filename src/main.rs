@@ -9,6 +9,7 @@ use crate::router::{Next, Ticket, ViewState};
 mod view;
 mod router;
 mod resource;
+mod game;
 
 pub const WIDTH: f32 = 640.;
 pub const HEIGHT: f32 = 800.;
