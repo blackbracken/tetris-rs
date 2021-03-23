@@ -7,11 +7,14 @@ struct Game {
     dropping_rotation: MinoRotation,
 }
 
-type Point = (isize, isize);
-type MinoShape = Vec<Vec<bool>>;
-type Board = [[bool; 10]; 22];
+const BOARD_WIDTH: usize = 10;
+const BOARD_HEIGHT: usize = 22;
 
-macro_rules! mino_shape {
+pub type Point = (isize, isize);
+pub type MinoShape = Vec<Vec<bool>>;
+pub type Board = [[bool; BOARD_WIDTH]; BOARD_HEIGHT];
+
+macro_rules! rect_vec {
     ($($x:expr),+ $(,)?) => (
         [ $($x),+ ].iter().map(|line| line.iter().map(|c| *c > 0).collect()).collect()
     )
@@ -20,7 +23,7 @@ macro_rules! mino_shape {
 impl Game {
     fn new() -> Game {
         Game {
-            board: [[false; 10]; 22],
+            board: [[false; BOARD_WIDTH]; BOARD_HEIGHT],
             dropping: Tetrimino::T,
             dropping_point: (4, 22 - 20),
             dropping_rotation: MinoRotation::Clockwise,
@@ -77,22 +80,22 @@ impl Tetrimino {
     fn shapes(&self) -> HashMap<MinoRotation, MinoShape> {
         match self {
             Tetrimino::T => maplit::hashmap! {
-                MinoRotation::Clockwise => mino_shape!(
+                MinoRotation::Clockwise => rect_vec!(
                         [0, 1, 0],
                         [1, 1, 1],
                         [0, 0, 0],
                 ),
-                MinoRotation::Clockwise90 => mino_shape!(
+                MinoRotation::Clockwise90 => rect_vec!(
                         [0, 1, 0],
                         [0, 1, 1],
                         [0, 1, 0],
                 ),
-                MinoRotation::Clockwise180 => mino_shape!(
+                MinoRotation::Clockwise180 => rect_vec!(
                         [0, 0, 0],
                         [1, 1, 1],
                         [0, 1, 0],
                 ),
-                MinoRotation::Clockwise270 => mino_shape!(
+                MinoRotation::Clockwise270 => rect_vec!(
                         [0, 1, 0],
                         [1, 1, 0],
                         [0, 1, 0],
@@ -138,89 +141,69 @@ impl Tetrimino {
 }
 
 #[test]
-// FIXME: separate
-fn test_game() {
-    let board = Game::new();
+fn board_is_only_with_dropping_on_init() {
+    let game = Game::new();
 
-    assert_eq!(
-        board.board,
-        [
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-        ]
+    assert_eq_board(
+        &game.board(),
+        &rect_vec!(
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ),
     );
-
-    let board_with_dropping = Game::new().board();
-    print_board(&board_with_dropping);
-
-    assert_eq!(
-        board_with_dropping,
-        [
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, true, false, false, false, false, false],
-            [false, false, false, true, true, true, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-            [false, false, false, false, false, false, false, false, false, false],
-        ]
-    );
-
-    let mino_shape: MinoShape = mino_shape!(
-        [0, 1, 0, 1],
-        [1, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 1, 1, 0],
-    );
-    assert_eq!(
-        mino_shape,
-        vec!(
-            vec!(false, true, false, true),
-            vec!(true, true, false, false),
-            vec!(false, false, true, false),
-            vec!(false, true, true, false),
-        )
-    )
 }
 
+#[test]
+fn rect_vec_returns_2d_vec() {
+    let rect_vec: Vec<Vec<bool>> = rect_vec!(
+        [0, 0, 0, 0],
+        [1, 0, 1, 0],
+        [0, 1, 0, 1],
+        [1, 1, 1, 1],
+    );
+
+    assert_eq!(
+        rect_vec,
+        vec!(
+            vec!(false, false, false, false),
+            vec!(true, false, true, false),
+            vec!(false, true, false, true),
+            vec!(true, true, true, true),
+        )
+    );
+}
+
+// TODO: まともにする
 fn print_board(board: &Board) {
     board
         .iter()
         .map(|x| x.iter().map(|y| if *y { 1 } else { 0 }).collect::<Vec<_>>())
         .for_each(|line| println!("{:?}", line));
+}
+
+// TODO: まともにする
+fn assert_eq_board(left: &Board, right_vec: &Vec<Vec<bool>>) {
+    let left_vec = left.iter().map(|line| line.to_vec()).collect::<Vec<_>>();
+
+    assert_eq!(&left_vec, right_vec);
 }
