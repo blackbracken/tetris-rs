@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use ggez::{Context, GameResult, graphics};
+use ggez::audio::SoundSource;
 use ggez::graphics::{Color, PxScale};
 use ggez::input::keyboard;
 use ggez::input::keyboard::KeyCode;
@@ -10,7 +11,6 @@ use crate::{HEIGHT, WIDTH};
 use crate::resource::SharedResource;
 use crate::router::{Next, Ticket};
 use crate::router::ViewState::ForTitle;
-use ggez::audio::SoundSource;
 
 #[derive(Clone)]
 pub struct TitleState {
@@ -56,6 +56,13 @@ impl TitleState {
             })
             .collect();
 
+        let particles = (0..32)
+            .map(|_| TitleParticle::new(
+                (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
+                HEIGHT * (random::<f32>() % 1.),
+            ))
+            .collect::<Vec<_>>();
+
         Ok(
             TitleState {
                 cursor: TitleItem::Play40Line,
@@ -63,7 +70,7 @@ impl TitleState {
                 pressed_down_before: false,
                 texts_ascii,
                 items_text_hash,
-                particles: Vec::new(),
+                particles,
             }
         )
     }
@@ -77,9 +84,12 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
         particle.rotation += particle.rotate_speed;
     }
     if random::<u32>() % (crate::FPS / 4) == 0 {
-        new_state.particles.push(TitleParticle::new());
+        new_state.particles.push(TitleParticle::new(
+            (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
+            HEIGHT + 10.,
+        ));
     }
-    new_state.particles.retain(|&particle| particle.y > 0.);
+    new_state.particles.retain(|&particle| particle.y > -30.);
 
     let pressed_up = [KeyCode::W, KeyCode::Up]
         .iter()
@@ -212,10 +222,10 @@ struct TitleParticle {
 }
 
 impl TitleParticle {
-    fn new() -> TitleParticle {
+    fn new(x: f32, y: f32) -> TitleParticle {
         TitleParticle {
-            x: (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
-            y: HEIGHT + 10.,
+            x,
+            y,
             up_speed: 0.8 + (random::<f32>() % 4.),
             rotate_speed: random::<f32>() % 0.09,
             size: 0.4 + (random::<f32>() % 0.4),

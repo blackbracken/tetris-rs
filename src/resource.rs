@@ -1,4 +1,6 @@
-use ggez::{Context, GameResult, graphics, audio};
+use std::time::Duration;
+
+use ggez::{audio, Context, GameResult, graphics};
 use ggez::audio::SoundSource;
 
 pub struct SharedResource {
@@ -17,7 +19,9 @@ impl SharedResource {
         let play_regular_font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
 
         let mut title_music = audio::Source::new(ctx, "/music/bgm_maoudamashii_cyber18.mp3")?;
-        title_music.set_volume(0.25);
+        title_music.set_volume(0.2);
+        title_music.set_repeat(true);
+        title_music.set_fade_in(Duration::from_secs(2));
 
         let cursor_image = graphics::Image::new(ctx, "/cursor.png")?;
 
