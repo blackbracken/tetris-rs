@@ -10,6 +10,7 @@ use crate::{HEIGHT, WIDTH};
 use crate::resource::SharedResource;
 use crate::router::{Next, Ticket};
 use crate::router::ViewState::ForTitle;
+use ggez::audio::SoundSource;
 
 #[derive(Clone)]
 pub struct TitleState {
@@ -23,6 +24,8 @@ pub struct TitleState {
 
 impl TitleState {
     pub fn new(_ctx: &mut Context, resource: &SharedResource) -> GameResult<TitleState> {
+        let x = &resource.title_music;
+        x.play_later();
         let ascii: Vec<&str> = r" __           __
 /\ \__       /\ \__         __
 \ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
