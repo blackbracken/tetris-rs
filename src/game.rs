@@ -278,13 +278,17 @@ impl Tetrimino {
     }
 }
 
-#[test]
-fn board_is_only_with_dropping_on_init() {
-    let game = Game::new();
+#[cfg(test)]
+mod tests {
+    use crate::game::{Game, Board};
 
-    assert_eq_board(
-        &game.board(),
-        &rect_vec!(
+    #[test]
+    fn board_is_only_with_dropping_on_init() {
+        let game = Game::new();
+
+        assert_eq_board(
+            &game.board(),
+            &rect_vec!(
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
@@ -308,38 +312,38 @@ fn board_is_only_with_dropping_on_init() {
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ),
-    );
-}
+        );
+    }
 
-#[test]
-fn rect_vec_returns_2d_vec() {
-    let rect_vec: Vec<Vec<bool>> = rect_vec!(
+    #[test]
+    fn rect_vec_returns_2d_vec() {
+        let rect_vec: Vec<Vec<bool>> = rect_vec!(
         [0, 0, 0, 0],
         [1, 0, 1, 0],
         [0, 1, 0, 1],
         [1, 1, 1, 1],
     );
 
-    assert_eq!(
-        rect_vec,
-        vec!(
-            vec!(false, false, false, false),
-            vec!(true, false, true, false),
-            vec!(false, true, false, true),
-            vec!(true, true, true, true),
-        )
-    );
-}
+        assert_eq!(
+            rect_vec,
+            vec!(
+                vec!(false, false, false, false),
+                vec!(true, false, true, false),
+                vec!(false, true, false, true),
+                vec!(true, true, true, true),
+            )
+        );
+    }
 
-#[test]
-fn move_right_once() {
-    let game = &mut Game::new();
+    #[test]
+    fn move_right_once() {
+        let game = &mut Game::new();
 
-    assert!(game.try_move_right());
+        assert!(game.try_move_right());
 
-    assert_eq_board(
-        &game.board(),
-        &rect_vec!(
+        assert_eq_board(
+            &game.board(),
+            &rect_vec!(
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
@@ -363,21 +367,21 @@ fn move_right_once() {
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ),
-    )
-}
-
-#[test]
-fn move_right_to_limit() {
-    let game = &mut Game::new();
-
-    for _ in 0..4 {
-        assert!(game.try_move_right());
+        )
     }
-    assert!(!game.try_move_right());
 
-    assert_eq_board(
-        &game.board(),
-        &rect_vec!(
+    #[test]
+    fn move_right_to_limit() {
+        let game = &mut Game::new();
+
+        for _ in 0..4 {
+            assert!(game.try_move_right());
+        }
+        assert!(!game.try_move_right());
+
+        assert_eq_board(
+            &game.board(),
+            &rect_vec!(
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
                 [0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
@@ -401,18 +405,18 @@ fn move_right_to_limit() {
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ),
-    )
-}
+        )
+    }
 
-#[test]
-fn move_left_once() {
-    let game = &mut Game::new();
+    #[test]
+    fn move_left_once() {
+        let game = &mut Game::new();
 
-    assert!(game.try_move_left());
+        assert!(game.try_move_left());
 
-    assert_eq_board(
-        &game.board(),
-        &rect_vec!(
+        assert_eq_board(
+            &game.board(),
+            &rect_vec!(
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
@@ -436,21 +440,21 @@ fn move_left_once() {
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ),
-    )
-}
-
-#[test]
-fn move_left_to_limit() {
-    let game = &mut Game::new();
-
-    for _ in 0..3 {
-        assert!(game.try_move_left());
+        )
     }
-    assert!(!game.try_move_left());
 
-    assert_eq_board(
-        &game.board(),
-        &rect_vec!(
+    #[test]
+    fn move_left_to_limit() {
+        let game = &mut Game::new();
+
+        for _ in 0..3 {
+            assert!(game.try_move_left());
+        }
+        assert!(!game.try_move_left());
+
+        assert_eq_board(
+            &game.board(),
+            &rect_vec!(
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
                 [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -474,20 +478,21 @@ fn move_left_to_limit() {
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ),
-    )
-}
+        )
+    }
 
-// TODO: まともにする
-fn print_board(board: &Board) {
-    board
-        .iter()
-        .map(|x| x.iter().map(|y| if *y { 1 } else { 0 }).collect::<Vec<_>>())
-        .for_each(|line| println!("{:?}", line));
-}
+    // TODO: まともにする
+    fn print_board(board: &Board) {
+        board
+            .iter()
+            .map(|x| x.iter().map(|y| if *y { 1 } else { 0 }).collect::<Vec<_>>())
+            .for_each(|line| println!("{:?}", line));
+    }
 
-// TODO: まともにする
-fn assert_eq_board(left: &Board, right_vec: &Vec<Vec<bool>>) {
-    let left_vec = left.iter().map(|line| line.to_vec()).collect::<Vec<_>>();
+    // TODO: まともにする
+    fn assert_eq_board(left: &Board, right_vec: &Vec<Vec<bool>>) {
+        let left_vec = left.iter().map(|line| line.to_vec()).collect::<Vec<_>>();
 
-    assert_eq!(&left_vec, right_vec);
+        assert_eq!(&left_vec, right_vec);
+    }
 }
