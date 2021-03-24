@@ -93,7 +93,7 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
 
     let pressed_up = [KeyCode::W, KeyCode::Up]
         .iter()
-        .any(|key| keyboard::is_key_pressed(ctx, *key));
+        .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_up && !state.pressed_up_before {
         if let Some(prev) = state.cursor.prev() {
             new_state.cursor = prev;
@@ -103,7 +103,7 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
 
     let pressed_down = [KeyCode::S, KeyCode::Down]
         .iter()
-        .any(|key| keyboard::is_key_pressed(ctx, *key));
+        .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_down && !new_state.pressed_down_before {
         if let Some(next) = new_state.cursor.next() {
             new_state.cursor = next;

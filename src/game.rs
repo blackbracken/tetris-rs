@@ -82,11 +82,11 @@ impl Game {
             .flat_map(|(mass_y, line)| {
                 line.iter()
                     .enumerate()
-                    .flat_map(|(mass_x, exists)| {
+                    .flat_map(|(mass_x, &exists)| {
                         let x = dropping_at.x + (mass_x as isize) - center.x;
                         let y = dropping_at.y + (mass_y as isize) - center.y;
 
-                        Some((x, y).into()).filter(|_| *exists)
+                        Some((x, y).into()).filter(|_| exists)
                     })
                     .collect::<Vec<_>>()
             })
@@ -140,7 +140,7 @@ impl Game {
         };
 
         offsets.into_iter()
-            .find(|offset| {
+            .find(|&offset| {
                 let clone = &mut self.clone();
                 manipulation(clone, offset);
 
@@ -152,7 +152,7 @@ impl Game {
 
     fn establishes_board(&self) -> bool {
         self.calc_dropping_mino_points().iter()
-            .all(|point| {
+            .all(|&point| {
                 if !(0..(BOARD_HEIGHT as isize)).contains(&point.y)
                     || !(0..(BOARD_WIDTH as isize)).contains(&point.x) {
                     return false;
@@ -485,13 +485,13 @@ mod tests {
     fn print_board(board: &Board) {
         board
             .iter()
-            .map(|x| x.iter().map(|y| if *y { 1 } else { 0 }).collect::<Vec<_>>())
+            .map(|&x| x.iter().map(|y| if *y { 1 } else { 0 }).collect::<Vec<_>>())
             .for_each(|line| println!("{:?}", line));
     }
 
     // TODO: まともにする
     fn assert_eq_board(left: &Board, right_vec: &Vec<Vec<bool>>) {
-        let left_vec = left.iter().map(|line| line.to_vec()).collect::<Vec<_>>();
+        let left_vec = left.iter().map(|&line| line.to_vec()).collect::<Vec<_>>();
 
         assert_eq!(&left_vec, right_vec);
     }
