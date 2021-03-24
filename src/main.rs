@@ -11,6 +11,7 @@ mod router;
 mod resource;
 mod game;
 
+pub const FPS: u32 = 60;
 pub const WIDTH: f32 = 640.;
 pub const HEIGHT: f32 = 800.;
 
@@ -40,7 +41,7 @@ fn main() -> GameResult {
                 srgb: false,
             }
         );
-    
+
     let (mut ctx, event_loop) = cb.build()?;
     let state = MainState::new(&mut ctx)?;
 
@@ -67,8 +68,6 @@ impl MainState {
 
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        const FPS: u32 = 30;
-
         while timer::check_update_time(ctx, FPS) {
             let next: Next = match &self.view_state {
                 ViewState::ForTitle { state } => view::title::update(ctx, state),

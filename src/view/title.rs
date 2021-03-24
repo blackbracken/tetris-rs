@@ -4,6 +4,7 @@ use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{Color, PxScale};
 use ggez::input::keyboard;
 use ggez::input::keyboard::KeyCode;
+use rand::random;
 
 use crate::{HEIGHT, WIDTH};
 use crate::resource::SharedResource;
@@ -17,6 +18,7 @@ pub struct TitleState {
     pressed_down_before: bool,
     texts_ascii: Vec<graphics::Text>,
     items_text_hash: HashMap<TitleItem, graphics::Text>,
+    particles: Vec<TitleParticle>,
 }
 
 impl TitleState {
@@ -58,6 +60,7 @@ impl TitleState {
                 pressed_down_before: false,
                 texts_ascii,
                 items_text_hash,
+                particles: Vec::new(),
             }
         )
     }
@@ -65,6 +68,15 @@ impl TitleState {
 
 pub fn update(ctx: &Context, state: &TitleState) -> Next {
     let mut new_state = state.clone();
+
+    for particle in &mut new_state.particles {
+        particle.y -= particle.up_speed;
+        particle.rotation += particle.rotate_speed;
+    }
+    if random::<u32>() % (crate::FPS / 4) == 0 {
+        new_state.particles.push(TitleParticle::new());
+    }
+    new_state.particles.retain(|&particle| particle.y > 0.);
 
     let pressed_up = [KeyCode::W, KeyCode::Up]
         .iter()
@@ -98,6 +110,19 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
 
 pub fn draw(ctx: &mut Context, state: &TitleState, resource: &SharedResource) -> GameResult {
     graphics::clear(ctx, resource.background_color);
+
+    for particle in &state.particles {
+        graphics::draw(
+            ctx,
+            &resource.title_particle_image,
+            graphics::DrawParam::default()
+                .color(Color::new(1., 1., 1., 0.2))
+                .dest([particle.x, particle.y])
+                .scale([particle.size, particle.size])
+                .rotation(particle.rotation)
+                .offset([0.5, 0.5]),
+        )?;
+    }
 
     let ascii_width = state.texts_ascii.get(4).unwrap().width(ctx);
     for (idx, text) in state.texts_ascii.iter().enumerate() {
@@ -170,5 +195,28 @@ impl TitleItem {
 
     fn all() -> Vec<TitleItem> {
         vec![TitleItem::Play40Line, TitleItem::Exit]
+    }
+}
+
+#[derive(Copy, Clone)]
+struct TitleParticle {
+    x: f32,
+    y: f32,
+    up_speed: f32,
+    rotate_speed: f32,
+    size: f32,
+    rotation: f32,
+}
+
+impl TitleParticle {
+    fn new() -> TitleParticle {
+        TitleParticle {
+            x: (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
+            y: HEIGHT + 10.,
+            up_speed: 0.8 + (random::<f32>() % 4.),
+            rotate_speed: random::<f32>() % 0.09,
+            size: 0.4 + (random::<f32>() % 0.4),
+            rotation: random::<f32>() % 360.,
+        }
     }
 }
