@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
+use ggez::filesystem::exists;
+
+#[derive(Copy, Clone)]
 struct Game {
-    board: [[bool; 10]; 22],
+    confirmed_board: [[bool; 10]; 22],
     dropping: Tetrimino,
     dropping_point: Point,
     dropping_rotation: MinoRotation,
@@ -10,9 +13,26 @@ struct Game {
 const BOARD_WIDTH: usize = 10;
 const BOARD_HEIGHT: usize = 22;
 
-pub type Point = (isize, isize);
 pub type MinoShape = Vec<Vec<bool>>;
 pub type Board = [[bool; BOARD_WIDTH]; BOARD_HEIGHT];
+
+#[derive(Copy, Clone)]
+struct Point { x: isize, y: isize }
+
+impl Into<Point> for (isize, isize) {
+    fn into(self) -> Point {
+        Point { x: self.0, y: self.1 }
+    }
+}
+
+enum Movement {
+    MoveLeft,
+    MoveRight,
+    DropSoftly,
+    DropHardly,
+    SpinLeft,
+    SpinRight,
+}
 
 macro_rules! rect_vec {
     ($($x:expr),+ $(,)?) => (
@@ -23,25 +43,25 @@ macro_rules! rect_vec {
 impl Game {
     fn new() -> Game {
         Game {
-            board: [[false; BOARD_WIDTH]; BOARD_HEIGHT],
+            confirmed_board: [[false; BOARD_WIDTH]; BOARD_HEIGHT],
             dropping: Tetrimino::T,
-            dropping_point: (4, 22 - 20),
+            dropping_point: (4, (BOARD_HEIGHT - 20) as isize).into(),
             dropping_rotation: MinoRotation::Clockwise,
         }
     }
 
     fn board(&self) -> Board {
-        let mut board = self.board.clone();
+        let mut board = self.confirmed_board.clone();
         let shapes = self.dropping.shapes();
         let dropping_shape = shapes.get(&self.dropping_rotation).unwrap();
 
-        let (center_x, center_y) = self.dropping.center();
-        let (dropping_x, dropping_y) = self.dropping_point;
+        let center = &self.dropping.center();
+        let dropping_at = &self.dropping_point;
 
         for (mass_y, line) in dropping_shape.iter().enumerate() {
             for (mass_x, exists) in line.iter().enumerate() {
-                let x = (dropping_x as usize) + mass_x - (center_x as usize);
-                let y = (dropping_y as usize) + mass_y - (center_y as usize);
+                let x = (dropping_at.x + (mass_x as isize) - center.x) as usize;
+                let y = (dropping_at.y + (mass_y as isize) - center.y) as usize;
 
                 board[y][x] = *exists;
             }
@@ -49,14 +69,107 @@ impl Game {
 
         board
     }
+
+    fn calc_dropping_mino_points(&self) -> Vec<Point> {
+        let shapes = self.dropping.shapes();
+        let shape = shapes.get(&self.dropping_rotation).unwrap();
+
+        let center = &self.dropping.center();
+        let dropping_at = &self.dropping_point;
+
+        shape.iter()
+            .enumerate()
+            .flat_map(|(mass_y, line)| {
+                line.iter()
+                    .enumerate()
+                    .flat_map(|(mass_x, exists)| {
+                        let x = dropping_at.x + (mass_x as isize) - center.x;
+                        let y = dropping_at.y + (mass_y as isize) - center.y;
+
+                        Some((x, y).into()).filter(|_| *exists)
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+    }
+
+    pub fn try_move_left(&mut self) -> bool {
+        self.try_move_x(-1)
+    }
+
+    pub fn try_move_right(&mut self) -> bool {
+        self.try_move_x(1)
+    }
+
+    fn try_move_x(&mut self, addition: isize) -> bool {
+        let clone = &mut self.clone();
+
+        let manipulation = |game: &mut Game| {
+            game.dropping_point.x += addition;
+        };
+
+        manipulation(clone);
+
+        if clone.establishes_board() {
+            manipulation(self);
+        }
+
+        clone.establishes_board()
+    }
+
+    pub fn try_spin_left(&mut self) -> bool {
+        self.try_spin(RotateDirection::Left)
+    }
+
+    pub fn try_spin_right(&mut self) -> bool {
+        self.try_spin(RotateDirection::Right)
+    }
+
+    fn try_spin(&mut self, direction: RotateDirection) -> bool {
+        let rotation = match direction {
+            RotateDirection::Left => self.dropping_rotation.left(),
+            RotateDirection::Right => self.dropping_rotation.right(),
+        };
+        let offsets = self.dropping.spin_offsets();
+        let offsets = offsets.get(&rotation).unwrap();
+
+        let manipulation = |game: &mut Game, offset: &Point| {
+            game.dropping_rotation = rotation;
+            game.dropping_point.x += offset.x;
+            game.dropping_point.y += offset.y;
+        };
+
+        offsets.into_iter()
+            .find(|offset| {
+                let clone = &mut self.clone();
+                manipulation(clone, offset);
+
+                clone.establishes_board()
+            })
+            .map(|offset| manipulation(self, offset))
+            .is_some()
+    }
+
+    fn establishes_board(&self) -> bool {
+        self.calc_dropping_mino_points().iter()
+            .all(|point| {
+                if !(0..(BOARD_HEIGHT as isize)).contains(&point.y)
+                    || !(0..(BOARD_WIDTH as isize)).contains(&point.x) {
+                    return false;
+                }
+
+                !self.confirmed_board[point.y as usize][point.x as usize]
+            })
+    }
 }
 
+#[derive(Copy, Clone)]
 enum Tetrimino {
     T,
 }
 
 // clockwise angles starts at 12 o'clock position
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 enum MinoRotation {
     Clockwise,
     Clockwise90,
@@ -64,10 +177,35 @@ enum MinoRotation {
     Clockwise270,
 }
 
+impl MinoRotation {
+    fn left(&self) -> MinoRotation {
+        match self {
+            MinoRotation::Clockwise => MinoRotation::Clockwise270,
+            MinoRotation::Clockwise90 => MinoRotation::Clockwise,
+            MinoRotation::Clockwise180 => MinoRotation::Clockwise90,
+            MinoRotation::Clockwise270 => MinoRotation::Clockwise180,
+        }
+    }
+
+    fn right(&self) -> MinoRotation {
+        match self {
+            MinoRotation::Clockwise => MinoRotation::Clockwise90,
+            MinoRotation::Clockwise90 => MinoRotation::Clockwise180,
+            MinoRotation::Clockwise180 => MinoRotation::Clockwise270,
+            MinoRotation::Clockwise270 => MinoRotation::Clockwise,
+        }
+    }
+}
+
+enum RotateDirection {
+    Left,
+    Right,
+}
+
 impl Tetrimino {
     fn center(&self) -> Point {
         match self {
-            Tetrimino::T => (1, 1)
+            Tetrimino::T => (1, 1).into()
         }
     }
 
@@ -108,32 +246,32 @@ impl Tetrimino {
         match self {
             Tetrimino::T => maplit::hashmap! {
                 MinoRotation::Clockwise => vec!(
-                        (0, 0),
-                        (-1, 0),
-                        (-1, -1),
-                        (0, 2),
-                        (-1, 2),
+                        (0, 0).into(),
+                        (-1, 0).into(),
+                        (-1, -1).into(),
+                        (0, 2).into(),
+                        (-1, 2).into(),
                 ),
                 MinoRotation::Clockwise90 => vec!(
-                        (0, 0),
-                        (1, 0),
-                        (1, 1),
-                        (0, -2),
-                        (1, -2),
+                        (0, 0).into(),
+                        (1, 0).into(),
+                        (1, 1).into(),
+                        (0, -2).into(),
+                        (1, -2).into(),
                 ),
                 MinoRotation::Clockwise180 => vec!(
-                        (0, 0),
-                        (1, 0),
-                        (1, -1),
-                        (0, 2),
-                        (1, 2),
+                        (0, 0).into(),
+                        (1, 0).into(),
+                        (1, -1).into(),
+                        (0, 2).into(),
+                        (1, 2).into(),
                 ),
                 MinoRotation::Clockwise270 => vec!(
-                        (0, 0),
-                        (-1, 0),
-                        (-1, 1),
-                        (0, -2),
-                        (-1, -2),
+                        (0, 0).into(),
+                        (-1, 0).into(),
+                        (-1, 1).into(),
+                        (0, -2).into(),
+                        (-1, -2).into(),
                 ),
             }
         }
@@ -191,6 +329,152 @@ fn rect_vec_returns_2d_vec() {
             vec!(true, true, true, true),
         )
     );
+}
+
+#[test]
+fn move_right_once() {
+    let game = &mut Game::new();
+
+    assert!(game.try_move_right());
+
+    assert_eq_board(
+        &game.board(),
+        &rect_vec!(
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ),
+    )
+}
+
+#[test]
+fn move_right_to_limit() {
+    let game = &mut Game::new();
+
+    for _ in 0..4 {
+        assert!(game.try_move_right());
+    }
+    assert!(!game.try_move_right());
+
+    assert_eq_board(
+        &game.board(),
+        &rect_vec!(
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ),
+    )
+}
+
+#[test]
+fn move_left_once() {
+    let game = &mut Game::new();
+
+    assert!(game.try_move_left());
+
+    assert_eq_board(
+        &game.board(),
+        &rect_vec!(
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ),
+    )
+}
+
+#[test]
+fn move_left_to_limit() {
+    let game = &mut Game::new();
+
+    for _ in 0..3 {
+        assert!(game.try_move_left());
+    }
+    assert!(!game.try_move_left());
+
+    assert_eq_board(
+        &game.board(),
+        &rect_vec!(
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ),
+    )
 }
 
 // TODO: まともにする
