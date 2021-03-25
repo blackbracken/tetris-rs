@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use crate::tetris::game;
-use crate::tetris::game::{MinoShape, Point};
+use crate::tetris::game::Point;
+
+type MinoShape = Vec<Vec<bool>>;
 
 #[derive(Copy, Clone)]
 pub enum Tetrimino {

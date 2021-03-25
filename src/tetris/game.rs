@@ -1,13 +1,8 @@
-use std::collections::HashMap;
-
-use ggez::filesystem::exists;
-
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BOARD_WIDTH: usize = 10;
 const BOARD_HEIGHT: usize = 22;
 
-pub type MinoShape = Vec<Vec<bool>>;
 pub type Board = [[bool; BOARD_WIDTH]; BOARD_HEIGHT];
 
 #[derive(Copy, Clone)]

@@ -1,10 +1,7 @@
 use ggez::{Context, GameResult, graphics};
-use ggez::graphics::Color;
-
 use crate::resource::SharedResource;
-use crate::router::{Next, SceneState};
+use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
-use rand::Rng;
 
 trait UnitSpace {
 
@@ -24,7 +21,7 @@ pub fn update(_ctx: &mut Context, state: &Play40LineState) -> Next {
     Next::do_continue(ForPlay40Line { state: new_state })
 }
 
-pub fn draw(ctx: &mut Context, state: &Play40LineState, resource: &SharedResource) -> GameResult {
+pub fn draw(ctx: &mut Context, _state: &Play40LineState, resource: &SharedResource) -> GameResult {
     graphics::clear(ctx, resource.background_color);
 
     for y in 0..20 {
