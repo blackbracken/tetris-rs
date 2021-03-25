@@ -2,8 +2,8 @@ use ggez::{Context, GameResult, graphics};
 use ggez::graphics::Color;
 
 use crate::resource::SharedResource;
-use crate::router::{Next, ViewState};
-use crate::router::ViewState::ForPlay40Line;
+use crate::router::{Next, SceneState};
+use crate::router::SceneState::ForPlay40Line;
 use rand::Rng;
 
 trait UnitSpace {

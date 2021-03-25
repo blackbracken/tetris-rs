@@ -4,12 +4,12 @@ use ggez::event::EventHandler;
 use ggez::timer;
 
 use crate::resource::SharedResource;
-use crate::router::{Next, Ticket, ViewState};
+use crate::router::{Next, SceneState, Ticket};
 
-mod view;
+mod scene;
 mod router;
 mod resource;
-mod game;
+mod tetris;
 
 pub const FPS: u32 = 60;
 pub const WIDTH: f32 = 640.;
@@ -49,7 +49,7 @@ fn main() -> GameResult {
 }
 
 struct MainState {
-    view_state: ViewState,
+    scene_state: SceneState,
     resource: Box<SharedResource>,
 }
 
@@ -59,7 +59,7 @@ impl MainState {
 
         Ok(
             MainState {
-                view_state: Ticket::ShowTitle.go(ctx, &resource)?,
+                scene_state: Ticket::ShowTitle.go(ctx, &resource)?,
                 resource,
             }
         )
@@ -69,17 +69,17 @@ impl MainState {
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
-            let next: Next = match &self.view_state {
-                ViewState::ForTitle { state } => view::title::update(ctx, state),
-                ViewState::ForPlay40Line { state } => view::play40line::update(ctx, state),
+            let next: Next = match &self.scene_state {
+                SceneState::ForTitle { state } => scene::title::update(ctx, state),
+                SceneState::ForPlay40Line { state } => scene::play40line::update(ctx, state),
             };
 
             match next {
                 Next::Continue { state } => {
-                    self.view_state = state;
+                    self.scene_state = state;
                 }
                 Next::Transit { ticket } => {
-                    self.view_state = ticket.go(ctx, &self.resource)?;
+                    self.scene_state = ticket.go(ctx, &self.resource)?;
                 }
                 Next::Exit => {
                     event::quit(ctx);
@@ -91,9 +91,9 @@ impl EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        match &self.view_state {
-            ViewState::ForTitle { state } => { view::title::draw(ctx, state, &self.resource)?; }
-            ViewState::ForPlay40Line { state } => { view::play40line::draw(ctx, state, &self.resource)?; }
+        match &self.scene_state {
+            SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.resource)?; }
+            SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &self.resource)?; }
         }
 
         Ok(())

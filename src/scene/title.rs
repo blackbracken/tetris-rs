@@ -10,7 +10,7 @@ use rand::random;
 use crate::{HEIGHT, WIDTH};
 use crate::resource::SharedResource;
 use crate::router::{Next, Ticket};
-use crate::router::ViewState::ForTitle;
+use crate::router::SceneState::ForTitle;
 
 #[derive(Clone)]
 pub struct TitleState {

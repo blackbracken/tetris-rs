@@ -2,13 +2,7 @@ use std::collections::HashMap;
 
 use ggez::filesystem::exists;
 
-#[derive(Copy, Clone)]
-struct Game {
-    confirmed_board: [[bool; 10]; 22],
-    dropping: Tetrimino,
-    dropping_point: Point,
-    dropping_rotation: MinoRotation,
-}
+use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BOARD_WIDTH: usize = 10;
 const BOARD_HEIGHT: usize = 22;
@@ -17,27 +11,11 @@ pub type MinoShape = Vec<Vec<bool>>;
 pub type Board = [[bool; BOARD_WIDTH]; BOARD_HEIGHT];
 
 #[derive(Copy, Clone)]
-struct Point { x: isize, y: isize }
-
-impl Into<Point> for (isize, isize) {
-    fn into(self) -> Point {
-        Point { x: self.0, y: self.1 }
-    }
-}
-
-enum Movement {
-    MoveLeft,
-    MoveRight,
-    DropSoftly,
-    DropHardly,
-    SpinLeft,
-    SpinRight,
-}
-
-macro_rules! rect_vec {
-    ($($x:expr),+ $(,)?) => (
-        [ $($x),+ ].iter().map(|line| line.iter().map(|c| *c > 0).collect()).collect()
-    )
+pub struct Game {
+    confirmed_board: Board,
+    dropping: Tetrimino,
+    dropping_point: Point,
+    dropping_rotation: MinoRotation,
 }
 
 impl Game {
@@ -164,118 +142,26 @@ impl Game {
 }
 
 #[derive(Copy, Clone)]
-enum Tetrimino {
-    T,
+pub struct Point { x: isize, y: isize }
+
+impl Into<Point> for (isize, isize) {
+    fn into(self) -> Point {
+        Point { x: self.0, y: self.1 }
+    }
 }
 
-// clockwise angles starts at 12 o'clock position
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-enum MinoRotation {
-    Clockwise,
-    Clockwise90,
-    Clockwise180,
-    Clockwise270,
-}
-
-impl MinoRotation {
-    fn left(&self) -> MinoRotation {
-        match self {
-            MinoRotation::Clockwise => MinoRotation::Clockwise270,
-            MinoRotation::Clockwise90 => MinoRotation::Clockwise,
-            MinoRotation::Clockwise180 => MinoRotation::Clockwise90,
-            MinoRotation::Clockwise270 => MinoRotation::Clockwise180,
-        }
-    }
-
-    fn right(&self) -> MinoRotation {
-        match self {
-            MinoRotation::Clockwise => MinoRotation::Clockwise90,
-            MinoRotation::Clockwise90 => MinoRotation::Clockwise180,
-            MinoRotation::Clockwise180 => MinoRotation::Clockwise270,
-            MinoRotation::Clockwise270 => MinoRotation::Clockwise,
-        }
-    }
+enum Movement {
+    MoveLeft,
+    MoveRight,
+    DropSoftly,
+    DropHardly,
+    SpinLeft,
+    SpinRight,
 }
 
 enum RotateDirection {
     Left,
     Right,
-}
-
-impl Tetrimino {
-    fn center(&self) -> Point {
-        match self {
-            Tetrimino::T => (1, 1).into()
-        }
-    }
-
-    fn edge_length(&self) -> usize {
-        match self {
-            Tetrimino::T => 3,
-        }
-    }
-
-    fn shapes(&self) -> HashMap<MinoRotation, MinoShape> {
-        match self {
-            Tetrimino::T => maplit::hashmap! {
-                MinoRotation::Clockwise => rect_vec!(
-                        [0, 1, 0],
-                        [1, 1, 1],
-                        [0, 0, 0],
-                ),
-                MinoRotation::Clockwise90 => rect_vec!(
-                        [0, 1, 0],
-                        [0, 1, 1],
-                        [0, 1, 0],
-                ),
-                MinoRotation::Clockwise180 => rect_vec!(
-                        [0, 0, 0],
-                        [1, 1, 1],
-                        [0, 1, 0],
-                ),
-                MinoRotation::Clockwise270 => rect_vec!(
-                        [0, 1, 0],
-                        [1, 1, 0],
-                        [0, 1, 0],
-                ),
-            }
-        }
-    }
-
-    fn spin_offsets(&self) -> HashMap<MinoRotation, Vec<Point>> {
-        match self {
-            Tetrimino::T => maplit::hashmap! {
-                MinoRotation::Clockwise => vec!(
-                        (0, 0).into(),
-                        (-1, 0).into(),
-                        (-1, -1).into(),
-                        (0, 2).into(),
-                        (-1, 2).into(),
-                ),
-                MinoRotation::Clockwise90 => vec!(
-                        (0, 0).into(),
-                        (1, 0).into(),
-                        (1, 1).into(),
-                        (0, -2).into(),
-                        (1, -2).into(),
-                ),
-                MinoRotation::Clockwise180 => vec!(
-                        (0, 0).into(),
-                        (1, 0).into(),
-                        (1, -1).into(),
-                        (0, 2).into(),
-                        (1, 2).into(),
-                ),
-                MinoRotation::Clockwise270 => vec!(
-                        (0, 0).into(),
-                        (-1, 0).into(),
-                        (-1, 1).into(),
-                        (0, -2).into(),
-                        (-1, -2).into(),
-                ),
-            }
-        }
-    }
 }
 
 #[cfg(test)]
