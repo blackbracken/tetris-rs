@@ -6,6 +6,7 @@ use ggez::audio::SoundSource;
 pub struct SharedResource {
     pub default_font: graphics::Font,
     pub title_music: audio::Source,
+    pub click_se: audio::Source,
     pub cursor_image: graphics::Image,
     pub title_particle_image: graphics::Image,
     pub block_image: graphics::Image,
@@ -18,10 +19,13 @@ impl SharedResource {
     pub fn load(ctx: &mut Context) -> GameResult<Box<SharedResource>> {
         let play_regular_font = graphics::Font::new(ctx, "/Play-Regular.ttf")?;
 
-        let mut title_music = audio::Source::new(ctx, "/music/bgm_maoudamashii_cyber18.mp3")?;
+        let mut title_music = audio::Source::new(ctx, "/sound/bgm_maoudamashii_cyber18.mp3")?;
         title_music.set_volume(0.2);
         title_music.set_repeat(true);
         title_music.set_fade_in(Duration::from_secs(2));
+
+        let mut click_se = audio::Source::new(ctx, "/sound/se_maoudamashii_system26.mp3")?;
+        click_se.set_volume(0.1);
 
         let cursor_image = graphics::Image::new(ctx, "/cursor.png")?;
 
@@ -48,6 +52,7 @@ impl SharedResource {
                 SharedResource {
                     default_font: play_regular_font,
                     title_music,
+                    click_se,
                     title_particle_image,
                     cursor_image,
                     block_image,

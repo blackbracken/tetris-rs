@@ -70,7 +70,7 @@ impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
             let next: Next = match &self.scene_state {
-                SceneState::ForTitle { state } => scene::title::update(ctx, state),
+                SceneState::ForTitle { state } => scene::title::update(ctx, state, &self.resource),
                 SceneState::ForPlay40Line { state } => scene::play40line::update(ctx, state),
             };
 

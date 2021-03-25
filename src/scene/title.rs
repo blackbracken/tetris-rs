@@ -76,7 +76,7 @@ impl TitleState {
     }
 }
 
-pub fn update(ctx: &Context, state: &TitleState) -> Next {
+pub fn update(ctx: &Context, state: &TitleState, resource: &SharedResource) -> Next {
     let mut new_state = state.clone();
 
     for particle in &mut new_state.particles {
@@ -95,6 +95,8 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_up && !state.pressed_up_before {
+        resource.click_se.play_later();
+
         if let Some(prev) = state.cursor.prev() {
             new_state.cursor = prev;
         }
@@ -105,6 +107,8 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_down && !new_state.pressed_down_before {
+        resource.click_se.play_later();
+
         if let Some(next) = new_state.cursor.next() {
             new_state.cursor = next;
         }
@@ -112,6 +116,8 @@ pub fn update(ctx: &Context, state: &TitleState) -> Next {
     new_state.pressed_down_before = pressed_down;
 
     if keyboard::is_key_pressed(ctx, KeyCode::Space) {
+        resource.click_se.play_later();
+
         match state.cursor {
             TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
             TitleItem::Exit => Next::Exit,
