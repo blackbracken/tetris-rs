@@ -1,6 +1,6 @@
 use ggez::{Context, GameResult};
 
-use crate::resource::SharedResource;
+use crate::asset::Asset;
 use crate::router::Next::{Continue, Transit};
 use crate::router::SceneState::{ForPlay40Line, ForTitle};
 use crate::scene::play40line::Play40LineState;
@@ -17,9 +17,9 @@ pub enum Ticket {
 }
 
 impl Ticket {
-    pub fn go(&self, ctx: &mut Context, resource: &mut SharedResource) -> GameResult<SceneState> {
+    pub fn go(&self, ctx: &mut Context, asset: &mut Asset) -> GameResult<SceneState> {
         match &self {
-            Ticket::ShowTitle => TitleState::new(ctx, resource).map(|state| ForTitle { state }),
+            Ticket::ShowTitle => TitleState::new(ctx, asset).map(|state| ForTitle { state }),
             Ticket::Play40Line => Play40LineState::new(ctx).map(|state| ForPlay40Line { state }),
         }
     }

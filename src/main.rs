@@ -3,12 +3,12 @@ use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::EventHandler;
 use ggez::timer;
 
-use crate::resource::SharedResource;
+use crate::asset::Asset;
 use crate::router::{Next, SceneState, Ticket};
 
 mod scene;
 mod router;
-mod resource;
+mod asset;
 mod tetris;
 
 pub const FPS: u32 = 60;
@@ -50,17 +50,17 @@ fn main() -> GameResult {
 
 struct MainState {
     scene_state: SceneState,
-    resource: Box<SharedResource>,
+    asset: Box<Asset>,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let mut resource = SharedResource::load(ctx)?;
+        let mut asset = Asset::load(ctx)?;
 
         Ok(
             MainState {
-                scene_state: Ticket::ShowTitle.go(ctx, &mut resource)?,
-                resource,
+                scene_state: Ticket::ShowTitle.go(ctx, &mut asset)?,
+                asset: Asset::load(ctx)?,
             }
         )
     }
@@ -70,7 +70,7 @@ impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
             let next: Next = match &self.scene_state {
-                SceneState::ForTitle { state } => scene::title::update(ctx, state, &self.resource),
+                SceneState::ForTitle { state } => scene::title::update(ctx, state, &self.asset),
                 SceneState::ForPlay40Line { state } => scene::play40line::update(ctx, state),
             };
 
@@ -79,7 +79,7 @@ impl EventHandler for MainState {
                     self.scene_state = state;
                 }
                 Next::Transit { ticket } => {
-                    self.scene_state = ticket.go(ctx, &mut self.resource)?;
+                    self.scene_state = ticket.go(ctx, &mut self.asset)?;
                 }
                 Next::Exit => {
                     event::quit(ctx);
@@ -92,8 +92,8 @@ impl EventHandler for MainState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match &self.scene_state {
-            SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.resource)?; }
-            SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &self.resource)?; }
+            SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.asset)?; }
+            SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &self.asset)?; }
         }
 
         Ok(())

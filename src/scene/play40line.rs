@@ -1,11 +1,10 @@
 use ggez::{Context, GameResult, graphics};
-use crate::resource::SharedResource;
+
+use crate::asset::Asset;
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 
-trait UnitSpace {
-
-}
+trait UnitSpace {}
 
 #[derive(Clone)]
 pub struct Play40LineState {}
@@ -21,16 +20,13 @@ pub fn update(_ctx: &mut Context, state: &Play40LineState) -> Next {
     Next::do_continue(ForPlay40Line { state: new_state })
 }
 
-pub fn draw(ctx: &mut Context, _state: &Play40LineState, resource: &SharedResource) -> GameResult {
-    graphics::clear(ctx, resource.background_color);
+pub fn draw(ctx: &mut Context, _state: &Play40LineState, asset: &Asset) -> GameResult {
+    graphics::clear(ctx, asset.color.background);
 
     for y in 0..20 {
         for x in 0..10 {
-            if rand::random::<u8>() % 10u8 == 0 {
-                graphics::draw(ctx, &resource.red_block_image, graphics::DrawParam::default().dest([(x * 32) as f32, (y * 32) as f32]));
-            } else {
-                graphics::draw(ctx, &resource.block_image, graphics::DrawParam::default().dest([(x * 32) as f32, (y * 32) as f32]));
-            }
+            let img = asset.image.colored_block(ctx)?;
+            graphics::draw(ctx, &img, graphics::DrawParam::default().dest([(x * 32) as f32, (y * 32) as f32]));
         }
     }
 

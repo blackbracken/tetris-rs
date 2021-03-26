@@ -8,7 +8,7 @@ use ggez::input::keyboard::KeyCode;
 use rand::random;
 
 use crate::{HEIGHT, WIDTH};
-use crate::resource::{Bgm, SharedResource, Se};
+use crate::asset::{Asset, Bgm, Se};
 use crate::router::{Next, Ticket};
 use crate::router::SceneState::ForTitle;
 
@@ -23,8 +23,8 @@ pub struct TitleState {
 }
 
 impl TitleState {
-    pub fn new(ctx: &mut Context, resource: &mut SharedResource) -> GameResult<TitleState> {
-        resource.play_bgm(ctx, Bgm::Title);
+    pub fn new(ctx: &mut Context, asset: &mut Asset) -> GameResult<TitleState> {
+        asset.audio.play_bgm(ctx, Bgm::Title);
 
         let ascii: Vec<&str> = r" __           __
 /\ \__       /\ \__         __
@@ -49,7 +49,7 @@ impl TitleState {
                     item,
                     graphics::Text::new(
                         graphics::TextFragment::new(str)
-                            .font(resource.default_font)
+                            .font(asset.font.default)
                             .scale(PxScale::from(32.))
                     )
                 )
@@ -76,7 +76,7 @@ impl TitleState {
     }
 }
 
-pub fn update(ctx: &mut Context, state: &TitleState, resource: &SharedResource) -> Next {
+pub fn update(ctx: &mut Context, state: &TitleState, asset: &Asset) -> Next {
     let mut new_state = state.clone();
 
     for particle in &mut new_state.particles {
@@ -95,7 +95,7 @@ pub fn update(ctx: &mut Context, state: &TitleState, resource: &SharedResource) 
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_up && !state.pressed_up_before {
-        resource.play_se(ctx, Se::MenuClick);
+        asset.audio.play_se(ctx, Se::MenuClick);
 
         if let Some(prev) = state.cursor.prev() {
             new_state.cursor = prev;
@@ -107,7 +107,7 @@ pub fn update(ctx: &mut Context, state: &TitleState, resource: &SharedResource) 
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_down && !new_state.pressed_down_before {
-        resource.play_se(ctx, Se::MenuClick);
+        asset.audio.play_se(ctx, Se::MenuClick);
 
         if let Some(next) = new_state.cursor.next() {
             new_state.cursor = next;
@@ -116,7 +116,7 @@ pub fn update(ctx: &mut Context, state: &TitleState, resource: &SharedResource) 
     new_state.pressed_down_before = pressed_down;
 
     if keyboard::is_key_pressed(ctx, KeyCode::Space) {
-        resource.play_se(ctx, Se::MenuClick);
+        asset.audio.play_se(ctx, Se::MenuClick);
 
         match state.cursor {
             TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
@@ -127,13 +127,13 @@ pub fn update(ctx: &mut Context, state: &TitleState, resource: &SharedResource) 
     }
 }
 
-pub fn draw(ctx: &mut Context, state: &TitleState, resource: &SharedResource) -> GameResult {
-    graphics::clear(ctx, resource.background_color);
+pub fn draw(ctx: &mut Context, state: &TitleState, asset: &Asset) -> GameResult {
+    graphics::clear(ctx, asset.color.background);
 
     for particle in &state.particles {
         graphics::draw(
             ctx,
-            &resource.title_particle_image,
+            &asset.image.title_particle,
             graphics::DrawParam::default()
                 .color(Color::new(1., 1., 1., 0.2))
                 .dest([particle.x, particle.y])
@@ -161,11 +161,11 @@ pub fn draw(ctx: &mut Context, state: &TitleState, resource: &SharedResource) ->
             if item == &state.cursor {
                 let cursor_scale = 0.5f32;
                 let cursor_x = x - 30.;
-                let cursor_y = y + text.height(ctx) / 2. - f32::from(resource.cursor_image.height()) * cursor_scale / 2.;
+                let cursor_y = y + text.height(ctx) / 2. - f32::from(asset.image.cursor.height()) * cursor_scale / 2.;
 
                 graphics::draw(
                     ctx,
-                    &resource.cursor_image,
+                    &asset.image.cursor,
                     graphics::DrawParam::default()
                         .dest([cursor_x, cursor_y])
                         .scale([cursor_scale, cursor_scale]),
