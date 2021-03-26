@@ -55,11 +55,11 @@ struct MainState {
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let resource = SharedResource::load(ctx)?;
+        let mut resource = SharedResource::load(ctx)?;
 
         Ok(
             MainState {
-                scene_state: Ticket::ShowTitle.go(ctx, &resource)?,
+                scene_state: Ticket::ShowTitle.go(ctx, &mut resource)?,
                 resource,
             }
         )
@@ -79,7 +79,7 @@ impl EventHandler for MainState {
                     self.scene_state = state;
                 }
                 Next::Transit { ticket } => {
-                    self.scene_state = ticket.go(ctx, &self.resource)?;
+                    self.scene_state = ticket.go(ctx, &mut self.resource)?;
                 }
                 Next::Exit => {
                     event::quit(ctx);

@@ -8,7 +8,7 @@ use ggez::input::keyboard::KeyCode;
 use rand::random;
 
 use crate::{HEIGHT, WIDTH};
-use crate::resource::SharedResource;
+use crate::resource::{Bgm, SharedResource, Se};
 use crate::router::{Next, Ticket};
 use crate::router::SceneState::ForTitle;
 
@@ -23,9 +23,9 @@ pub struct TitleState {
 }
 
 impl TitleState {
-    pub fn new(_ctx: &mut Context, resource: &SharedResource) -> GameResult<TitleState> {
-        let x = &resource.title_music;
-        x.play_later();
+    pub fn new(ctx: &mut Context, resource: &mut SharedResource) -> GameResult<TitleState> {
+        resource.play_bgm(ctx, Bgm::Title);
+
         let ascii: Vec<&str> = r" __           __
 /\ \__       /\ \__         __
 \ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
@@ -76,7 +76,7 @@ impl TitleState {
     }
 }
 
-pub fn update(ctx: &Context, state: &TitleState, resource: &SharedResource) -> Next {
+pub fn update(ctx: &mut Context, state: &TitleState, resource: &SharedResource) -> Next {
     let mut new_state = state.clone();
 
     for particle in &mut new_state.particles {
@@ -95,7 +95,7 @@ pub fn update(ctx: &Context, state: &TitleState, resource: &SharedResource) -> N
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_up && !state.pressed_up_before {
-        resource.click_se.play_later();
+        resource.play_se(ctx, Se::MenuClick);
 
         if let Some(prev) = state.cursor.prev() {
             new_state.cursor = prev;
@@ -107,7 +107,7 @@ pub fn update(ctx: &Context, state: &TitleState, resource: &SharedResource) -> N
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_down && !new_state.pressed_down_before {
-        resource.click_se.play_later();
+        resource.play_se(ctx, Se::MenuClick);
 
         if let Some(next) = new_state.cursor.next() {
             new_state.cursor = next;
@@ -116,7 +116,7 @@ pub fn update(ctx: &Context, state: &TitleState, resource: &SharedResource) -> N
     new_state.pressed_down_before = pressed_down;
 
     if keyboard::is_key_pressed(ctx, KeyCode::Space) {
-        resource.click_se.play_later();
+        resource.play_se(ctx, Se::MenuClick);
 
         match state.cursor {
             TitleItem::Play40Line => Next::transit(Ticket::Play40Line),

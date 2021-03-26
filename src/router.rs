@@ -17,7 +17,7 @@ pub enum Ticket {
 }
 
 impl Ticket {
-    pub fn go(&self, ctx: &mut Context, resource: &SharedResource) -> GameResult<SceneState> {
+    pub fn go(&self, ctx: &mut Context, resource: &mut SharedResource) -> GameResult<SceneState> {
         match &self {
             Ticket::ShowTitle => TitleState::new(ctx, resource).map(|state| ForTitle { state }),
             Ticket::Play40Line => Play40LineState::new(ctx).map(|state| ForPlay40Line { state }),
