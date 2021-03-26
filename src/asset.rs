@@ -16,7 +16,7 @@ pub struct Asset {
 
 impl Asset {
     // TODO: support asynchronous loading
-    pub fn load(ctx: &mut Context) -> GameResult<Box<Asset>> {
+    pub fn new(ctx: &mut Context) -> GameResult<Box<Asset>> {
         Ok(
             Box::new(
                 Asset {
@@ -40,9 +40,9 @@ impl Image {
     fn new(ctx: &mut Context) -> GameResult<Image> {
         Ok(
             Image {
-                cursor: graphics::Image::new(ctx, "/cursor.png")?,
-                title_particle: graphics::Image::new(ctx, "/particles/title.png")?,
-                mino_block: graphics::Image::new(ctx, "/block.png")?,
+                cursor: graphics::Image::new(ctx, "/image/cursor.png")?,
+                title_particle: graphics::Image::new(ctx, "/image/particles/title.png")?,
+                mino_block: graphics::Image::new(ctx, "/image/mino_block.png")?,
             }
         )
     }
@@ -65,7 +65,6 @@ impl Image {
         graphics::Image::from_rgba8(ctx, w, h, &colored_block)
     }
 }
-
 
 pub struct Audio {
     bgm_data_map: HashMap<Bgm, audio::SoundData>,
@@ -113,7 +112,7 @@ impl Audio {
                 }
             });
 
-        if let Some(src) = src {
+        if let Some(mut src) = src {
             src.play_later();
             self.playing_src = Some(src);
         }
@@ -156,7 +155,7 @@ impl Font {
     fn new(ctx: &mut Context) -> GameResult<Font> {
         Ok(
             Font {
-                default: graphics::Font::new(ctx, "/Play-Regular.ttf")?,
+                default: graphics::Font::new(ctx, "/font/Play-Regular.ttf")?,
             }
         )
     }

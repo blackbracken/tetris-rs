@@ -55,12 +55,12 @@ struct MainState {
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let mut asset = Asset::load(ctx)?;
+        let mut asset = Asset::new(ctx)?;
 
         Ok(
             MainState {
                 scene_state: Ticket::ShowTitle.go(ctx, &mut asset)?,
-                asset: Asset::load(ctx)?,
+                asset,
             }
         )
     }
