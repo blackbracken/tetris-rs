@@ -3,7 +3,7 @@ use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 const BOARD_WIDTH: usize = 10;
 const BOARD_HEIGHT: usize = 22;
 
-pub type Board = [[bool; BOARD_WIDTH]; BOARD_HEIGHT];
+pub type Board = [[MinoBlock; BOARD_WIDTH]; BOARD_HEIGHT];
 
 #[derive(Copy, Clone)]
 pub struct Game {
@@ -16,7 +16,7 @@ pub struct Game {
 impl Game {
     fn new() -> Game {
         Game {
-            confirmed_board: [[false; BOARD_WIDTH]; BOARD_HEIGHT],
+            confirmed_board: [[MinoBlock::AIR; BOARD_WIDTH]; BOARD_HEIGHT],
             dropping: Tetrimino::T,
             dropping_point: (4, (BOARD_HEIGHT - 20) as isize).into(),
             dropping_rotation: MinoRotation::Clockwise,
@@ -32,11 +32,13 @@ impl Game {
         let dropping_at = &self.dropping_point;
 
         for (mass_y, line) in dropping_shape.iter().enumerate() {
-            for (mass_x, exists) in line.iter().enumerate() {
+            for (mass_x, &exists) in line.iter().enumerate() {
                 let x = (dropping_at.x + (mass_x as isize) - center.x) as usize;
                 let y = (dropping_at.y + (mass_y as isize) - center.y) as usize;
 
-                board[y][x] = *exists;
+                if exists {
+                    board[y][x] = self.dropping.block();
+                }
             }
         }
 
@@ -131,7 +133,7 @@ impl Game {
                     return false;
                 }
 
-                !self.confirmed_board[point.y as usize][point.x as usize]
+                !self.confirmed_board[point.y as usize][point.x as usize].exists()
             })
     }
 }
@@ -142,6 +144,27 @@ pub struct Point { x: isize, y: isize }
 impl Into<Point> for (isize, isize) {
     fn into(self) -> Point {
         Point { x: self.0, y: self.1 }
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum MinoBlock {
+    AQUA,
+    YELLOW,
+    PURPLE,
+    BLUE,
+    ORANGE,
+    GREEN,
+    RED,
+    AIR,
+}
+
+impl MinoBlock {
+    fn exists(&self) -> bool {
+        match self {
+            MinoBlock::AIR => true,
+            _ => false,
+        }
     }
 }
 

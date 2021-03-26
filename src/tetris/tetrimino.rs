@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::tetris::game::Point;
+use crate::tetris::game::{MinoBlock, Point};
 
 type MinoShape = Vec<Vec<bool>>;
 
@@ -81,6 +81,12 @@ impl Tetrimino {
                         (-1, -2).into(),
                 ),
             }
+        }
+    }
+
+    pub fn block(&self) -> MinoBlock {
+        match self {
+            Tetrimino::T => MinoBlock::PURPLE
         }
     }
 }
