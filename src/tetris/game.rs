@@ -162,8 +162,8 @@ pub enum MinoBlock {
 impl MinoBlock {
     fn exists(&self) -> bool {
         match self {
-            MinoBlock::AIR => true,
-            _ => false,
+            MinoBlock::AIR => false,
+            _ => true,
         }
     }
 }
@@ -389,13 +389,17 @@ mod tests {
     fn print_board(board: &Board) {
         board
             .iter()
-            .map(|&x| x.iter().map(|y| if *y { 1 } else { 0 }).collect::<Vec<_>>())
+            .map(|&x| x.iter().map(|y| if y.exists() { 1 } else { 0 }).collect::<Vec<_>>())
             .for_each(|line| println!("{:?}", line));
     }
 
     // TODO: まともにする
     fn assert_eq_board(left: &Board, right_vec: &Vec<Vec<bool>>) {
-        let left_vec = left.iter().map(|&line| line.to_vec()).collect::<Vec<_>>();
+        let left_vec = left.iter()
+            .map(|&line| line.iter()
+                .map(|e| e.exists())
+                .collect::<Vec<_>>())
+            .collect::<Vec<_>>();
 
         assert_eq!(&left_vec, right_vec);
     }
