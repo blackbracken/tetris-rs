@@ -89,6 +89,12 @@ impl Tetrimino {
             Tetrimino::T => MinoBlock::PURPLE
         }
     }
+
+    pub fn all() -> Vec<Tetrimino> {
+        use crate::tetris::tetrimino::Tetrimino::T;
+
+        vec!(T)
+    }
 }
 
 // clockwise angles starts at 12 o'clock position
