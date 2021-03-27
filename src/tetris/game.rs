@@ -15,7 +15,7 @@ pub struct Game {
 }
 
 impl Game {
-    fn new() -> Game {
+    pub fn new() -> Game {
         let mut bag = MinoBag::new();
         let dropping = bag.pop();
 
@@ -240,7 +240,6 @@ enum RotateDirection {
     Left,
     Right,
 }
-
 
 #[derive(Copy, Clone)]
 pub struct Point { x: isize, y: isize }

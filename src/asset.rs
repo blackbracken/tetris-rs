@@ -54,11 +54,11 @@ impl Image {
             .to_rgba8(ctx)?
             .iter()
             .enumerate()
-            .map(|(idx, v)| match idx % 4 {
+            .map(|(idx, &v)| match idx % 4 {
                 0 => v.saturating_add(64),
                 1 | 2 => v.saturating_sub(64),
                 3 => 255u8,
-                _ => *v,
+                _ => v,
             })
             .collect();
 
