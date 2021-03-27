@@ -1,3 +1,5 @@
+use std::mem;
+
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::EventHandler;
@@ -49,7 +51,7 @@ fn main() -> GameResult {
 }
 
 struct MainState {
-    scene_state: SceneState,
+    scene_state: Option<SceneState>,
     asset: Box<Asset>,
 }
 
@@ -59,7 +61,7 @@ impl MainState {
 
         Ok(
             MainState {
-                scene_state: Ticket::ShowTitle.go(ctx, &mut asset)?,
+                scene_state: Some(Ticket::ShowTitle.go(ctx, &mut asset)?),
                 asset,
             }
         )
@@ -69,17 +71,22 @@ impl MainState {
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
-            let next: Next = match &self.scene_state {
-                SceneState::ForTitle { state } => scene::title::update(ctx, state, &self.asset),
+            let state = mem::replace(&mut self.scene_state, None)
+                .expect("scene_state has not been updated");
+
+            let next: Next = match state {
+                SceneState::ForTitle { state } => {
+                    scene::title::update(ctx, state, &self.asset)
+                }
                 SceneState::ForPlay40Line { state } => scene::play40line::update(ctx, state),
             };
 
             match next {
                 Next::Continue { state } => {
-                    self.scene_state = state;
+                    self.scene_state = Some(state);
                 }
                 Next::Transit { ticket } => {
-                    self.scene_state = ticket.go(ctx, &mut self.asset)?;
+                    self.scene_state = Some(ticket.go(ctx, &mut self.asset)?);
                 }
                 Next::Exit => {
                     event::quit(ctx);
@@ -91,9 +98,11 @@ impl EventHandler for MainState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        match &self.scene_state {
-            SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.asset)?; }
-            SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &self.asset)?; }
+        if let Some(state) = &self.scene_state {
+            match state {
+                SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.asset)?; }
+                SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &self.asset)?; }
+            }
         }
 
         Ok(())

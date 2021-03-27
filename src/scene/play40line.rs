@@ -3,21 +3,24 @@ use ggez::{Context, GameResult, graphics};
 use crate::asset::Asset;
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
+use crate::tetris::game::Game;
 
-trait UnitSpace {}
-
-#[derive(Clone)]
-pub struct Play40LineState {}
+pub struct Play40LineState {
+    game: Game
+}
 
 impl Play40LineState {
     pub fn new(_ctx: &mut Context) -> GameResult<Play40LineState> {
-        Ok(Play40LineState {}) // TODO: implement
+        Ok(
+            Play40LineState {
+                game: Game::new(),
+            }
+        )
     }
 }
 
-pub fn update(_ctx: &mut Context, state: &Play40LineState) -> Next {
-    let new_state = state.clone();
-    Next::do_continue(ForPlay40Line { state: new_state })
+pub fn update(_ctx: &mut Context, mut state: Play40LineState) -> Next {
+    Next::do_continue(ForPlay40Line { state })
 }
 
 pub fn draw(ctx: &mut Context, _state: &Play40LineState, asset: &Asset) -> GameResult {

@@ -76,20 +76,18 @@ impl TitleState {
     }
 }
 
-pub fn update(ctx: &mut Context, state: &TitleState, asset: &Asset) -> Next {
-    let mut new_state = state.clone();
-
-    for particle in &mut new_state.particles {
+pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {
+    for particle in &mut state.particles {
         particle.y -= particle.up_speed;
         particle.rotation += particle.rotate_speed;
     }
     if random::<u32>() % (crate::FPS / 4) == 0 {
-        new_state.particles.push(TitleParticle::new(
+        state.particles.push(TitleParticle::new(
             (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
             HEIGHT + 10.,
         ));
     }
-    new_state.particles.retain(|&particle| particle.y > -30.);
+    state.particles.retain(|&particle| particle.y > -30.);
 
     let pressed_up = [KeyCode::W, KeyCode::Up]
         .iter()
@@ -98,22 +96,22 @@ pub fn update(ctx: &mut Context, state: &TitleState, asset: &Asset) -> Next {
         asset.audio.play_se(ctx, Se::MenuClick);
 
         if let Some(prev) = state.cursor.prev() {
-            new_state.cursor = prev;
+            state.cursor = prev;
         }
     }
-    new_state.pressed_up_before = pressed_up;
+    state.pressed_up_before = pressed_up;
 
     let pressed_down = [KeyCode::S, KeyCode::Down]
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
-    if pressed_down && !new_state.pressed_down_before {
+    if pressed_down && !state.pressed_down_before {
         asset.audio.play_se(ctx, Se::MenuClick);
 
-        if let Some(next) = new_state.cursor.next() {
-            new_state.cursor = next;
+        if let Some(next) = state.cursor.next() {
+            state.cursor = next;
         }
     }
-    new_state.pressed_down_before = pressed_down;
+    state.pressed_down_before = pressed_down;
 
     if keyboard::is_key_pressed(ctx, KeyCode::Space) {
         asset.audio.play_se(ctx, Se::MenuClick);
@@ -123,7 +121,7 @@ pub fn update(ctx: &mut Context, state: &TitleState, asset: &Asset) -> Next {
             TitleItem::Exit => Next::Exit,
         }
     } else {
-        Next::do_continue(ForTitle { state: new_state })
+        Next::do_continue(ForTitle { state })
     }
 }
 
