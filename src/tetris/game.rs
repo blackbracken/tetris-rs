@@ -10,7 +10,7 @@ const FIELD_HEIGHT: usize = 22;
 pub type Field = [[MinoBlock; FIELD_WIDTH]; FIELD_HEIGHT];
 
 pub struct Game {
-    board: Board,
+    pub board: Board,
     bag: MinoBag,
 }
 
@@ -206,7 +206,7 @@ impl MinoBag {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub enum MinoBlock {
     AQUA,
     YELLOW,

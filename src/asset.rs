@@ -1,8 +1,14 @@
+#![feature(once_cell)]
+
+use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use ggez::{audio, Context, GameResult, graphics};
+use ggez::{audio, Context, GameError, GameResult, graphics};
 use ggez::audio::SoundSource;
+use ggez::graphics::{GlBackendSpec, ImageGeneric};
+
+use crate::tetris::game::MinoBlock;
 
 const BGM_VOLUME: f32 = 0.2;
 const SE_VOLUME: f32 = 0.1;
@@ -34,6 +40,7 @@ pub struct Image {
     pub cursor: graphics::Image,
     pub title_particle: graphics::Image,
     mino_block: graphics::Image,
+    mino_block_images: HashMap<MinoBlock, graphics::Image>,
 }
 
 impl Image {
@@ -43,26 +50,50 @@ impl Image {
                 cursor: graphics::Image::new(ctx, "/image/cursor.png")?,
                 title_particle: graphics::Image::new(ctx, "/image/particles/title.png")?,
                 mino_block: graphics::Image::new(ctx, "/image/mino_block.png")?,
+                mino_block_images: HashMap::new(),
             }
         )
     }
 
-    pub fn colored_block(&self, ctx: &mut Context) -> GameResult<graphics::Image> {
+    pub fn mino_block<'a>(&'a mut self, ctx: &mut Context, block: &MinoBlock) -> GameResult<&'a graphics::Image> {
+        if self.mino_block_images.get(block) == None {
+            let img = self.colorize(ctx, block)?;
+            let _ = self.mino_block_images.insert(block.clone(), img);
+        }
+
+        Ok(self.mino_block_images.get(block).unwrap())
+    }
+
+    fn colorize(&self, ctx: &mut Context, block: &MinoBlock) -> GameResult<graphics::Image> {
+        const RED: usize = 0;
+        const GREEN: usize = 1;
+        const BLUE: usize = 2;
+        const ALPHA: usize = 3;
+
         let w = self.mino_block.width();
         let h = self.mino_block.height();
-        let colored_block: Vec<u8> = self.mino_block
+
+        let rgba = self.mino_block
             .to_rgba8(ctx)?
             .iter()
             .enumerate()
-            .map(|(idx, &v)| match idx % 4 {
-                0 => v.saturating_add(64),
-                1 | 2 => v.saturating_sub(64),
-                3 => 255u8,
-                _ => v,
+            .map(|(idx, &v)| match block {
+                MinoBlock::PURPLE => match idx % 4 {
+                    RED | BLUE => v.saturating_add(64),
+                    GREEN => v.saturating_sub(64),
+                    ALPHA => 255u8,
+                    _ => v,
+                }
+                MinoBlock::AIR => match idx % 4 {
+                    RED | GREEN | BLUE => v.saturating_add(16),
+                    ALPHA => 255u8,
+                    _ => v
+                }
+                _ => unimplemented!(),
             })
-            .collect();
+            .collect::<Vec<_>>();
 
-        graphics::Image::from_rgba8(ctx, w, h, &colored_block)
+        graphics::Image::from_rgba8(ctx, w, h, rgba.as_slice())
     }
 }
 

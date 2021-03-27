@@ -101,7 +101,7 @@ impl EventHandler for MainState {
         if let Some(state) = &self.scene_state {
             match state {
                 SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.asset)?; }
-                SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &self.asset)?; }
+                SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &mut self.asset)?; }
             }
         }
 
