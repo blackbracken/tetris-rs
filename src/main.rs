@@ -81,7 +81,9 @@ impl EventHandler for MainState {
                 SceneState::ForTitle { state } => {
                     scene::title::update(ctx, state, &self.asset)
                 }
-                SceneState::ForPlay40Line { state } => scene::play40line::update(ctx, state),
+                SceneState::ForPlay40Line { state } => {
+                    scene::play40line::update(ctx, state)
+                }
             };
 
             match next {

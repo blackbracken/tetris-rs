@@ -23,9 +23,7 @@ pub struct TitleState {
 }
 
 impl TitleState {
-    pub fn new(ctx: &mut Context, asset: &mut Asset) -> GameResult<TitleState> {
-        asset.audio.play_bgm(ctx, Bgm::Title);
-
+    pub fn new(_ctx: &mut Context, asset: &mut Asset) -> GameResult<TitleState> {
         let ascii: Vec<&str> = r" __           __
 /\ \__       /\ \__         __
 \ \ ,_\    __\ \ ,_\  _ __ /\_\    ____           _ __   ____
@@ -74,6 +72,10 @@ impl TitleState {
             }
         )
     }
+}
+
+pub fn init(ctx: &mut Context, asset: &mut Asset) {
+    asset.audio.play_bgm(ctx, Bgm::Title);
 }
 
 pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {

@@ -19,6 +19,10 @@ impl Play40LineState {
     }
 }
 
+pub fn init(_ctx: &mut Context, asset: &mut Asset) {
+    asset.audio.stop_bgm();
+}
+
 pub fn update(_ctx: &mut Context, mut state: Play40LineState) -> Next {
     Next::do_continue(ForPlay40Line { state })
 }
