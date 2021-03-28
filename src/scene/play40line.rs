@@ -174,7 +174,7 @@ fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineSt
                 .and_then(|array| array.get(x))
                 .unwrap();
 
-            if block != &MinoBlock::AIR {
+            if block != &MinoBlock::AIR && y <= FIELD_VISIBLE_UNIT_HEIGHT {
                 let img = asset.image.mino_block(ctx, block)?.unwrap();
                 let x = x as f32;
                 let y = y as f32;
@@ -185,7 +185,7 @@ fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineSt
                     graphics::DrawParam::default()
                         .dest([
                             (FIELD_ORIGIN_X as f32) + (x * BLOCK_LENGTH as f32),
-                            (FIELD_ORIGIN_Y as f32) + (y * BLOCK_LENGTH as f32)
+                            (FIELD_ORIGIN_Y as f32) + (y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as f32) * BLOCK_LENGTH as f32,
                         ]),
                 )?;
             }
