@@ -18,15 +18,15 @@ mod asset;
 mod tetris;
 
 pub const FPS: u32 = 60;
-pub const WIDTH: f32 = 640.;
-pub const HEIGHT: f32 = 800.;
+pub const WINDOW_WIDTH: f32 = 960.;
+pub const WINDOW_HEIGHT: f32 = 800.;
 
 fn main() -> GameResult {
     let cb = ContextBuilder::new("tetris-rs", "blackbracken")
         .window_mode(
             WindowMode {
-                width: WIDTH,
-                height: HEIGHT,
+                width: WINDOW_WIDTH,
+                height: WINDOW_HEIGHT,
                 maximized: false,
                 fullscreen_type: FullscreenType::Windowed,
                 borderless: false,

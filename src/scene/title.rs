@@ -7,7 +7,7 @@ use ggez::input::keyboard;
 use ggez::input::keyboard::KeyCode;
 use rand::random;
 
-use crate::{HEIGHT, WIDTH};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::{Next, Ticket};
 use crate::router::SceneState::ForTitle;
@@ -56,8 +56,8 @@ impl TitleState {
 
         let particles = (0..32)
             .map(|_| TitleParticle::new(
-                (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
-                HEIGHT * (random::<f32>() % 1.),
+                (WINDOW_WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
+                WINDOW_HEIGHT * (random::<f32>() % 1.),
             ))
             .collect::<Vec<_>>();
 
@@ -85,8 +85,8 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {
     }
     if random::<u32>() % (crate::FPS / 4) == 0 {
         state.particles.push(TitleParticle::new(
-            (WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
-            HEIGHT + 10.,
+            (WINDOW_WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
+            WINDOW_HEIGHT + 10.,
         ));
     }
     state.particles.retain(|&particle| particle.y > -30.);
@@ -145,7 +145,7 @@ pub fn draw(ctx: &mut Context, state: &TitleState, asset: &Asset) -> GameResult 
 
     let ascii_width = state.texts_ascii.get(4).unwrap().width(ctx);
     for (idx, text) in state.texts_ascii.iter().enumerate() {
-        let x = WIDTH / 2. - ascii_width / 2.;
+        let x = WINDOW_WIDTH / 2. - ascii_width / 2.;
         let y = 50. + (15 * idx) as f32;
 
         graphics::draw(ctx, text, graphics::DrawParam::default().dest([x, y]))?;
@@ -153,8 +153,8 @@ pub fn draw(ctx: &mut Context, state: &TitleState, asset: &Asset) -> GameResult 
 
     for (idx, item) in TitleItem::all().iter().enumerate() {
         if let Some(text) = state.items_text_hash.get(item) {
-            let x = WIDTH / 2. - text.width(ctx) / 2.;
-            let y = HEIGHT / 3. + (50 * idx) as f32;
+            let x = WINDOW_WIDTH / 2. - text.width(ctx) / 2.;
+            let y = WINDOW_HEIGHT / 3. + (50 * idx) as f32;
 
             graphics::draw(ctx, text, graphics::DrawParam::default().dest([x, y]))?;
 

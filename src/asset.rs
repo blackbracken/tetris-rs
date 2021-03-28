@@ -158,7 +158,10 @@ impl Audio {
                         src.set_fade_in(Duration::from_secs(2));
                         src
                     }
-                    _ => src
+                    Bgm::InGame => {
+                        src.set_pitch(0.9);
+                        src
+                    }
                 }
             });
 

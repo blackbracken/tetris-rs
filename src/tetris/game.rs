@@ -4,10 +4,10 @@ use rand::prelude::SliceRandom;
 
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
-const FIELD_WIDTH: usize = 10;
-const FIELD_HEIGHT: usize = 22;
+pub const GAME_FIELD_WIDTH: usize = 10;
+pub const GAME_FIELD_HEIGHT: usize = 22;
 
-pub type Field = [[MinoBlock; FIELD_WIDTH]; FIELD_HEIGHT];
+pub type Field = [[MinoBlock; GAME_FIELD_WIDTH]; GAME_FIELD_HEIGHT];
 
 pub struct Game {
     pub board: Board,
@@ -37,9 +37,9 @@ pub struct Board {
 impl Board {
     fn new(dropping: Tetrimino) -> Board {
         Board {
-            confirmed_field: [[MinoBlock::AIR; FIELD_WIDTH]; FIELD_HEIGHT],
+            confirmed_field: [[MinoBlock::AIR; GAME_FIELD_WIDTH]; GAME_FIELD_HEIGHT],
             dropping,
-            dropping_point: (4, (FIELD_HEIGHT - 20) as isize).into(),
+            dropping_point: (4, (GAME_FIELD_HEIGHT - 20) as isize).into(),
             dropping_rotation: MinoRotation::Clockwise,
         }
     }
@@ -126,8 +126,8 @@ impl Board {
     fn establishes_field(&self) -> bool {
         self.calc_dropping_mino_points().iter()
             .all(|&point| {
-                if !(0..(FIELD_HEIGHT as isize)).contains(&point.y)
-                    || !(0..(FIELD_WIDTH as isize)).contains(&point.x) {
+                if !(0..(GAME_FIELD_HEIGHT as isize)).contains(&point.y)
+                    || !(0..(GAME_FIELD_WIDTH as isize)).contains(&point.x) {
                     return false;
                 }
 
@@ -254,7 +254,7 @@ impl Into<Point> for (isize, isize) {
 mod tests {
     use super::*;
 
-    type ExistenceField = [[bool; FIELD_WIDTH]; FIELD_HEIGHT];
+    type ExistenceField = [[bool; GAME_FIELD_WIDTH]; GAME_FIELD_HEIGHT];
 
     trait LikeExistenceField {
         fn to_existences(&self) -> ExistenceField;
@@ -277,7 +277,7 @@ mod tests {
         }
     }
 
-    impl LikeExistenceField for [[i32; FIELD_WIDTH]; FIELD_HEIGHT] {
+    impl LikeExistenceField for [[i32; GAME_FIELD_WIDTH]; GAME_FIELD_HEIGHT] {
         fn to_existences(&self) -> ExistenceField {
             let mut f = ExistenceField::default();
             self.iter().enumerate().for_each(|(y, line)| {

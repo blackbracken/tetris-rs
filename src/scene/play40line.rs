@@ -6,13 +6,16 @@ use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{DrawMode, FilterMode, PxScale, Rect};
 use ggez::timer;
 
-use crate::{HEIGHT, WIDTH};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
-use crate::tetris::game::{Game, MinoBlock};
+use crate::tetris::game::{Game, GAME_FIELD_HEIGHT, GAME_FIELD_WIDTH, MinoBlock};
 
 const BLOCK_LENGTH: f32 = 32.;
+
+const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
+const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (GAME_FIELD_HEIGHT as f32 / 2.);
 
 pub struct Play40LineState {
     game: Game,
@@ -69,21 +72,27 @@ pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
     graphics::clear(ctx, asset.color.background);
 
-    for x in (0..=10).map(|x| (x as f32) * BLOCK_LENGTH) {
+    for x in (0..=GAME_FIELD_WIDTH).map(|x| FIELD_ORIGIN_X + (x as f32) * BLOCK_LENGTH) {
         let line = graphics::Mesh::new_line(
             ctx,
-            &[[x, 0.], [x, BLOCK_LENGTH * 22.]],
-            2.,
+            &[
+                [x, FIELD_ORIGIN_Y],
+                [x, FIELD_ORIGIN_Y + BLOCK_LENGTH * (GAME_FIELD_HEIGHT as f32)]
+            ],
+            1.,
             graphics::Color::from_rgb(24, 24, 24),
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default());
     }
 
-    for y in (0..=22).map(|y| (y as f32) * BLOCK_LENGTH) {
+    for y in (0..=GAME_FIELD_HEIGHT).map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH) {
         let line = graphics::Mesh::new_line(
             ctx,
-            &[[0., y], [BLOCK_LENGTH * 10., y]],
-            2.,
+            &[
+                [FIELD_ORIGIN_X, y],
+                [FIELD_ORIGIN_X + BLOCK_LENGTH * (GAME_FIELD_WIDTH as f32), y]
+            ],
+            1.,
             graphics::Color::from_rgb(24, 24, 24),
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default());
@@ -91,25 +100,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
     match state.countdown {
         Some(0) | None => {
-            let field = state.game.board.field();
-            for y in 0..20 {
-                for x in 0..10 {
-                    let block = field
-                        .get(y)
-                        .and_then(|array| array.get(x))
-                        .unwrap();
-
-                    if block != &MinoBlock::AIR {
-                        let img = asset.image.mino_block(ctx, block)?;
-                        graphics::draw(
-                            ctx,
-                            img,
-                            graphics::DrawParam::default()
-                                .dest([(x * 32) as f32, (y * 32) as f32]),
-                        );
-                    }
-                }
-            }
+            draw_dropping_mino(ctx, asset, state)?;
         }
         Some(c) => {
             draw_count_down(ctx, asset, c);
@@ -125,7 +116,7 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
     let rect = graphics::Mesh::new_rectangle(
         ctx,
         DrawMode::fill(),
-        Rect::new(0., 0., WIDTH, HEIGHT),
+        Rect::new(0., 0., WINDOW_WIDTH, WINDOW_HEIGHT),
         graphics::Color::new(0., 0., 0., 0.9),
     )?;
 
@@ -142,10 +133,40 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
         &text,
         graphics::DrawParam::default()
             .dest([
-                WIDTH / 2. - text.width(ctx) / 2.,
-                HEIGHT / 2. - text.height(ctx) / 2.,
+                WINDOW_WIDTH / 2. - text.width(ctx) / 2.,
+                WINDOW_HEIGHT / 2. - text.height(ctx) / 2.,
             ]),
     );
+
+    Ok(())
+}
+
+fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
+    let field = state.game.board.field();
+    for y in 0..GAME_FIELD_HEIGHT {
+        for x in 0..GAME_FIELD_WIDTH {
+            let block = field
+                .get(y)
+                .and_then(|array| array.get(x))
+                .unwrap();
+
+            if block != &MinoBlock::AIR {
+                let img = asset.image.mino_block(ctx, block)?;
+                let x = x as f32;
+                let y = y as f32;
+
+                graphics::draw(
+                    ctx,
+                    img,
+                    graphics::DrawParam::default()
+                        .dest([
+                            (FIELD_ORIGIN_X as f32) + (x * BLOCK_LENGTH as f32),
+                            (FIELD_ORIGIN_Y as f32) + (y * BLOCK_LENGTH as f32)
+                        ]),
+                )?;
+            }
+        }
+    }
 
     Ok(())
 }
