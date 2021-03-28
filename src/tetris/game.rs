@@ -6,6 +6,7 @@ use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 pub const FIELD_UNIT_WIDTH: usize = 10;
 pub const FIELD_UNIT_HEIGHT: usize = 22;
+pub const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 pub type Field = [[MinoBlock; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
 
@@ -39,7 +40,7 @@ impl Board {
         Board {
             confirmed_field: [[MinoBlock::AIR; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT],
             dropping,
-            dropping_point: (4, (FIELD_UNIT_HEIGHT - 20) as isize).into(),
+            dropping_point: (4, (FIELD_VISIBLE_UNIT_HEIGHT - 18) as isize).into(),
             dropping_rotation: MinoRotation::Clockwise,
         }
     }

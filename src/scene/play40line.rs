@@ -9,10 +9,9 @@ use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
-use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, Game, MinoBlock};
+use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, MinoBlock};
 
 const BLOCK_LENGTH: f32 = 32.;
-const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
 const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
