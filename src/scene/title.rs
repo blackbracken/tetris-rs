@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use ggez::{Context, GameResult, graphics};
-use ggez::audio::SoundSource;
 use ggez::graphics::{Color, PxScale};
 use ggez::input::keyboard;
 use ggez::input::keyboard::KeyCode;
@@ -74,8 +73,10 @@ impl TitleState {
     }
 }
 
-pub fn init(ctx: &mut Context, asset: &mut Asset) {
-    asset.audio.play_bgm(ctx, Bgm::Title);
+pub fn init(ctx: &mut Context, asset: &mut Asset) -> GameResult {
+    asset.audio.play_bgm(ctx, Bgm::Title)?;
+
+    Ok(())
 }
 
 pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {

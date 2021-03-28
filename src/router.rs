@@ -1,7 +1,6 @@
 use ggez::{Context, GameResult};
 
 use crate::asset::Asset;
-use crate::asset::Bgm::Title;
 use crate::router::Next::{Continue, Transit};
 use crate::router::SceneState::{ForPlay40Line, ForTitle};
 use crate::scene;
@@ -22,7 +21,7 @@ impl Ticket {
     pub fn go(&self, ctx: &mut Context, asset: &mut Asset) -> GameResult<SceneState> {
         match &self {
             Ticket::ShowTitle => {
-                scene::title::init(ctx, asset);
+                scene::title::init(ctx, asset)?;
                 TitleState::new(ctx, asset).map(|state| ForTitle { state })
             }
             Ticket::Play40Line => {

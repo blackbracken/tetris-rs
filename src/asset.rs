@@ -1,12 +1,8 @@
-#![feature(once_cell)]
-
-use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use ggez::{audio, Context, GameError, GameResult, graphics};
+use ggez::{audio, Context, GameResult, graphics};
 use ggez::audio::SoundSource;
-use ggez::graphics::{GlBackendSpec, ImageGeneric};
 
 use crate::tetris::game::MinoBlock;
 
@@ -101,6 +97,7 @@ pub struct Audio {
     bgm_data_map: HashMap<Bgm, audio::SoundData>,
     se_data_map: HashMap<Se, audio::SoundData>,
 
+    #[allow(dead_code)]
     playing_src: Option<audio::Source>,
 }
 
@@ -141,7 +138,7 @@ impl Audio {
         )
     }
 
-    pub fn play_bgm(&mut self, ctx: &mut Context, bgm: Bgm) {
+    pub fn play_bgm(&mut self, ctx: &mut Context, bgm: Bgm) -> GameResult {
         self.stop_bgm();
 
         let src = self.bgm_data_map.get(&bgm)
@@ -165,17 +162,19 @@ impl Audio {
                 }
             });
 
-        if let Some(mut src) = src {
-            src.play_later();
+        if let Some(src) = src {
+            src.play_later()?;
             self.playing_src = Some(src);
         }
+
+        Ok(())
     }
 
     pub fn stop_bgm(&mut self) {
         self.playing_src = None
     }
 
-    pub fn play_se(&self, ctx: &mut Context, se: Se) {
+    pub fn play_se(&self, ctx: &mut Context, se: Se) -> GameResult {
         let src = self.se_data_map.get(&se)
             .and_then(|data| audio::Source::from_data(ctx, data.clone()).ok())
             .map(|mut src| {
@@ -184,8 +183,10 @@ impl Audio {
             });
 
         if let Some(mut src) = src {
-            src.play_detached(ctx);
+            src.play_detached(ctx)?;
         }
+
+        Ok(())
     }
 }
 

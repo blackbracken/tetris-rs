@@ -1,21 +1,21 @@
-use std::cmp::{max, min};
-use std::ops::Sub;
+use std::cmp::max;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
-use ggez::graphics::{DrawMode, FilterMode, PxScale, Rect};
+use ggez::graphics::{DrawMode, PxScale, Rect};
 use ggez::timer;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
-use crate::tetris::game::{Game, GAME_FIELD_HEIGHT, GAME_FIELD_WIDTH, MinoBlock};
+use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, Game, MinoBlock};
 
 const BLOCK_LENGTH: f32 = 32.;
+const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
-const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (GAME_FIELD_HEIGHT as f32 / 2.);
+const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
 
 pub struct Play40LineState {
     game: Game,
@@ -40,7 +40,7 @@ pub fn init(_ctx: &mut Context, asset: &mut Asset) {
     asset.audio.stop_bgm();
 }
 
-pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) -> Next {
+pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) -> GameResult<Next> {
     const COUNTDOWN_SEC: u64 = 3;
 
     let countdown = match state.countdown {
@@ -56,58 +56,66 @@ pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) 
     if state.countdown != countdown {
         match countdown {
             Some(0) => {
-                asset.audio.play_bgm(ctx, Bgm::InGame);
-                asset.audio.play_se(ctx, Se::GameStart);
+                asset.audio.play_bgm(ctx, Bgm::InGame)?;
+                asset.audio.play_se(ctx, Se::GameStart)?;
             }
-            Some(_) => asset.audio.play_se(ctx, Se::CountdownTick),
+            Some(_) => {
+                asset.audio.play_se(ctx, Se::CountdownTick)?;
+            }
             None => (),
         }
 
         state.countdown = countdown;
     }
 
-    Next::do_continue(ForPlay40Line { state })
+    Ok(Next::do_continue(ForPlay40Line { state }))
 }
 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
     graphics::clear(ctx, asset.color.background);
 
-    for x in (0..=GAME_FIELD_WIDTH).map(|x| FIELD_ORIGIN_X + (x as f32) * BLOCK_LENGTH) {
-        let line = graphics::Mesh::new_line(
-            ctx,
-            &[
-                [x, FIELD_ORIGIN_Y],
-                [x, FIELD_ORIGIN_Y + BLOCK_LENGTH * (GAME_FIELD_HEIGHT as f32)]
-            ],
-            1.,
-            graphics::Color::from_rgb(24, 24, 24),
-        )?;
-        graphics::draw(ctx, &line, graphics::DrawParam::default());
-    }
-
-    for y in (0..=GAME_FIELD_HEIGHT).map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH) {
-        let line = graphics::Mesh::new_line(
-            ctx,
-            &[
-                [FIELD_ORIGIN_X, y],
-                [FIELD_ORIGIN_X + BLOCK_LENGTH * (GAME_FIELD_WIDTH as f32), y]
-            ],
-            1.,
-            graphics::Color::from_rgb(24, 24, 24),
-        )?;
-        graphics::draw(ctx, &line, graphics::DrawParam::default());
-    }
+    draw_field_grid(ctx)?;
 
     match state.countdown {
         Some(0) | None => {
             draw_dropping_mino(ctx, asset, state)?;
         }
         Some(c) => {
-            draw_count_down(ctx, asset, c);
+            draw_count_down(ctx, asset, c)?;
         }
     }
 
     graphics::present(ctx)?;
+
+    Ok(())
+}
+
+fn draw_field_grid(ctx: &mut Context) -> GameResult {
+    for x in (0..=FIELD_UNIT_WIDTH).map(|x| FIELD_ORIGIN_X + (x as f32) * BLOCK_LENGTH) {
+        let line = graphics::Mesh::new_line(
+            ctx,
+            &[
+                [x, FIELD_ORIGIN_Y],
+                [x, FIELD_ORIGIN_Y + BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32)]
+            ],
+            1.,
+            graphics::Color::from_rgb(24, 24, 24),
+        )?;
+        graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+    }
+
+    for y in (0..=FIELD_VISIBLE_UNIT_HEIGHT).map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH) {
+        let line = graphics::Mesh::new_line(
+            ctx,
+            &[
+                [FIELD_ORIGIN_X, y],
+                [FIELD_ORIGIN_X + BLOCK_LENGTH * (FIELD_UNIT_WIDTH as f32), y]
+            ],
+            1.,
+            graphics::Color::from_rgb(24, 24, 24),
+        )?;
+        graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+    }
 
     Ok(())
 }
@@ -136,15 +144,15 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
                 WINDOW_WIDTH / 2. - text.width(ctx) / 2.,
                 WINDOW_HEIGHT / 2. - text.height(ctx) / 2.,
             ]),
-    );
+    )?;
 
     Ok(())
 }
 
 fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
     let field = state.game.board.field();
-    for y in 0..GAME_FIELD_HEIGHT {
-        for x in 0..GAME_FIELD_WIDTH {
+    for y in 0..FIELD_UNIT_HEIGHT {
+        for x in 0..FIELD_UNIT_WIDTH {
             let block = field
                 .get(y)
                 .and_then(|array| array.get(x))
