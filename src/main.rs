@@ -79,7 +79,7 @@ impl EventHandler for MainState {
 
             let next: Next = match state {
                 SceneState::ForTitle { state } => {
-                    scene::title::update(ctx, state, &self.asset)
+                    scene::title::update(ctx, state, &self.asset)?
                 }
                 SceneState::ForPlay40Line { state } => {
                     scene::play40line::update(ctx, state, &mut self.asset)?

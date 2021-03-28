@@ -79,7 +79,7 @@ pub fn init(ctx: &mut Context, asset: &mut Asset) -> GameResult {
     Ok(())
 }
 
-pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {
+pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> GameResult<Next> {
     for particle in &mut state.particles {
         particle.y -= particle.up_speed;
         particle.rotation += particle.rotate_speed;
@@ -96,7 +96,7 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_up && !state.pressed_up_before {
-        asset.audio.play_se(ctx, Se::MenuClick);
+        asset.audio.play_se(ctx, Se::MenuClick)?;
 
         if let Some(prev) = state.cursor.prev() {
             state.cursor = prev;
@@ -108,7 +108,7 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
     if pressed_down && !state.pressed_down_before {
-        asset.audio.play_se(ctx, Se::MenuClick);
+        asset.audio.play_se(ctx, Se::MenuClick)?;
 
         if let Some(next) = state.cursor.next() {
             state.cursor = next;
@@ -117,14 +117,16 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> Next {
     state.pressed_down_before = pressed_down;
 
     if keyboard::is_key_pressed(ctx, KeyCode::Space) {
-        asset.audio.play_se(ctx, Se::MenuClick);
+        asset.audio.play_se(ctx, Se::MenuClick)?;
 
-        match state.cursor {
-            TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
-            TitleItem::Exit => Next::Exit,
-        }
+        Ok(
+            match state.cursor {
+                TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
+                TitleItem::Exit => Next::Exit,
+            }
+        )
     } else {
-        Next::do_continue(ForTitle { state })
+        Ok(Next::do_continue(ForTitle { state }))
     }
 }
 
