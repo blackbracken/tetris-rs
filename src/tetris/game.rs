@@ -31,7 +31,7 @@ impl Game {
         }
     }
 
-    pub fn spawn_mino(&mut self) -> SpawnResult {
+    pub fn spawn_mino(&mut self) -> TetrisResult {
         let mino = self.bag.pop();
 
         self.board.dropping = mino;
@@ -42,11 +42,11 @@ impl Game {
             self.board.dropping_point.y -= 1;
 
             if !self.board.establishes_field() {
-                return SpawnResult::Fail;
+                return TetrisResult::Fail;
             }
         }
 
-        SpawnResult::Success
+        TetrisResult::Success
     }
 }
 
@@ -147,6 +147,47 @@ impl Board {
             .is_some()
     }
 
+    pub fn drop_softly(&mut self) -> DropResult {
+        let mut clone = self.clone();
+
+        clone.dropping_point.y += 1;
+
+        if clone.establishes_field() {
+            self.dropping_point.y += 1;
+
+            clone.dropping_point.y += 1;
+            if clone.establishes_field() {
+                DropResult::InAir
+            } else {
+                DropResult::OnGround
+            }
+        } else {
+            clone.dropping_point.y -= 1;
+
+            if clone.establishes_field() {
+                DropResult::OnGround
+            } else {
+                DropResult::Failure
+            }
+        }
+    }
+
+    pub fn drop_hardly(&mut self) -> Option<usize> {
+        let mut n = 0;
+        loop {
+            match self.drop_softly() {
+                DropResult::InAir => { n += 1; }
+                DropResult::OnGround => {
+                    n += 1;
+                    break;
+                }
+                DropResult::Failure => { return None; }
+            }
+        }
+
+        Some(n)
+    }
+
     fn establishes_field(&self) -> bool {
         self.calc_dropping_mino_points().iter()
             .all(|&point| {
@@ -184,9 +225,16 @@ impl Board {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum SpawnResult {
+pub enum TetrisResult {
     Success,
     Fail,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum DropResult {
+    InAir,
+    OnGround,
+    Failure,
 }
 
 struct MinoBag {
@@ -572,6 +620,103 @@ mod tests {
     }
 
     #[test]
+    fn drop_t_softly() {
+        let mut board = Board::new(Tetrimino::T);
+
+        assert_eq!(board.drop_softly(), DropResult::InAir);
+
+        let expected = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+
+        assert!(board.field().similar(expected));
+    }
+
+    #[test]
+    fn drop_t_hardly() {
+        let mut board = Board::new(Tetrimino::T);
+
+        assert_eq!(board.drop_hardly(), Some(18));
+
+        let expected = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        ];
+
+        assert!(board.field().similar(expected));
+    }
+
+    #[test]
+    fn drop_vertical_i_hardly() {
+        let mut board = Board::new(Tetrimino::I);
+
+        assert!(board.try_spin_right());
+        assert_eq!(board.drop_hardly(), Some(16));
+
+        let expected = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        ];
+
+        assert!(board.field().similar(expected));
+    }
+
+    #[test]
     fn gen_all_minos() {
         let mut minos = MinoBag::gen_shuffled_all_minos();
 
@@ -603,7 +748,7 @@ mod tests {
     fn spawn_mino_j() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::J).into();
-        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+        assert_eq!(game.spawn_mino(), TetrisResult::Success);
 
         let expected = [
             [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -635,7 +780,7 @@ mod tests {
     fn spawn_mino_i() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::I).into();
-        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+        assert_eq!(game.spawn_mino(), TetrisResult::Success);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -667,7 +812,7 @@ mod tests {
     fn spawn_mino_o() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::O).into();
-        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+        assert_eq!(game.spawn_mino(), TetrisResult::Success);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
