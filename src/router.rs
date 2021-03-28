@@ -1,12 +1,12 @@
 use ggez::{Context, GameResult};
 
 use crate::asset::Asset;
+use crate::asset::Bgm::Title;
 use crate::router::Next::{Continue, Transit};
 use crate::router::SceneState::{ForPlay40Line, ForTitle};
 use crate::scene;
 use crate::scene::play40line::Play40LineState;
 use crate::scene::title::TitleState;
-use crate::asset::Bgm::Title;
 
 pub enum SceneState {
     ForTitle { state: TitleState },

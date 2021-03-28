@@ -1,3 +1,5 @@
+#![feature(duration_saturating_ops)]
+
 use std::mem;
 use std::time::Duration;
 
@@ -82,7 +84,7 @@ impl EventHandler for MainState {
                     scene::title::update(ctx, state, &self.asset)
                 }
                 SceneState::ForPlay40Line { state } => {
-                    scene::play40line::update(ctx, state)
+                    scene::play40line::update(ctx, state, &self.asset)
                 }
             };
 

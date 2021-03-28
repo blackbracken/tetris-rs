@@ -11,7 +11,7 @@ use ggez::graphics::{GlBackendSpec, ImageGeneric};
 use crate::tetris::game::MinoBlock;
 
 const BGM_VOLUME: f32 = 0.2;
-const SE_VOLUME: f32 = 0.1;
+const SE_VOLUME: f32 = 0.4;
 
 pub struct Asset {
     pub image: Image,
@@ -106,12 +106,28 @@ pub struct Audio {
 
 impl Audio {
     fn new(ctx: &mut Context) -> GameResult<Audio> {
+        // for exhaustive checking on compile
+        fn bgm_path(bgm: Bgm) -> &'static str {
+            match bgm {
+                Bgm::Title => "/sound/bgm_maoudamashii_cyber18.mp3",
+            }
+        }
         let bgm_data_map = maplit::hashmap! {
-            Bgm::Title => audio::SoundData::new(ctx, "/sound/bgm_maoudamashii_cyber18.mp3")?,
+            Bgm::Title => audio::SoundData::new(ctx, bgm_path(Bgm::Title))?,
         };
 
+        // for exhaustive checking on compile
+        fn se_path(se: Se) -> &'static str {
+            match se {
+                Se::MenuClick => "/sound/se_maoudamashii_system26.mp3",
+                Se::CountdownTick => "/sound/se/se_maoudamashii_instruments_drum1_hat.mp3",
+                Se::GameStart => "/sound/se/se_maoudamashii_instruments_drum1_tom3.mp3",
+            }
+        }
         let se_data_map = maplit::hashmap! {
-            Se::MenuClick => audio::SoundData::new(ctx, "/sound/se_maoudamashii_system26.mp3")?,
+            Se::MenuClick => audio::SoundData::new(ctx, se_path(Se::MenuClick))?,
+            Se::CountdownTick => audio::SoundData::new(ctx, se_path(Se::CountdownTick))?,
+            Se::GameStart => audio::SoundData::new(ctx, se_path(Se::GameStart))?,
         };
 
         Ok(
@@ -139,7 +155,6 @@ impl Audio {
                         src.set_fade_in(Duration::from_secs(2));
                         src
                     }
-                    _ => src
                 }
             });
 
@@ -161,6 +176,8 @@ impl Audio {
                 src
             });
 
+        println!("se is {:?}", src);
+
         if let Some(mut src) = src {
             src.play_detached(ctx);
         }
@@ -170,16 +187,18 @@ impl Audio {
 #[derive(Eq, PartialEq, Hash)]
 pub enum Bgm {
     Title,
-    None,
 }
 
 #[derive(Eq, PartialEq, Hash)]
 pub enum Se {
     MenuClick,
+    CountdownTick,
+    GameStart,
 }
 
 pub struct Font {
     pub default: graphics::Font,
+    pub vt323: graphics::Font,
 }
 
 impl Font {
@@ -187,6 +206,7 @@ impl Font {
         Ok(
             Font {
                 default: graphics::Font::new(ctx, "/font/Play-Regular.ttf")?,
+                vt323: graphics::Font::new(ctx, "/font/VT323-Regular.ttf")?,
             }
         )
     }
