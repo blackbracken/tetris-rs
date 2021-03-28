@@ -84,7 +84,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
     match state.countdown {
         Some(0) | None => {
-            draw_next(ctx, asset, state.game.bag.peek(1).get(0).unwrap())?;
+            draw_next(ctx, asset, state.game.bag.peek(5).as_slice())?;
             draw_minos_on_field(ctx, asset, state)?;
         }
         Some(c) => {
@@ -202,7 +202,7 @@ fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineS
     Ok(())
 }
 
-fn draw_next(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino) -> GameResult {
+fn draw_next(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new("NEXT")
             .font(asset.font.vt323)
@@ -216,12 +216,20 @@ fn draw_next(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino) -> GameResu
             .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y]),
     )?;
 
-    draw_mini_mino(
-        ctx,
-        asset,
-        mino,
-        (NEXT_ORIGIN_X, NEXT_ORIGIN_Y + 2. * FONT_SIZE).into(),
-    )?;
+    for (idx, mino) in minos.iter().enumerate() {
+        let x = NEXT_ORIGIN_X + match mino {
+            Tetrimino::O => HALF_BLOCK_LENGTH,
+            _ => 0.,
+        };
+        let y = NEXT_ORIGIN_Y + (2. * FONT_SIZE) + (idx as f32) * 5. * HALF_BLOCK_LENGTH;
+
+        draw_mini_mino(
+            ctx,
+            asset,
+            mino,
+            (x, y).into(),
+        )?;
+    }
 
     Ok(())
 }

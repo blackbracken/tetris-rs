@@ -92,8 +92,8 @@ impl Image {
                     _ => unreachable!(),
                 },
                 MinoBlock::PURPLE => match idx % 4 {
-                    RED | GREEN => v.saturating_add(80),
-                    BLUE => v.saturating_sub(64),
+                    RED | BLUE => v.saturating_add(80),
+                    GREEN => v.saturating_sub(64),
                     ALPHA => 255u8,
                     _ => unreachable!(),
                 },
@@ -104,9 +104,9 @@ impl Image {
                     _ => unreachable!(),
                 },
                 MinoBlock::ORANGE => match idx % 4 {
-                    RED => v.saturating_add(80),
-                    BLUE => v.saturating_add(40),
-                    GREEN => v.saturating_sub(64),
+                    RED => v.saturating_add(172),
+                    GREEN => v.saturating_add(48),
+                    BLUE => v.saturating_sub(48),
                     ALPHA => 255u8,
                     _ => unreachable!(),
                 },
