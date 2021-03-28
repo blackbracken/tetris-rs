@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use MinoRotation::*;
+use Tetrimino::*;
+
 use crate::tetris::game::{MinoBlock, Point};
 
 type MinoShape = Vec<Vec<bool>>;
@@ -7,93 +10,273 @@ type MinoShape = Vec<Vec<bool>>;
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Tetrimino {
     T,
+    S,
+    Z,
+    L,
+    J,
+    O,
+    I,
 }
 
 impl Tetrimino {
     pub fn center(&self) -> Point {
         match self {
-            Tetrimino::T => (1, 1).into()
+            T | S | Z | L | J | I => (1, 1).into(),
+            O => (0, 0).into(),
         }
     }
 
     pub fn edge_length(&self) -> usize {
         match self {
-            Tetrimino::T => 3,
+            T | S | Z | L | J => 3,
+            O => 2,
+            I => 4,
         }
     }
 
     pub fn shapes(&self) -> HashMap<MinoRotation, MinoShape> {
         match self {
-            Tetrimino::T => maplit::hashmap! {
-                MinoRotation::Clockwise => rect_vec!(
+            T => maplit::hashmap! {
+                Clockwise => rect_vec!(
                         [0, 1, 0],
                         [1, 1, 1],
                         [0, 0, 0],
                 ),
-                MinoRotation::Clockwise90 => rect_vec!(
+                Clockwise90 => rect_vec!(
                         [0, 1, 0],
                         [0, 1, 1],
                         [0, 1, 0],
                 ),
-                MinoRotation::Clockwise180 => rect_vec!(
+                Clockwise180 => rect_vec!(
                         [0, 0, 0],
                         [1, 1, 1],
                         [0, 1, 0],
                 ),
-                MinoRotation::Clockwise270 => rect_vec!(
+                Clockwise270 => rect_vec!(
                         [0, 1, 0],
                         [1, 1, 0],
                         [0, 1, 0],
                 ),
-            }
+            },
+            S => maplit::hashmap! {
+                Clockwise => rect_vec!(
+                        [0, 1, 1],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                ),
+                Clockwise90 => rect_vec!(
+                        [0, 1, 0],
+                        [0, 1, 1],
+                        [0, 0, 1],
+                ),
+                Clockwise180 => rect_vec!(
+                        [0, 0, 0],
+                        [0, 1, 1],
+                        [1, 1, 0],
+                ),
+                Clockwise270 => rect_vec!(
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 1, 0],
+                ),
+            },
+            Z => maplit::hashmap! {
+                Clockwise => rect_vec!(
+                        [1, 1, 0],
+                        [0, 1, 1],
+                        [0, 0, 0],
+                ),
+                Clockwise90 => rect_vec!(
+                        [0, 0, 1],
+                        [0, 1, 1],
+                        [0, 1, 0],
+                ),
+                Clockwise180 => rect_vec!(
+                        [0, 0, 0],
+                        [1, 1, 0],
+                        [0, 1, 1],
+                ),
+                Clockwise270 => rect_vec!(
+                        [0, 1, 0],
+                        [1, 1, 0],
+                        [1, 0, 0],
+                ),
+            },
+            L => maplit::hashmap! {
+                Clockwise => rect_vec!(
+                        [0, 0, 1],
+                        [1, 1, 1],
+                        [0, 0, 0],
+                ),
+                Clockwise90 => rect_vec!(
+                        [0, 1, 0],
+                        [0, 1, 0],
+                        [0, 1, 1],
+                ),
+                Clockwise180 => rect_vec!(
+                        [0, 0, 0],
+                        [1, 1, 1],
+                        [1, 0, 0],
+                ),
+                Clockwise270 => rect_vec!(
+                        [1, 1, 0],
+                        [0, 1, 0],
+                        [0, 1, 0],
+                ),
+            },
+            J => maplit::hashmap! {
+                Clockwise => rect_vec!(
+                        [1, 0, 0],
+                        [1, 1, 1],
+                        [0, 0, 0],
+                ),
+                Clockwise90 => rect_vec!(
+                        [0, 1, 1],
+                        [0, 1, 0],
+                        [0, 1, 0],
+                ),
+                Clockwise180 => rect_vec!(
+                        [0, 0, 0],
+                        [1, 1, 1],
+                        [0, 0, 1],
+                ),
+                Clockwise270 => rect_vec!(
+                        [0, 1, 0],
+                        [0, 1, 0],
+                        [1, 1, 0],
+                ),
+            },
+            O => maplit::hashmap! {
+                Clockwise => rect_vec!(
+                        [1, 1],
+                        [1, 1],
+                ),
+                Clockwise90 => rect_vec!(
+                        [1, 1],
+                        [1, 1],
+                ),
+                Clockwise180 => rect_vec!(
+                        [1, 1],
+                        [1, 1],
+                ),
+                Clockwise270 => rect_vec!(
+                        [1, 1],
+                        [1, 1],
+                ),
+            },
+            I => maplit::hashmap! {
+                Clockwise => rect_vec!(
+                        [0, 0, 0, 0],
+                        [1, 1, 1, 1],
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0],
+                ),
+                Clockwise90 => rect_vec!(
+                        [0, 0, 1, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 1, 0],
+                ),
+                Clockwise180 => rect_vec!(
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0],
+                        [1, 1, 1, 1],
+                        [0, 0, 0, 0],
+                ),
+                Clockwise270 => rect_vec!(
+                        [0, 1, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 1, 0, 0],
+                )
+            },
         }
     }
 
-    pub fn spin_offsets(&self) -> HashMap<MinoRotation, Vec<Point>> {
+    pub fn wall_kicks(&self) -> HashMap<MinoRotation, [Point; 5]> {
         match self {
-            Tetrimino::T => maplit::hashmap! {
-                MinoRotation::Clockwise => vec!(
+            T | S | Z | L | J => maplit::hashmap! {
+                Clockwise => [
                         (0, 0).into(),
                         (-1, 0).into(),
                         (-1, -1).into(),
                         (0, 2).into(),
                         (-1, 2).into(),
-                ),
-                MinoRotation::Clockwise90 => vec!(
+                ],
+                Clockwise90 => [
                         (0, 0).into(),
                         (1, 0).into(),
                         (1, 1).into(),
                         (0, -2).into(),
                         (1, -2).into(),
-                ),
-                MinoRotation::Clockwise180 => vec!(
+                ],
+                Clockwise180 => [
                         (0, 0).into(),
                         (1, 0).into(),
                         (1, -1).into(),
                         (0, 2).into(),
                         (1, 2).into(),
-                ),
-                MinoRotation::Clockwise270 => vec!(
+                ],
+                Clockwise270 => [
                         (0, 0).into(),
                         (-1, 0).into(),
                         (-1, 1).into(),
                         (0, -2).into(),
                         (-1, -2).into(),
-                ),
-            }
+                ],
+            },
+            O => maplit::hashmap! {
+                Clockwise => [(0, 0).into(); 5]
+            },
+            I => maplit::hashmap! {
+                Clockwise => [
+                        (0, 0).into(),
+                        (-2, 0).into(),
+                        (1, 0).into(),
+                        (-2, 1).into(),
+                        (1, -2).into(),
+                ],
+                Clockwise90 => [
+                        (0, 0).into(),
+                        (-1, 0).into(),
+                        (2, 0).into(),
+                        (-1, -2).into(),
+                        (2, 1).into(),
+                ],
+                Clockwise180 => [
+                        (0, 0).into(),
+                        (2, 0).into(),
+                        (-1, 0).into(),
+                        (2, -1).into(),
+                        (-1, -2).into(),
+                ],
+                Clockwise270 => [
+                        (0, 0).into(),
+                        (1, 0).into(),
+                        (-2, 0).into(),
+                        (1, 2).into(),
+                        (-2, -1).into(),
+                ],
+            },
         }
     }
 
     pub fn block(&self) -> MinoBlock {
+        use MinoBlock::*;
+
         match self {
-            Tetrimino::T => MinoBlock::PURPLE
+            T => PURPLE,
+            S => GREEN,
+            Z => RED,
+            L => ORANGE,
+            J => BLUE,
+            O => YELLOW,
+            I => AQUA,
         }
     }
 
     pub fn all() -> Vec<Tetrimino> {
-        use crate::tetris::tetrimino::Tetrimino::T;
-
-        vec!(T)
+        vec!(T, S, Z, L, J, O, I)
     }
 }
 
@@ -109,25 +292,25 @@ pub enum MinoRotation {
 impl MinoRotation {
     pub fn left(&self) -> MinoRotation {
         match self {
-            MinoRotation::Clockwise => MinoRotation::Clockwise270,
-            MinoRotation::Clockwise90 => MinoRotation::Clockwise,
-            MinoRotation::Clockwise180 => MinoRotation::Clockwise90,
-            MinoRotation::Clockwise270 => MinoRotation::Clockwise180,
+            Clockwise => Clockwise270,
+            Clockwise90 => Clockwise,
+            Clockwise180 => Clockwise90,
+            Clockwise270 => Clockwise180,
         }
     }
 
     pub fn right(&self) -> MinoRotation {
         match self {
-            MinoRotation::Clockwise => MinoRotation::Clockwise90,
-            MinoRotation::Clockwise90 => MinoRotation::Clockwise180,
-            MinoRotation::Clockwise180 => MinoRotation::Clockwise270,
-            MinoRotation::Clockwise270 => MinoRotation::Clockwise,
+            Clockwise => Clockwise90,
+            Clockwise90 => Clockwise180,
+            Clockwise180 => Clockwise270,
+            Clockwise270 => Clockwise,
         }
     }
 }
 
 impl Default for MinoRotation {
     fn default() -> Self {
-        MinoRotation::Clockwise
+        Clockwise
     }
 }

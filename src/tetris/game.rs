@@ -10,7 +10,7 @@ pub const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 const SPAWN_POINT: Point = Point {
     x: 4,
-    y: ((FIELD_VISIBLE_UNIT_HEIGHT - 18) as isize),
+    y: ((FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT + 1) as isize),
 };
 
 pub type Field = [[MinoBlock; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
@@ -127,23 +127,23 @@ impl Board {
             RotateDirection::Left => self.dropping_rotation.left(),
             RotateDirection::Right => self.dropping_rotation.right(),
         };
-        let offsets = self.dropping.spin_offsets();
-        let offsets = offsets.get(&rotation).unwrap();
+        let kicks = self.dropping.wall_kicks();
+        let kicks = kicks.get(&rotation).unwrap();
 
-        let manipulation = |board: &mut Board, offset: &Point| {
+        let manipulation = |board: &mut Board, kick: &Point| {
             board.dropping_rotation = rotation;
-            board.dropping_point.x += offset.x;
-            board.dropping_point.y += offset.y;
+            board.dropping_point.x += kick.x;
+            board.dropping_point.y += kick.y;
         };
 
-        offsets.into_iter()
-            .find(|&offset| {
+        kicks.into_iter()
+            .find(|&kick| {
                 let clone = &mut self.clone();
-                manipulation(clone, offset);
+                manipulation(clone, kick);
 
                 clone.establishes_field()
             })
-            .map(|offset| manipulation(self, offset))
+            .map(|kick| manipulation(self, kick))
             .is_some()
     }
 
@@ -321,6 +321,19 @@ mod tests {
         }
     }
 
+    impl LikeExistenceField for [[i32; FIELD_UNIT_WIDTH]; FIELD_VISIBLE_UNIT_HEIGHT] {
+        fn to_existences(&self) -> ExistenceField {
+            let mut f = ExistenceField::default();
+            self.iter().enumerate().for_each(|(y, line)| {
+                line.iter().enumerate().for_each(|(x, &n)| {
+                    f[y + 2][x] = n > 0;
+                })
+            });
+
+            f
+        }
+    }
+
     #[test]
     fn rect_vec_returns_2d_vec() {
         let rect_vec: Vec<Vec<bool>> = rect_vec!(
@@ -346,10 +359,8 @@ mod tests {
         let board = Board::new(Tetrimino::T);
 
         let expected = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -379,10 +390,8 @@ mod tests {
         assert!(board.try_move_right());
 
         let expected = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -415,10 +424,8 @@ mod tests {
         assert!(!board.try_move_right());
 
         let expected = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -448,10 +455,8 @@ mod tests {
         assert!(board.try_move_left());
 
         let expected = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
             [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -484,10 +489,8 @@ mod tests {
         assert!(!board.try_move_left());
 
         let expected = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
             [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -512,8 +515,64 @@ mod tests {
     }
 
     #[test]
+    fn spin_right() {
+        let mut board = Board::new(Tetrimino::S);
+
+        let expected = [
+            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+
+        assert!(board.field().similar(expected));
+
+        assert!(board.try_spin_right());
+
+        let expected = [
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+
+        assert!(board.field().similar(expected));
+    }
+
+    #[test]
     fn gen_all_minos() {
-        let bag = MinoBag::new();
         let mut minos = MinoBag::gen_shuffled_all_minos();
 
         assert!(minos.len() == Tetrimino::all().len());
@@ -526,15 +585,12 @@ mod tests {
     #[test]
     fn spawn_mino() {
         let mut game = Game::new();
-        // TODO: test using minos other than T-mino
-        game.bag.queue = vec!(Tetrimino::T, Tetrimino::T).into();
+        game.bag.queue = vec!(Tetrimino::J).into();
         assert_eq!(game.spawn_mino(), SpawnResult::Success);
 
         let expected = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
