@@ -21,7 +21,7 @@ const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
 const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
 
 const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + 16.;
-const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y - FONT_SIZE;
+const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 pub struct Play40LineState {
     game: Game,
@@ -81,10 +81,11 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     graphics::clear(ctx, asset.color.background);
 
     draw_field_grid(ctx, asset)?;
+    draw_next_panel(ctx, asset)?;
 
     match state.countdown {
         Some(0) | None => {
-            draw_next(ctx, asset, state.game.bag.peek(5).as_slice())?;
+            draw_next_minos(ctx, asset, state.game.bag.peek(5).as_slice())?;
             draw_minos_on_field(ctx, asset, state)?;
         }
         Some(c) => {
@@ -122,7 +123,7 @@ fn draw_field_grid(ctx: &mut Context, asset: &Asset) -> GameResult {
                 [x, FIELD_ORIGIN_Y + FIELD_HEIGHT]
             ],
             1.,
-            graphics::Color::from_rgba(24, 24, 24, 128),
+            asset.color.grid_line,
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
@@ -135,7 +136,7 @@ fn draw_field_grid(ctx: &mut Context, asset: &Asset) -> GameResult {
                 [FIELD_ORIGIN_X + FIELD_WIDTH, y]
             ],
             1.,
-            graphics::Color::from_rgba(24, 24, 24, 128),
+            asset.color.grid_line,
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
@@ -202,26 +203,64 @@ fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineS
     Ok(())
 }
 
-fn draw_next(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) -> GameResult {
+const NEXT_MINOS_AMOUNT: usize = 5;
+const NEXT_MINO_SPACE_LENGTH: f32 = HALF_BLOCK_LENGTH * 6.;
+
+fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new("NEXT")
             .font(asset.font.vt323)
             .scale(PxScale::from(FONT_SIZE))
     );
-
     graphics::draw(
         ctx,
         &text,
         graphics::DrawParam::default()
-            .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y]),
+            .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y - FONT_SIZE]),
     )?;
 
+    let line = graphics::Mesh::new_line(
+        ctx,
+        &[
+            [NEXT_ORIGIN_X, NEXT_ORIGIN_Y],
+            [NEXT_ORIGIN_X + 4. * HALF_BLOCK_LENGTH, NEXT_ORIGIN_Y]
+        ],
+        2.,
+        asset.color.separator,
+    )?;
+    graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+
+    for idx in 1..=NEXT_MINOS_AMOUNT {
+        let y = NEXT_ORIGIN_Y + (idx as f32) * NEXT_MINO_SPACE_LENGTH;
+        let sep = graphics::Mesh::new_line(
+            ctx,
+            &[
+                [NEXT_ORIGIN_X, y],
+                [NEXT_ORIGIN_X + 4. * HALF_BLOCK_LENGTH, y]
+            ],
+            1.,
+            asset.color.separator,
+        )?;
+
+        graphics::draw(ctx, &sep, graphics::DrawParam::default())?;
+    }
+
+    Ok(())
+}
+
+fn draw_next_minos(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) -> GameResult {
     for (idx, mino) in minos.iter().enumerate() {
         let x = NEXT_ORIGIN_X + match mino {
             Tetrimino::O => HALF_BLOCK_LENGTH,
             _ => 0.,
         };
-        let y = NEXT_ORIGIN_Y + (2. * FONT_SIZE) + (idx as f32) * 5. * HALF_BLOCK_LENGTH;
+        let y = NEXT_ORIGIN_Y
+            + (idx as f32) * NEXT_MINO_SPACE_LENGTH
+            + 2. * HALF_BLOCK_LENGTH
+            + match mino {
+            Tetrimino::I => -HALF_BLOCK_LENGTH,
+            _ => 0.,
+        };
 
         draw_mini_mino(
             ctx,
