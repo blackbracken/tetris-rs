@@ -1,4 +1,5 @@
 use std::mem;
+use std::time::Duration;
 
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
@@ -53,6 +54,7 @@ fn main() -> GameResult {
 struct MainState {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
+    elapsed: Duration,
 }
 
 impl MainState {
@@ -63,6 +65,7 @@ impl MainState {
             MainState {
                 scene_state: Some(Ticket::ShowTitle.go(ctx, &mut asset)?),
                 asset,
+                elapsed: Duration::new(0, 0),
             }
         )
     }

@@ -79,7 +79,7 @@ impl Image {
             .enumerate()
             .map(|(idx, &v)| match block {
                 MinoBlock::PURPLE => match idx % 4 {
-                    RED | BLUE => v.saturating_add(64),
+                    RED | BLUE => v.saturating_add(80),
                     GREEN => v.saturating_sub(64),
                     ALPHA => 255u8,
                     _ => v,
