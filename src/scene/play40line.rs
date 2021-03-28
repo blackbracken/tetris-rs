@@ -9,13 +9,19 @@ use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
-use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, MinoBlock};
+use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, MinoBlock, Point};
+use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
 const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;
 
+const FONT_SIZE: f32 = 24.;
+
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
 const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
+
+const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + 16.;
+const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y - FONT_SIZE;
 
 pub struct Play40LineState {
     game: Game,
@@ -78,7 +84,8 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
     match state.countdown {
         Some(0) | None => {
-            draw_dropping_mino(ctx, asset, state)?;
+            draw_next(ctx, asset, state.game.bag.peek(1).get(0).unwrap())?;
+            draw_minos_on_field(ctx, asset, state)?;
         }
         Some(c) => {
             draw_count_down(ctx, asset, c)?;
@@ -165,7 +172,7 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
     Ok(())
 }
 
-fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
+fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
     let field = state.game.board.field();
     for y in 0..FIELD_UNIT_HEIGHT {
         for x in 0..FIELD_UNIT_WIDTH {
@@ -188,6 +195,56 @@ fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineSt
                             (FIELD_ORIGIN_Y as f32) + (y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as f32) * BLOCK_LENGTH as f32,
                         ]),
                 )?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn draw_next(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino) -> GameResult {
+    let text = graphics::Text::new(
+        graphics::TextFragment::new("NEXT")
+            .font(asset.font.vt323)
+            .scale(PxScale::from(FONT_SIZE))
+    );
+
+    graphics::draw(
+        ctx,
+        &text,
+        graphics::DrawParam::default()
+            .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y]),
+    )?;
+
+    draw_mini_mino(
+        ctx,
+        asset,
+        mino,
+        (NEXT_ORIGIN_X, NEXT_ORIGIN_Y + 2. * FONT_SIZE).into(),
+    )?;
+
+    Ok(())
+}
+
+fn draw_mini_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino, point: Point) -> GameResult {
+    let shapes = mino.shapes();
+    let shape = shapes.get(&MinoRotation::Clockwise).unwrap();
+
+    for (y, line) in shape.iter().enumerate() {
+        for (x, &exists) in line.iter().enumerate() {
+            let x = (point.x as f32) + HALF_BLOCK_LENGTH * (x as f32);
+            let y = (point.y as f32) + HALF_BLOCK_LENGTH * (y as f32);
+
+            if exists {
+                if let Some(img) = asset.image.mino_block(ctx, &mino.block())? {
+                    graphics::draw(
+                        ctx,
+                        img,
+                        graphics::DrawParam::default()
+                            .dest([x, y])
+                            .scale([0.5, 0.5]),
+                    )?;
+                }
             }
         }
     }

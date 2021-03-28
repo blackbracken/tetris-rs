@@ -17,7 +17,7 @@ pub type Field = [[MinoBlock; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
 
 pub struct Game {
     pub board: Board,
-    bag: MinoBag,
+    pub bag: MinoBag,
 }
 
 impl Game {
@@ -237,7 +237,7 @@ pub enum DropResult {
     Failure,
 }
 
-struct MinoBag {
+pub struct MinoBag {
     queue: VecDeque<Tetrimino>
 }
 
@@ -263,7 +263,7 @@ impl MinoBag {
         p
     }
 
-    fn peek(&self, amount: usize) -> Vec<Tetrimino> {
+    pub fn peek(&self, amount: usize) -> Vec<Tetrimino> {
         if amount > Tetrimino::all().len() {
             panic!("the amount of minos must be equal to or lower than the amount of tetrimino types");
         }
@@ -320,11 +320,20 @@ enum RotateDirection {
 }
 
 #[derive(Copy, Clone)]
-pub struct Point { x: isize, y: isize }
+pub struct Point {
+    pub x: isize,
+    pub y: isize,
+}
 
 impl Into<Point> for (isize, isize) {
     fn into(self) -> Point {
         Point { x: self.0, y: self.1 }
+    }
+}
+
+impl Into<Point> for (f32, f32) {
+    fn into(self) -> Point {
+        Point { x: self.0 as isize, y: self.1 as isize }
     }
 }
 
