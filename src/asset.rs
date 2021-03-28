@@ -259,12 +259,14 @@ impl Font {
 
 pub struct Color {
     pub background: graphics::Color,
+    pub panel: graphics::Color,
 }
 
 impl Color {
     fn new() -> Color {
         Color {
-            background: graphics::Color::from_rgb(46, 46, 46),
+            background: graphics::Color::from_rgb(24, 24, 24),
+            panel: graphics::Color::from_rgba(48, 240, 255, 16),
         }
     }
 }

@@ -12,6 +12,7 @@ use crate::router::SceneState::ForPlay40Line;
 use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, MinoBlock};
 
 const BLOCK_LENGTH: f32 = 32.;
+const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;
 
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
 const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
@@ -73,7 +74,7 @@ pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
     graphics::clear(ctx, asset.color.background);
 
-    draw_field_grid(ctx)?;
+    draw_field_grid(ctx, asset)?;
 
     match state.countdown {
         Some(0) | None => {
@@ -89,16 +90,32 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     Ok(())
 }
 
-fn draw_field_grid(ctx: &mut Context) -> GameResult {
+fn draw_field_grid(ctx: &mut Context, asset: &Asset) -> GameResult {
+    const FIELD_WIDTH: f32 = BLOCK_LENGTH * (FIELD_UNIT_WIDTH as f32);
+    const FIELD_HEIGHT: f32 = BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32);
+
+    let rect = graphics::Mesh::new_rectangle(
+        ctx,
+        DrawMode::fill(),
+        Rect::new(
+            FIELD_ORIGIN_X,
+            FIELD_ORIGIN_Y,
+            FIELD_WIDTH,
+            FIELD_HEIGHT,
+        ),
+        asset.color.panel,
+    )?;
+    graphics::draw(ctx, &rect, graphics::DrawParam::default())?;
+
     for x in (0..=FIELD_UNIT_WIDTH).map(|x| FIELD_ORIGIN_X + (x as f32) * BLOCK_LENGTH) {
         let line = graphics::Mesh::new_line(
             ctx,
             &[
                 [x, FIELD_ORIGIN_Y],
-                [x, FIELD_ORIGIN_Y + BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32)]
+                [x, FIELD_ORIGIN_Y + FIELD_HEIGHT]
             ],
             1.,
-            graphics::Color::from_rgb(24, 24, 24),
+            graphics::Color::from_rgba(24, 24, 24, 128),
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
@@ -108,10 +125,10 @@ fn draw_field_grid(ctx: &mut Context) -> GameResult {
             ctx,
             &[
                 [FIELD_ORIGIN_X, y],
-                [FIELD_ORIGIN_X + BLOCK_LENGTH * (FIELD_UNIT_WIDTH as f32), y]
+                [FIELD_ORIGIN_X + FIELD_WIDTH, y]
             ],
             1.,
-            graphics::Color::from_rgb(24, 24, 24),
+            graphics::Color::from_rgba(24, 24, 24, 128),
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
