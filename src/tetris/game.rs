@@ -512,8 +512,21 @@ mod tests {
     }
 
     #[test]
+    fn gen_all_minos() {
+        let bag = MinoBag::new();
+        let mut minos = MinoBag::gen_shuffled_all_minos();
+
+        assert!(minos.len() == Tetrimino::all().len());
+
+        minos.sort();
+        minos.dedup();
+        assert!(minos.len() == Tetrimino::all().len());
+    }
+
+    #[test]
     fn spawn_mino() {
         let mut game = Game::new();
+        // TODO: test using minos other than T-mino
         game.bag.queue = vec!(Tetrimino::T, Tetrimino::T).into();
         assert_eq!(game.spawn_mino(), SpawnResult::Success);
 

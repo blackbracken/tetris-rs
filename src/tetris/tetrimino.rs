@@ -4,7 +4,7 @@ use crate::tetris::game::{MinoBlock, Point};
 
 type MinoShape = Vec<Vec<bool>>;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Tetrimino {
     T,
 }
