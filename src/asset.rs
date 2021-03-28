@@ -6,7 +6,7 @@ use ggez::audio::SoundSource;
 
 use crate::tetris::game::MinoBlock;
 
-const BGM_VOLUME: f32 = 0.2;
+const BGM_VOLUME: f32 = 0.15;
 const SE_VOLUME: f32 = 0.4;
 
 pub struct Asset {
@@ -51,16 +51,17 @@ impl Image {
         )
     }
 
-    pub fn mino_block<'a>(&'a mut self, ctx: &mut Context, block: &MinoBlock) -> GameResult<&'a graphics::Image> {
+    pub fn mino_block<'a>(&'a mut self, ctx: &mut Context, block: &MinoBlock) -> GameResult<Option<&'a graphics::Image>> {
         if self.mino_block_images.get(block) == None {
-            let img = self.colorize(ctx, block)?;
-            let _ = self.mino_block_images.insert(block.clone(), img);
+            if let Some(img) = self.colorize(ctx, block)? {
+                let _ = self.mino_block_images.insert(block.clone(), img);
+            }
         }
 
-        Ok(self.mino_block_images.get(block).unwrap())
+        Ok(self.mino_block_images.get(block))
     }
 
-    fn colorize(&self, ctx: &mut Context, block: &MinoBlock) -> GameResult<graphics::Image> {
+    fn colorize(&self, ctx: &mut Context, block: &MinoBlock) -> GameResult<Option<graphics::Image>> {
         const RED: usize = 0;
         const GREEN: usize = 1;
         const BLUE: usize = 2;
@@ -69,27 +70,64 @@ impl Image {
         let w = self.mino_block.width();
         let h = self.mino_block.height();
 
+        if block == &MinoBlock::AIR {
+            return Ok(None);
+        }
+
         let rgba = self.mino_block
             .to_rgba8(ctx)?
             .iter()
             .enumerate()
             .map(|(idx, &v)| match block {
+                MinoBlock::AQUA => match idx % 4 {
+                    RED => v.saturating_sub(64),
+                    BLUE | GREEN => v.saturating_add(80),
+                    ALPHA => 255u8,
+                    _ => unreachable!(),
+                },
+                MinoBlock::YELLOW => match idx % 4 {
+                    RED | GREEN => v.saturating_add(80),
+                    BLUE => v.saturating_sub(64),
+                    ALPHA => 255u8,
+                    _ => unreachable!(),
+                },
                 MinoBlock::PURPLE => match idx % 4 {
-                    RED | BLUE => v.saturating_add(80),
+                    RED | GREEN => v.saturating_add(80),
+                    BLUE => v.saturating_sub(64),
+                    ALPHA => 255u8,
+                    _ => unreachable!(),
+                },
+                MinoBlock::BLUE => match idx % 4 {
+                    BLUE => v.saturating_add(80),
+                    RED | GREEN => v.saturating_sub(64),
+                    ALPHA => 255u8,
+                    _ => unreachable!(),
+                },
+                MinoBlock::ORANGE => match idx % 4 {
+                    RED => v.saturating_add(80),
+                    BLUE => v.saturating_add(40),
                     GREEN => v.saturating_sub(64),
                     ALPHA => 255u8,
-                    _ => v,
-                }
-                MinoBlock::AIR => match idx % 4 {
-                    RED | GREEN | BLUE => v.saturating_add(16),
+                    _ => unreachable!(),
+                },
+                MinoBlock::GREEN => match idx % 4 {
+                    GREEN => v.saturating_add(80),
+                    RED | BLUE => v.saturating_sub(64),
                     ALPHA => 255u8,
-                    _ => v
-                }
-                _ => unimplemented!(),
+                    _ => unreachable!(),
+                },
+                MinoBlock::RED => match idx % 4 {
+                    RED => v.saturating_add(80),
+                    GREEN | BLUE => v.saturating_sub(64),
+                    ALPHA => 255u8,
+                    _ => unreachable!(),
+                },
+                MinoBlock::AIR => unreachable!(),
             })
             .collect::<Vec<_>>();
 
-        graphics::Image::from_rgba8(ctx, w, h, rgba.as_slice())
+        let img = graphics::Image::from_rgba8(ctx, w, h, rgba.as_slice())?;
+        Ok(Some(img))
     }
 }
 

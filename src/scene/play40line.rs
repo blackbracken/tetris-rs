@@ -158,7 +158,7 @@ fn draw_dropping_mino(ctx: &mut Context, asset: &mut Asset, state: &Play40LineSt
                 .unwrap();
 
             if block != &MinoBlock::AIR {
-                let img = asset.image.mino_block(ctx, block)?;
+                let img = asset.image.mino_block(ctx, block)?.unwrap();
                 let x = x as f32;
                 let y = y as f32;
 
