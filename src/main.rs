@@ -5,7 +5,8 @@ use std::mem;
 
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
-use ggez::event::EventHandler;
+use ggez::event::{EventHandler, KeyCode, KeyMods};
+use ggez::input::keyboard;
 use ggez::timer;
 
 use crate::asset::Asset;
@@ -112,4 +113,12 @@ impl EventHandler for MainState {
 
         Ok(())
     }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        _keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {}
 }
