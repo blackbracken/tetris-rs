@@ -7,7 +7,7 @@ use ggez::graphics::{DrawMode, FilterMode, PxScale, Rect};
 use ggez::timer;
 
 use crate::{HEIGHT, WIDTH};
-use crate::asset::{Asset, Se};
+use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::tetris::game::{Game, MinoBlock};
@@ -37,7 +37,7 @@ pub fn init(_ctx: &mut Context, asset: &mut Asset) {
     asset.audio.stop_bgm();
 }
 
-pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &Asset) -> Next {
+pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) -> Next {
     const COUNTDOWN_SEC: u64 = 3;
 
     let countdown = match state.countdown {
@@ -51,9 +51,11 @@ pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &Asset) -> N
     };
 
     if state.countdown != countdown {
-        println!("countdown is ${:?}", countdown);
         match countdown {
-            Some(0) => asset.audio.play_se(ctx, Se::GameStart),
+            Some(0) => {
+                asset.audio.play_bgm(ctx, Bgm::InGame);
+                asset.audio.play_se(ctx, Se::GameStart);
+            }
             Some(_) => asset.audio.play_se(ctx, Se::CountdownTick),
             None => (),
         }

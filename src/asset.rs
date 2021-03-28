@@ -109,17 +109,19 @@ impl Audio {
         // for exhaustive checking on compile
         fn bgm_path(bgm: Bgm) -> &'static str {
             match bgm {
-                Bgm::Title => "/sound/bgm_maoudamashii_cyber18.mp3",
+                Bgm::Title => "/sound/bgm/bgm_maoudamashii_cyber18.mp3",
+                Bgm::InGame => "/sound/bgm/game_maoudamashii_7_rock44.mp3"
             }
         }
         let bgm_data_map = maplit::hashmap! {
             Bgm::Title => audio::SoundData::new(ctx, bgm_path(Bgm::Title))?,
+            Bgm::InGame => audio::SoundData::new(ctx, bgm_path(Bgm::InGame))?,
         };
 
         // for exhaustive checking on compile
         fn se_path(se: Se) -> &'static str {
             match se {
-                Se::MenuClick => "/sound/se_maoudamashii_system26.mp3",
+                Se::MenuClick => "/sound/se/se_maoudamashii_system26.mp3",
                 Se::CountdownTick => "/sound/se/se_maoudamashii_instruments_drum1_hat.mp3",
                 Se::GameStart => "/sound/se/se_maoudamashii_instruments_drum1_tom3.mp3",
             }
@@ -147,6 +149,7 @@ impl Audio {
             .map(|mut src| {
                 src.set_volume(BGM_VOLUME);
                 src.set_repeat(true);
+                src.set_query_interval(Duration::ZERO);
                 src
             })
             .map(|mut src| {
@@ -155,6 +158,7 @@ impl Audio {
                         src.set_fade_in(Duration::from_secs(2));
                         src
                     }
+                    _ => src
                 }
             });
 
@@ -176,8 +180,6 @@ impl Audio {
                 src
             });
 
-        println!("se is {:?}", src);
-
         if let Some(mut src) = src {
             src.play_detached(ctx);
         }
@@ -187,6 +189,7 @@ impl Audio {
 #[derive(Eq, PartialEq, Hash)]
 pub enum Bgm {
     Title,
+    InGame,
 }
 
 #[derive(Eq, PartialEq, Hash)]
