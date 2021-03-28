@@ -8,6 +8,11 @@ pub const FIELD_UNIT_WIDTH: usize = 10;
 pub const FIELD_UNIT_HEIGHT: usize = 22;
 pub const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
+const SPAWN_POINT: Point = Point {
+    x: 4,
+    y: ((FIELD_VISIBLE_UNIT_HEIGHT - 18) as isize),
+};
+
 pub type Field = [[MinoBlock; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
 
 pub struct Game {
@@ -25,6 +30,24 @@ impl Game {
             bag,
         }
     }
+
+    pub fn spawn_mino(&mut self) -> SpawnResult {
+        let mino = self.bag.pop();
+
+        self.board.dropping = mino;
+        self.board.dropping_point = SPAWN_POINT;
+        self.board.dropping_rotation = MinoRotation::default();
+
+        if !self.board.establishes_field() {
+            self.board.dropping_point.y -= 1;
+
+            if !self.board.establishes_field() {
+                return SpawnResult::Fail;
+            }
+        }
+
+        SpawnResult::Success
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -40,8 +63,8 @@ impl Board {
         Board {
             confirmed_field: [[MinoBlock::AIR; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT],
             dropping,
-            dropping_point: (4, (FIELD_VISIBLE_UNIT_HEIGHT - 18) as isize).into(),
-            dropping_rotation: MinoRotation::Clockwise,
+            dropping_point: SPAWN_POINT,
+            dropping_rotation: MinoRotation::default(),
         }
     }
 
@@ -160,6 +183,12 @@ impl Board {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub enum SpawnResult {
+    Success,
+    Fail,
+}
+
 struct MinoBag {
     queue: VecDeque<Tetrimino>
 }
@@ -175,7 +204,7 @@ impl MinoBag {
         }
     }
 
-    pub fn pop(&mut self) -> Tetrimino {
+    fn pop(&mut self) -> Tetrimino {
         let p = self.queue.pop_front().unwrap();
 
         if self.queue.len() < Tetrimino::all().len() {
@@ -186,7 +215,7 @@ impl MinoBag {
         p
     }
 
-    pub fn peek(&self, amount: usize) -> Vec<Tetrimino> {
+    fn peek(&self, amount: usize) -> Vec<Tetrimino> {
         if amount > Tetrimino::all().len() {
             panic!("the amount of minos must be equal to or lower than the amount of tetrimino types");
         }
@@ -252,6 +281,7 @@ impl Into<Point> for (isize, isize) {
 }
 
 #[cfg(test)]
+//noinspection ALL
 mod tests {
     use super::*;
 
@@ -479,5 +509,39 @@ mod tests {
         ];
 
         assert!(board.field().similar(expected));
+    }
+
+    #[test]
+    fn spawn_mino() {
+        let mut game = Game::new();
+        game.bag.queue = vec!(Tetrimino::T, Tetrimino::T).into();
+        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+
+        let expected = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+
+        assert!(game.board.field().similar(expected));
     }
 }

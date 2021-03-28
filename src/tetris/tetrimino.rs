@@ -125,3 +125,9 @@ impl MinoRotation {
         }
     }
 }
+
+impl Default for MinoRotation {
+    fn default() -> Self {
+        MinoRotation::Clockwise
+    }
+}
