@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use MinoRotation::*;
 use Tetrimino::*;
 
-use crate::tetris::game::{MinoBlock, Point};
+use crate::tetris::game::{MinoBlock, MinoColor, Point};
 
 type MinoShape = Vec<Vec<bool>>;
 
@@ -275,6 +275,10 @@ impl Tetrimino {
         }
     }
 
+    pub fn color(&self) -> MinoColor {
+        self.block().color().unwrap()
+    }
+
     pub fn all() -> Vec<Tetrimino> {
         vec!(T, S, Z, L, J, O, I)
     }
@@ -312,5 +316,17 @@ impl MinoRotation {
 impl Default for MinoRotation {
     fn default() -> Self {
         Clockwise
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_mino_has_color() {
+        let all = Tetrimino::all();
+
+        assert_eq!(all.iter().map(|mino| mino.color()).len(), all.len());
     }
 }

@@ -284,6 +284,16 @@ impl MinoBag {
     }
 }
 
+pub enum MinoColor {
+    AQUA,
+    YELLOW,
+    PURPLE,
+    BLUE,
+    ORANGE,
+    GREEN,
+    RED,
+}
+
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub enum MinoBlock {
     AQUA,
@@ -297,6 +307,19 @@ pub enum MinoBlock {
 }
 
 impl MinoBlock {
+    pub fn color(&self) -> Option<MinoColor> {
+        match self {
+            MinoBlock::AQUA => Some(MinoColor::AQUA),
+            MinoBlock::YELLOW => Some(MinoColor::YELLOW),
+            MinoBlock::PURPLE => Some(MinoColor::PURPLE),
+            MinoBlock::BLUE => Some(MinoColor::BLUE),
+            MinoBlock::ORANGE => Some(MinoColor::ORANGE),
+            MinoBlock::GREEN => Some(MinoColor::GREEN),
+            MinoBlock::RED => Some(MinoColor::RED),
+            _ => None,
+        }
+    }
+
     fn exists(&self) -> bool {
         match self {
             MinoBlock::AIR => false,
