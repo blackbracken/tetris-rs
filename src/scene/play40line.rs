@@ -2,13 +2,16 @@ use std::cmp::max;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
+use ggez::event::KeyCode;
 use ggez::graphics::{DrawMode, PxScale, Rect};
+use ggez::input::keyboard;
 use ggez::timer;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
+use crate::router::Ticket::ShowTitle;
 use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, MinoBlock, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
@@ -72,6 +75,12 @@ pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) 
         }
 
         state.countdown = countdown;
+    }
+
+    if state.countdown == None {
+        if keyboard::is_key_pressed(ctx, KeyCode::Escape) {
+            return Ok(Next::transit(ShowTitle));
+        }
     }
 
     Ok(Next::do_continue(ForPlay40Line { state }))
