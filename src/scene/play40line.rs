@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::collections::HashMap;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
@@ -7,7 +8,7 @@ use ggez::graphics::{DrawMode, PxScale, Rect};
 use ggez::input::keyboard;
 use ggez::timer;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
@@ -33,6 +34,7 @@ pub struct Play40LineState {
     last_dropped: Duration,
     countdown: Option<u64>,
     start_countdown_at: Duration,
+    continuous_inputs: HashMap<KeyInput, usize>,
 }
 
 impl Play40LineState {
@@ -44,6 +46,7 @@ impl Play40LineState {
                 last_dropped: Duration::ZERO,
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
+                continuous_inputs: HashMap::new(),
             }
         )
     }
@@ -93,8 +96,10 @@ pub fn update(
 
         state.ingame_elapsed += diff_from_last_frame;
 
+        update_to_move(ctx, &mut state, asset)?;
+
         // TODO: implement
-        match update_to_drop_naturally(ctx, &mut state, asset, diff_from_last_frame) {
+        match update_to_drop_naturally(ctx, &mut state, asset) {
             TetrisResult::Continue => {}
             TetrisResult::End => {}
         }
@@ -103,11 +108,53 @@ pub fn update(
     Ok(Next::do_continue(state.into()))
 }
 
-fn update_to_drop_naturally(
+fn update_to_move(
     ctx: &mut Context,
     state: &mut Play40LineState,
     asset: &mut Asset,
-    diff_from_last_frame: Duration,
+) -> GameResult {
+    const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
+    const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 20;
+
+    fn recognizes_as_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
+        if pressed {
+            let inputs = state.continuous_inputs
+                .entry(key_input)
+                .or_insert(0);
+            *inputs += 1;
+            let inputs = *inputs;
+
+            inputs == 1 || (inputs >= CONTINUOUS_WAIT && inputs % CONTINUOUS_INTERVAL == 0)
+        } else {
+            state.continuous_inputs.insert(key_input, 0);
+
+            false
+        }
+    }
+
+    let pressed_left = [KeyCode::A, KeyCode::Left]
+        .iter()
+        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    let pressed_left = recognizes_as_input(state, pressed_left, KeyInput::Left);
+    if pressed_left {
+        state.game.board.try_move_left();
+    }
+
+    let pressed_right = [KeyCode::D, KeyCode::Right]
+        .iter()
+        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    let pressed_right = recognizes_as_input(state, pressed_right, KeyInput::Right);
+    if pressed_right {
+        state.game.board.try_move_right();
+    }
+
+    Ok(())
+}
+
+fn update_to_drop_naturally(
+    ctx: &mut Context,
+    state: &mut Play40LineState,
+    _asset: &mut Asset,
 ) -> TetrisResult {
     const DROP_INTERVAL: Duration = Duration::new(1, 0);
 
@@ -115,6 +162,7 @@ fn update_to_drop_naturally(
         let r = state.game.board.drop_softly();
 
         match r {
+            // TODO: implement
             DropResult::InAir => {}
             DropResult::OnGround => {}
             DropResult::Failure => {
@@ -131,6 +179,13 @@ fn update_to_drop_naturally(
 enum TetrisResult {
     Continue,
     End, // Success | Fail
+}
+
+#[derive(Hash, Eq, PartialEq)]
+enum KeyInput {
+    Down,
+    Left,
+    Right,
 }
 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
