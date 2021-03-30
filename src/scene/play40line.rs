@@ -99,7 +99,7 @@ pub fn update(
         update_to_move(ctx, &mut state, asset)?;
 
         // TODO: implement
-        match update_to_drop_naturally(ctx, &mut state, asset) {
+        match update_to_drop(ctx, &mut state, asset) {
             TetrisResult::Continue => {}
             TetrisResult::End => {}
         }
@@ -133,8 +133,66 @@ fn update_to_move(
     }
 
     fn recognizes_as_spinning_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
+        if pressed {
+            let inputs = state.continuous_inputs
+                .entry(key_input)
+                .or_insert(0);
+            *inputs += 1;
+            let inputs = *inputs;
+
+            inputs == 1
+        } else {
+            state.continuous_inputs.insert(key_input, 0);
+
+            false
+        }
+    }
+
+    let pressed_move_left = [KeyCode::A, KeyCode::Left]
+        .iter()
+        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    if recognizes_as_moving_input(state, pressed_move_left, KeyInput::MoveLeft) {
+        if state.game.move_left() {
+            asset.audio.play_se(ctx, Se::MinoMove)?;
+        }
+    }
+
+    let pressed_move_right = [KeyCode::D, KeyCode::Right]
+        .iter()
+        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    if recognizes_as_moving_input(state, pressed_move_right, KeyInput::MoveRight) {
+        if state.game.move_right() {
+            asset.audio.play_se(ctx, Se::MinoMove)?;
+        }
+    }
+
+    let pressed_spin_left = keyboard::is_key_pressed(ctx, KeyCode::J);
+    if recognizes_as_spinning_input(state, pressed_spin_left, KeyInput::SpinLeft) {
+        if state.game.spin_left() {
+            asset.audio.play_se(ctx, Se::MinoSpin)?;
+        }
+    }
+
+    let pressed_spin_right = keyboard::is_key_pressed(ctx, KeyCode::K);
+    if recognizes_as_spinning_input(state, pressed_spin_right, KeyInput::SpinRight) {
+        if state.game.spin_right() {
+            asset.audio.play_se(ctx, Se::MinoSpin)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn update_to_drop(
+    ctx: &mut Context,
+    state: &mut Play40LineState,
+    asset: &mut Asset,
+) -> TetrisResult {
+    const DROP_INTERVAL: Duration = Duration::new(1, 0);
+
+    fn recognizes_as_dropping_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
         const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
-        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 3;
+        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 2;
 
         if pressed {
             let inputs = state.continuous_inputs
@@ -151,50 +209,14 @@ fn update_to_move(
         }
     }
 
-    let pressed_move_left = [KeyCode::A, KeyCode::Left]
-        .iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key));
-    if recognizes_as_moving_input(state, pressed_move_left, KeyInput::MoveLeft) {
-        if state.game.board.try_move_left() {
-            asset.audio.play_se(ctx, Se::MinoMove)?;
-        }
+    let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W);
+    if recognizes_as_dropping_input(state, pressed_up, KeyInput::Up) {
+        state.game.drop_hardly();
+        asset.audio.play_se(ctx, Se::MinoDropHardly);
     }
-
-    let pressed_move_right = [KeyCode::D, KeyCode::Right]
-        .iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key));
-    if recognizes_as_moving_input(state, pressed_move_right, KeyInput::MoveRight) {
-        if state.game.board.try_move_right() {
-            asset.audio.play_se(ctx, Se::MinoMove)?;
-        }
-    }
-
-    let pressed_spin_left = keyboard::is_key_pressed(ctx, KeyCode::J);
-    if recognizes_as_spinning_input(state, pressed_spin_left, KeyInput::SpinLeft) {
-        if state.game.board.try_spin_left() {
-            asset.audio.play_se(ctx, Se::MinoSpin)?;
-        }
-    }
-
-    let pressed_spin_right = keyboard::is_key_pressed(ctx, KeyCode::K);
-    if recognizes_as_spinning_input(state, pressed_spin_right, KeyInput::SpinRight) {
-        if state.game.board.try_spin_right() {
-            asset.audio.play_se(ctx, Se::MinoSpin)?;
-        }
-    }
-
-    Ok(())
-}
-
-fn update_to_drop_naturally(
-    ctx: &mut Context,
-    state: &mut Play40LineState,
-    _asset: &mut Asset,
-) -> TetrisResult {
-    const DROP_INTERVAL: Duration = Duration::new(1, 0);
 
     if state.last_dropped + DROP_INTERVAL < state.ingame_elapsed {
-        let r = state.game.board.drop_softly();
+        let r = state.game.drop_softly();
 
         match r {
             // TODO: implement
@@ -218,6 +240,7 @@ enum TetrisResult {
 
 #[derive(Hash, Eq, PartialEq)]
 enum KeyInput {
+    Up,
     Down,
     MoveLeft,
     MoveRight,

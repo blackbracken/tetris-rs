@@ -32,7 +32,34 @@ impl Game {
         }
     }
 
-    pub fn spawn_mino(&mut self) -> SpawnResult {
+    pub fn move_left(&mut self) -> bool {
+        self.board.try_move_x(-1)
+    }
+
+    pub fn move_right(&mut self) -> bool {
+        self.board.try_move_x(1)
+    }
+
+    pub fn spin_left(&mut self) -> bool {
+        self.board.try_spin(SpinDirection::Left)
+    }
+
+    pub fn spin_right(&mut self) -> bool {
+        self.board.try_spin(SpinDirection::Right)
+    }
+
+    pub fn drop_softly(&mut self) -> DropResult {
+        self.board.drop_softly()
+    }
+
+    pub fn drop_hardly(&mut self) -> bool {
+        self.board.drop_hardly();
+        self.put_and_spawn();
+
+        true
+    }
+
+    fn spawn_mino(&mut self) -> SpawnResult {
         let mino = self.bag.pop();
 
         self.board.dropping = mino;
@@ -48,6 +75,15 @@ impl Game {
         }
 
         SpawnResult::Success
+    }
+
+    fn put_and_spawn(&mut self) -> SpawnResult {
+        if !self.board.establishes_field() {
+            return SpawnResult::Fail;
+        }
+
+        self.board.determine_dropping_mino();
+        self.spawn_mino()
     }
 }
 
@@ -91,14 +127,6 @@ impl Board {
         field
     }
 
-    pub fn try_move_left(&mut self) -> bool {
-        self.try_move_x(-1)
-    }
-
-    pub fn try_move_right(&mut self) -> bool {
-        self.try_move_x(1)
-    }
-
     fn try_move_x(&mut self, addition: isize) -> bool {
         let clone = &mut self.clone();
 
@@ -113,15 +141,6 @@ impl Board {
         }
 
         clone.establishes_field()
-    }
-
-    // TODO: returns whether you did t-spin
-    pub fn try_spin_left(&mut self) -> bool {
-        self.try_spin(SpinDirection::Left)
-    }
-
-    pub fn try_spin_right(&mut self) -> bool {
-        self.try_spin(SpinDirection::Right)
     }
 
     fn try_spin(&mut self, direction: SpinDirection) -> bool {
@@ -149,7 +168,7 @@ impl Board {
             .is_some()
     }
 
-    pub fn drop_softly(&mut self) -> DropResult {
+    fn drop_softly(&mut self) -> DropResult {
         let mut clone = self.clone();
 
         clone.dropping_point.y += 1;
@@ -174,7 +193,7 @@ impl Board {
         }
     }
 
-    pub fn drop_hardly(&mut self) -> Option<usize> {
+    fn drop_hardly(&mut self) -> Option<usize> {
         let mut n = 0;
         loop {
             match self.drop_softly() {
@@ -188,6 +207,12 @@ impl Board {
         }
 
         Some(n)
+    }
+
+    fn determine_dropping_mino(&mut self) {
+        for p in self.calc_dropping_mino_points() {
+            self.confirmed_field[p.y as usize][p.x as usize] = self.dropping.block().into();
+        }
     }
 
     fn establishes_field(&self) -> bool {
