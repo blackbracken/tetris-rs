@@ -135,17 +135,19 @@ fn update_to_move(
     let pressed_left = [KeyCode::A, KeyCode::Left]
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
-    let pressed_left = recognizes_as_input(state, pressed_left, KeyInput::Left);
-    if pressed_left {
-        state.game.board.try_move_left();
+    if recognizes_as_input(state, pressed_left, KeyInput::Left) {
+        if state.game.board.try_move_left() {
+            asset.audio.play_se(ctx, Se::MinoMove)?;
+        }
     }
 
     let pressed_right = [KeyCode::D, KeyCode::Right]
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
-    let pressed_right = recognizes_as_input(state, pressed_right, KeyInput::Right);
-    if pressed_right {
-        state.game.board.try_move_right();
+    if recognizes_as_input(state, pressed_right, KeyInput::Right) {
+        if state.game.board.try_move_right() {
+            asset.audio.play_se(ctx, Se::MinoMove)?;
+        }
     }
 
     Ok(())

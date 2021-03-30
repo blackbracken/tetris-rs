@@ -6,9 +6,6 @@ use ggez::audio::SoundSource;
 
 use crate::tetris::game::MinoBlock;
 
-const BGM_VOLUME: f32 = 0.15;
-const SE_VOLUME: f32 = 0.4;
-
 pub struct Asset {
     pub image: Image,
     pub audio: Audio,
@@ -157,12 +154,14 @@ impl Audio {
                 Se::MenuClick => "/sound/se/se_maoudamashii_system26.mp3",
                 Se::CountdownTick => "/sound/se/se_maoudamashii_instruments_drum1_hat.mp3",
                 Se::GameStart => "/sound/se/se_maoudamashii_instruments_drum1_tom3.mp3",
+                Se::MinoMove => "/sound/se/thinkpad_shift_click.mp3"
             }
         }
         let se_data_map = maplit::hashmap! {
             Se::MenuClick => audio::SoundData::new(ctx, se_path(Se::MenuClick))?,
             Se::CountdownTick => audio::SoundData::new(ctx, se_path(Se::CountdownTick))?,
             Se::GameStart => audio::SoundData::new(ctx, se_path(Se::GameStart))?,
+            Se::MinoMove => audio::SoundData::new(ctx, se_path(Se::MinoMove))?,
         };
 
         Ok(
@@ -180,7 +179,6 @@ impl Audio {
         let src = self.bgm_data_map.get(&bgm)
             .and_then(|data| audio::Source::from_data(ctx, data.clone()).ok())
             .map(|mut src| {
-                src.set_volume(BGM_VOLUME);
                 src.set_repeat(true);
                 src.set_query_interval(Duration::ZERO);
                 src
@@ -188,10 +186,12 @@ impl Audio {
             .map(|mut src| {
                 match bgm {
                     Bgm::Title => {
+                        src.set_volume(0.15);
                         src.set_fade_in(Duration::from_secs(2));
                         src
                     }
                     Bgm::InGame => {
+                        src.set_volume(0.12);
                         src.set_pitch(0.9);
                         src
                     }
@@ -214,7 +214,21 @@ impl Audio {
         let src = self.se_data_map.get(&se)
             .and_then(|data| audio::Source::from_data(ctx, data.clone()).ok())
             .map(|mut src| {
-                src.set_volume(SE_VOLUME);
+                match se {
+                    Se::MenuClick => {
+                        src.set_volume(0.15);
+                    }
+                    Se::GameStart => {
+                        src.set_volume(0.4);
+                    }
+                    Se::CountdownTick => {
+                        src.set_volume(0.45);
+                    }
+                    Se::MinoMove => {
+                        src.set_volume(0.8);
+                        src.set_pitch(1.1);
+                    }
+                }
                 src
             });
 
@@ -237,6 +251,7 @@ pub enum Se {
     MenuClick,
     CountdownTick,
     GameStart,
+    MinoMove,
 }
 
 pub struct Font {
