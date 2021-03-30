@@ -126,7 +126,7 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> GameRe
             }
         )
     } else {
-        Ok(Next::do_continue(ForTitle { state }))
+        Ok(Next::do_continue(state.into()))
     }
 }
 

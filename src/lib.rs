@@ -1,5 +1,6 @@
 #![feature(duration_zero)]
 #![feature(duration_saturating_ops)]
+#![feature(duration_consts_2)]
 
 use std::mem;
 use std::time::Duration;

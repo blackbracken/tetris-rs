@@ -12,6 +12,14 @@ pub enum SceneState {
     ForPlay40Line { state: Play40LineState },
 }
 
+impl Into<SceneState> for TitleState {
+    fn into(self) -> SceneState { ForTitle { state: self } }
+}
+
+impl Into<SceneState> for Play40LineState {
+    fn into(self) -> SceneState { ForPlay40Line { state: self } }
+}
+
 pub enum Ticket {
     ShowTitle,
     Play40Line,

@@ -12,7 +12,7 @@ use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, Point};
+use crate::tetris::game::{DropResult, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
@@ -28,8 +28,9 @@ const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 pub struct Play40LineState {
     game: Game,
-    // TODO: delete
-    sum: Duration,
+    ingame_elapsed: Duration,
+    // TODO: generalize (e.g. scheduler)
+    last_dropped: Duration,
     countdown: Option<u64>,
     start_countdown_at: Duration,
 }
@@ -39,7 +40,8 @@ impl Play40LineState {
         Ok(
             Play40LineState {
                 game: Game::new(),
-                sum: Duration::ZERO,
+                ingame_elapsed: Duration::ZERO,
+                last_dropped: Duration::ZERO,
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
             }
@@ -58,9 +60,6 @@ pub fn update(
     diff_from_last_frame: Duration,
 ) -> GameResult<Next> {
     const COUNTDOWN_SEC: u64 = 3;
-    state.sum += diff_from_last_frame;
-
-    println!("second is {:?}", state.sum);
 
     let countdown = match state.countdown {
         None | Some(0) => None,
@@ -91,9 +90,47 @@ pub fn update(
         if keyboard::is_key_pressed(ctx, KeyCode::Escape) {
             return Ok(Next::transit(ShowTitle));
         }
+
+        state.ingame_elapsed += diff_from_last_frame;
+
+        // TODO: implement
+        match update_to_drop_naturally(ctx, &mut state, asset, diff_from_last_frame) {
+            TetrisResult::Continue => {}
+            TetrisResult::End => {}
+        }
     }
 
-    Ok(Next::do_continue(ForPlay40Line { state }))
+    Ok(Next::do_continue(state.into()))
+}
+
+fn update_to_drop_naturally(
+    ctx: &mut Context,
+    state: &mut Play40LineState,
+    asset: &mut Asset,
+    diff_from_last_frame: Duration,
+) -> TetrisResult {
+    const DROP_INTERVAL: Duration = Duration::new(1, 0);
+
+    if state.last_dropped + DROP_INTERVAL < state.ingame_elapsed {
+        let r = state.game.board.drop_softly();
+
+        match r {
+            DropResult::InAir => {}
+            DropResult::OnGround => {}
+            DropResult::Failure => {
+                return TetrisResult::End;
+            }
+        }
+
+        state.last_dropped = state.ingame_elapsed;
+    }
+
+    TetrisResult::Continue
+}
+
+enum TetrisResult {
+    Continue,
+    End, // Success | Fail
 }
 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
@@ -193,11 +230,11 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
 }
 
 fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
-    let field = state.game.board.field();
+    let field = &state.game.board.field();
     for y in 0..FIELD_VISIBLE_UNIT_HEIGHT {
         for x in 0..FIELD_UNIT_WIDTH {
             let entity = field
-                .get(y)
+                .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT))
                 .and_then(|array| array.get(x))
                 .unwrap();
 
@@ -211,8 +248,8 @@ fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineS
                     img,
                     graphics::DrawParam::default()
                         .dest([
-                            (FIELD_ORIGIN_X as f32) + (x * BLOCK_LENGTH as f32),
-                            (FIELD_ORIGIN_Y as f32) + (y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as f32) * BLOCK_LENGTH as f32,
+                            (FIELD_ORIGIN_X as f32) + (x * BLOCK_LENGTH) as f32,
+                            (FIELD_ORIGIN_Y as f32) + (y * BLOCK_LENGTH) as f32,
                         ]),
                 )?;
             }
