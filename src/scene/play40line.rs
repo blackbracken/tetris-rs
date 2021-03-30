@@ -28,7 +28,8 @@ const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 pub struct Play40LineState {
     game: Game,
-
+    // TODO: delete
+    sum: Duration,
     countdown: Option<u64>,
     start_countdown_at: Duration,
 }
@@ -38,6 +39,7 @@ impl Play40LineState {
         Ok(
             Play40LineState {
                 game: Game::new(),
+                sum: Duration::ZERO,
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
             }
@@ -49,8 +51,16 @@ pub fn init(_ctx: &mut Context, asset: &mut Asset) {
     asset.audio.stop_bgm();
 }
 
-pub fn update(ctx: &mut Context, mut state: Play40LineState, asset: &mut Asset) -> GameResult<Next> {
+pub fn update(
+    ctx: &mut Context,
+    mut state: Play40LineState,
+    asset: &mut Asset,
+    diff_from_last_frame: Duration,
+) -> GameResult<Next> {
     const COUNTDOWN_SEC: u64 = 3;
+    state.sum += diff_from_last_frame;
+
+    println!("second is {:?}", state.sum);
 
     let countdown = match state.countdown {
         None | Some(0) => None,

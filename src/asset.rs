@@ -18,7 +18,7 @@ pub struct Asset {
 
 impl Asset {
     // TODO: support asynchronous loading
-    pub fn new(ctx: &mut Context) -> GameResult<Box<Asset>> {
+    pub fn load(ctx: &mut Context) -> GameResult<Box<Asset>> {
         Ok(
             Box::new(
                 Asset {
