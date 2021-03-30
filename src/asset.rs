@@ -154,7 +154,9 @@ impl Audio {
                 Se::MenuClick => "/sound/se/se_maoudamashii_system26.mp3",
                 Se::CountdownTick => "/sound/se/se_maoudamashii_instruments_drum1_hat.mp3",
                 Se::GameStart => "/sound/se/se_maoudamashii_instruments_drum1_tom3.mp3",
-                Se::MinoMove => "/sound/se/thinkpad_shift_click.mp3"
+                Se::MinoMove => "/sound/se/thinkpad_shift_click.mp3",
+                Se::MinoSpin => "/sound/se/se_maoudamashii_se_pc03.mp3",
+
             }
         }
         let se_data_map = maplit::hashmap! {
@@ -162,6 +164,7 @@ impl Audio {
             Se::CountdownTick => audio::SoundData::new(ctx, se_path(Se::CountdownTick))?,
             Se::GameStart => audio::SoundData::new(ctx, se_path(Se::GameStart))?,
             Se::MinoMove => audio::SoundData::new(ctx, se_path(Se::MinoMove))?,
+            Se::MinoSpin => audio::SoundData::new(ctx, se_path(Se::MinoSpin))?,
         };
 
         Ok(
@@ -226,7 +229,10 @@ impl Audio {
                     }
                     Se::MinoMove => {
                         src.set_volume(0.8);
-                        src.set_pitch(1.1);
+                        src.set_pitch(0.6);
+                    }
+                    Se::MinoSpin => {
+                        src.set_volume(0.5)
                     }
                 }
                 src
@@ -252,6 +258,7 @@ pub enum Se {
     CountdownTick,
     GameStart,
     MinoMove,
+    MinoSpin,
 }
 
 pub struct Font {

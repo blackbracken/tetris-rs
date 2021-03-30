@@ -226,7 +226,10 @@ impl Tetrimino {
                 ],
             },
             O => maplit::hashmap! {
-                Clockwise => [(0, 0).into(); 5]
+                Clockwise => [(0, 0).into(); 5],
+                Clockwise90 => [(0, 0).into(); 5],
+                Clockwise180 => [(0, 0).into(); 5],
+                Clockwise270 => [(0, 0).into(); 5],
             },
             I => maplit::hashmap! {
                 Clockwise => [

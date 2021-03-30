@@ -115,18 +115,19 @@ impl Board {
         clone.establishes_field()
     }
 
+    // TODO: returns whether you did t-spin
     pub fn try_spin_left(&mut self) -> bool {
-        self.try_spin(RotateDirection::Left)
+        self.try_spin(SpinDirection::Left)
     }
 
     pub fn try_spin_right(&mut self) -> bool {
-        self.try_spin(RotateDirection::Right)
+        self.try_spin(SpinDirection::Right)
     }
 
-    fn try_spin(&mut self, direction: RotateDirection) -> bool {
+    fn try_spin(&mut self, direction: SpinDirection) -> bool {
         let rotation = match direction {
-            RotateDirection::Left => self.dropping_rotation.left(),
-            RotateDirection::Right => self.dropping_rotation.right(),
+            SpinDirection::Left => self.dropping_rotation.left(),
+            SpinDirection::Right => self.dropping_rotation.right(),
         };
         let kicks = self.dropping.wall_kicks();
         let kicks = kicks.get(&rotation).unwrap();
@@ -349,7 +350,7 @@ impl MinoEntity {
     }
 }
 
-enum RotateDirection {
+enum SpinDirection {
     Left,
     Right,
 }

@@ -113,10 +113,10 @@ fn update_to_move(
     state: &mut Play40LineState,
     asset: &mut Asset,
 ) -> GameResult {
-    const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
-    const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 20;
+    fn recognizes_as_moving_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
+        const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
+        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 20;
 
-    fn recognizes_as_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
         if pressed {
             let inputs = state.continuous_inputs
                 .entry(key_input)
@@ -132,21 +132,54 @@ fn update_to_move(
         }
     }
 
-    let pressed_left = [KeyCode::A, KeyCode::Left]
+    fn recognizes_as_spinning_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
+        const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
+        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 3;
+
+        if pressed {
+            let inputs = state.continuous_inputs
+                .entry(key_input)
+                .or_insert(0);
+            *inputs += 1;
+            let inputs = *inputs;
+
+            inputs == 1 || (inputs >= CONTINUOUS_WAIT && inputs % CONTINUOUS_INTERVAL == 0)
+        } else {
+            state.continuous_inputs.insert(key_input, 0);
+
+            false
+        }
+    }
+
+    let pressed_move_left = [KeyCode::A, KeyCode::Left]
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
-    if recognizes_as_input(state, pressed_left, KeyInput::Left) {
+    if recognizes_as_moving_input(state, pressed_move_left, KeyInput::MoveLeft) {
         if state.game.board.try_move_left() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_right = [KeyCode::D, KeyCode::Right]
+    let pressed_move_right = [KeyCode::D, KeyCode::Right]
         .iter()
         .any(|&key| keyboard::is_key_pressed(ctx, key));
-    if recognizes_as_input(state, pressed_right, KeyInput::Right) {
+    if recognizes_as_moving_input(state, pressed_move_right, KeyInput::MoveRight) {
         if state.game.board.try_move_right() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
+        }
+    }
+
+    let pressed_spin_left = keyboard::is_key_pressed(ctx, KeyCode::J);
+    if recognizes_as_spinning_input(state, pressed_spin_left, KeyInput::SpinLeft) {
+        if state.game.board.try_spin_left() {
+            asset.audio.play_se(ctx, Se::MinoSpin)?;
+        }
+    }
+
+    let pressed_spin_right = keyboard::is_key_pressed(ctx, KeyCode::K);
+    if recognizes_as_spinning_input(state, pressed_spin_right, KeyInput::SpinRight) {
+        if state.game.board.try_spin_right() {
+            asset.audio.play_se(ctx, Se::MinoSpin)?;
         }
     }
 
@@ -186,8 +219,10 @@ enum TetrisResult {
 #[derive(Hash, Eq, PartialEq)]
 enum KeyInput {
     Down,
-    Left,
-    Right,
+    MoveLeft,
+    MoveRight,
+    SpinLeft,
+    SpinRight,
 }
 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
