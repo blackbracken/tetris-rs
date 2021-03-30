@@ -12,7 +12,7 @@ use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, MinoBlock, Point};
+use crate::tetris::game::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
@@ -184,15 +184,15 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
 
 fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
     let field = state.game.board.field();
-    for y in 0..FIELD_UNIT_HEIGHT {
+    for y in 0..FIELD_VISIBLE_UNIT_HEIGHT {
         for x in 0..FIELD_UNIT_WIDTH {
-            let block = field
+            let entity = field
                 .get(y)
                 .and_then(|array| array.get(x))
                 .unwrap();
 
-            if block != &MinoBlock::AIR && y <= FIELD_VISIBLE_UNIT_HEIGHT {
-                let img = asset.image.mino_block(ctx, block)?.unwrap();
+            if let Some(block) = entity.block() {
+                let img = asset.image.mino_block(ctx, &block)?;
                 let x = x as f32;
                 let y = y as f32;
 
@@ -292,15 +292,14 @@ fn draw_mini_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino, point:
             let y = (point.y as f32) + HALF_BLOCK_LENGTH * (y as f32);
 
             if exists {
-                if let Some(img) = asset.image.mino_block(ctx, &mino.block())? {
-                    graphics::draw(
-                        ctx,
-                        img,
-                        graphics::DrawParam::default()
-                            .dest([x, y])
-                            .scale([0.5, 0.5]),
-                    )?;
-                }
+                let img = asset.image.mino_block(ctx, &mino.block())?;
+                graphics::draw(
+                    ctx,
+                    img,
+                    graphics::DrawParam::default()
+                        .dest([x, y])
+                        .scale([0.5, 0.5]),
+                )?;
             }
         }
     }

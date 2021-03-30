@@ -6,7 +6,6 @@ use std::mem;
 use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::{EventHandler, KeyCode, KeyMods};
-use ggez::input::keyboard;
 use ggez::timer;
 
 use crate::asset::Asset;

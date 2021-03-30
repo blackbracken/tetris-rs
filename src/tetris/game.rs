@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::convert::TryFrom;
 
 use rand::prelude::SliceRandom;
 
@@ -13,7 +14,7 @@ const SPAWN_POINT: Point = Point {
     y: ((FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT + 1) as isize),
 };
 
-pub type Field = [[MinoBlock; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
+pub type Field = [[MinoEntity; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
 
 pub struct Game {
     pub board: Board,
@@ -31,7 +32,7 @@ impl Game {
         }
     }
 
-    pub fn spawn_mino(&mut self) -> TetrisResult {
+    pub fn spawn_mino(&mut self) -> SpawnResult {
         let mino = self.bag.pop();
 
         self.board.dropping = mino;
@@ -42,11 +43,11 @@ impl Game {
             self.board.dropping_point.y -= 1;
 
             if !self.board.establishes_field() {
-                return TetrisResult::Fail;
+                return SpawnResult::Fail;
             }
         }
 
-        TetrisResult::Success
+        SpawnResult::Success
     }
 }
 
@@ -61,7 +62,7 @@ pub struct Board {
 impl Board {
     fn new(dropping: Tetrimino) -> Board {
         Board {
-            confirmed_field: [[MinoBlock::AIR; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT],
+            confirmed_field: [[MinoEntity::AIR; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT],
             dropping,
             dropping_point: SPAWN_POINT,
             dropping_rotation: MinoRotation::default(),
@@ -82,7 +83,7 @@ impl Board {
                 let y = (dropping_at.y + (block_y as isize) - center.y) as usize;
 
                 if exists {
-                    field[y][x] = self.dropping.block();
+                    field[y][x] = self.dropping.block().into();
                 }
             }
         }
@@ -191,12 +192,19 @@ impl Board {
     fn establishes_field(&self) -> bool {
         self.calc_dropping_mino_points().iter()
             .all(|&point| {
-                if !(0..(FIELD_UNIT_HEIGHT as isize)).contains(&point.y)
-                    || !(0..(FIELD_UNIT_WIDTH as isize)).contains(&point.x) {
-                    return false;
+                if let Ok(x) = usize::try_from(point.x) {
+                    if let Ok(y) = usize::try_from(point.y) {
+                        let entity = self.confirmed_field
+                            .get(y)
+                            .and_then(|line| line.get(x));
+
+                        if let Some(entity) = entity {
+                            return entity.block().is_none();
+                        }
+                    }
                 }
 
-                !self.confirmed_field[point.y as usize][point.x as usize].exists()
+                false
             })
     }
 
@@ -225,7 +233,7 @@ impl Board {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum TetrisResult {
+pub enum SpawnResult {
     Success,
     Fail,
 }
@@ -284,16 +292,6 @@ impl MinoBag {
     }
 }
 
-pub enum MinoColor {
-    AQUA,
-    YELLOW,
-    PURPLE,
-    BLUE,
-    ORANGE,
-    GREEN,
-    RED,
-}
-
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub enum MinoBlock {
     AQUA,
@@ -303,38 +301,52 @@ pub enum MinoBlock {
     ORANGE,
     GREEN,
     RED,
+}
+
+impl Into<MinoEntity> for MinoBlock {
+    fn into(self) -> MinoEntity {
+        use MinoEntity::*;
+
+        match self {
+            MinoBlock::AQUA => AQUA,
+            MinoBlock::YELLOW => YELLOW,
+            MinoBlock::PURPLE => PURPLE,
+            MinoBlock::BLUE => BLUE,
+            MinoBlock::ORANGE => ORANGE,
+            MinoBlock::GREEN => GREEN,
+            MinoBlock::RED => RED,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+pub enum MinoEntity {
+    AQUA,
+    YELLOW,
+    PURPLE,
+    BLUE,
+    ORANGE,
+    GREEN,
+    RED,
+
     AIR,
 }
 
-impl MinoBlock {
-    pub fn color(&self) -> Option<MinoColor> {
+impl MinoEntity {
+    pub fn block(&self) -> Option<MinoBlock> {
+        use MinoBlock::*;
+
         match self {
-            MinoBlock::AQUA => Some(MinoColor::AQUA),
-            MinoBlock::YELLOW => Some(MinoColor::YELLOW),
-            MinoBlock::PURPLE => Some(MinoColor::PURPLE),
-            MinoBlock::BLUE => Some(MinoColor::BLUE),
-            MinoBlock::ORANGE => Some(MinoColor::ORANGE),
-            MinoBlock::GREEN => Some(MinoColor::GREEN),
-            MinoBlock::RED => Some(MinoColor::RED),
-            _ => None,
+            MinoEntity::AQUA => Some(AQUA),
+            MinoEntity::YELLOW => Some(YELLOW),
+            MinoEntity::PURPLE => Some(PURPLE),
+            MinoEntity::BLUE => Some(BLUE),
+            MinoEntity::ORANGE => Some(ORANGE),
+            MinoEntity::GREEN => Some(GREEN),
+            MinoEntity::RED => Some(RED),
+            MinoEntity::AIR => None,
         }
     }
-
-    fn exists(&self) -> bool {
-        match self {
-            MinoBlock::AIR => false,
-            _ => true,
-        }
-    }
-}
-
-enum Movement {
-    MoveLeft,
-    MoveRight,
-    DropSoftly,
-    DropHardly,
-    SpinLeft,
-    SpinRight,
 }
 
 enum RotateDirection {
@@ -379,8 +391,8 @@ mod tests {
         fn to_existences(&self) -> ExistenceField {
             let mut f = ExistenceField::default();
             self.iter().enumerate().for_each(|(y, line)| {
-                line.iter().enumerate().for_each(|(x, block)| {
-                    f[y][x] = block.exists();
+                line.iter().enumerate().for_each(|(x, entity)| {
+                    f[y][x] = entity.block().is_some();
                 })
             });
 
@@ -761,7 +773,7 @@ mod tests {
 
     #[test]
     fn peek_bag_minos() {
-        let mut bag = MinoBag::new();
+        let bag = MinoBag::new();
         let l = Tetrimino::all().len();
 
         assert_eq!(bag.peek(l).len(), l);
@@ -770,7 +782,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn peek_bag_minos_exceeded_limit() {
-        let mut bag = MinoBag::new();
+        let bag = MinoBag::new();
         let l = Tetrimino::all().len();
 
         bag.peek(l + 1);
@@ -780,7 +792,7 @@ mod tests {
     fn spawn_mino_j() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::J).into();
-        assert_eq!(game.spawn_mino(), TetrisResult::Success);
+        assert_eq!(game.spawn_mino(), SpawnResult::Success);
 
         let expected = [
             [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -812,7 +824,7 @@ mod tests {
     fn spawn_mino_i() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::I).into();
-        assert_eq!(game.spawn_mino(), TetrisResult::Success);
+        assert_eq!(game.spawn_mino(), SpawnResult::Success);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -844,7 +856,7 @@ mod tests {
     fn spawn_mino_o() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::O).into();
-        assert_eq!(game.spawn_mino(), TetrisResult::Success);
+        assert_eq!(game.spawn_mino(), SpawnResult::Success);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

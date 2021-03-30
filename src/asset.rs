@@ -35,7 +35,7 @@ impl Asset {
 pub struct Image {
     pub cursor: graphics::Image,
     pub title_particle: graphics::Image,
-    mino_block: graphics::Image,
+    uncolored_mino_block: graphics::Image,
     mino_block_images: HashMap<MinoBlock, graphics::Image>,
 }
 
@@ -45,89 +45,87 @@ impl Image {
             Image {
                 cursor: graphics::Image::new(ctx, "/image/cursor.png")?,
                 title_particle: graphics::Image::new(ctx, "/image/particles/title.png")?,
-                mino_block: graphics::Image::new(ctx, "/image/mino_block.png")?,
+                uncolored_mino_block: graphics::Image::new(ctx, "/image/mino_block.png")?,
                 mino_block_images: HashMap::new(),
             }
         )
     }
 
-    pub fn mino_block<'a>(&'a mut self, ctx: &mut Context, block: &MinoBlock) -> GameResult<Option<&'a graphics::Image>> {
-        if self.mino_block_images.get(block) == None {
-            if let Some(img) = self.colorize(ctx, block)? {
-                let _ = self.mino_block_images.insert(block.clone(), img);
-            }
+    pub fn mino_block<'a>(&'a mut self, ctx: &mut Context, block: &MinoBlock) -> GameResult<&'a graphics::Image> {
+        if self.mino_block_images.get(block).is_none() {
+            let _ = self.mino_block_images.insert(
+                block.clone(),
+                self.gen_colorized_mino_block(ctx, block,
+                )?,
+            );
         }
 
-        Ok(self.mino_block_images.get(block))
+        Ok(self.mino_block_images.get(block).expect("failed to gen image"))
     }
 
-    fn colorize(&self, ctx: &mut Context, block: &MinoBlock) -> GameResult<Option<graphics::Image>> {
-        const RED: usize = 0;
-        const GREEN: usize = 1;
-        const BLUE: usize = 2;
-        const ALPHA: usize = 3;
+    fn gen_colorized_mino_block(&self, ctx: &mut Context, block: &MinoBlock) -> GameResult<graphics::Image> {
+        const RED_VALUE: usize = 0;
+        const GREEN_VALUE: usize = 1;
+        const BLUE_VALUE: usize = 2;
+        const ALPHA_VALUE: usize = 3;
 
-        let w = self.mino_block.width();
-        let h = self.mino_block.height();
+        let w = self.uncolored_mino_block.width();
+        let h = self.uncolored_mino_block.height();
 
-        if block == &MinoBlock::AIR {
-            return Ok(None);
-        }
-
-        let rgba = self.mino_block
+        let rgba = self.uncolored_mino_block
             .to_rgba8(ctx)?
             .iter()
             .enumerate()
-            .map(|(idx, &v)| match block {
-                MinoBlock::AQUA => match idx % 4 {
-                    RED => v.saturating_sub(64),
-                    BLUE | GREEN => v.saturating_add(80),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::YELLOW => match idx % 4 {
-                    RED | GREEN => v.saturating_add(80),
-                    BLUE => v.saturating_sub(64),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::PURPLE => match idx % 4 {
-                    RED | BLUE => v.saturating_add(80),
-                    GREEN => v.saturating_sub(64),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::BLUE => match idx % 4 {
-                    BLUE => v.saturating_add(80),
-                    RED | GREEN => v.saturating_sub(64),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::ORANGE => match idx % 4 {
-                    RED => v.saturating_add(172),
-                    GREEN => v.saturating_add(48),
-                    BLUE => v.saturating_sub(48),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::GREEN => match idx % 4 {
-                    GREEN => v.saturating_add(80),
-                    RED | BLUE => v.saturating_sub(64),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::RED => match idx % 4 {
-                    RED => v.saturating_add(80),
-                    GREEN | BLUE => v.saturating_sub(64),
-                    ALPHA => 255u8,
-                    _ => unreachable!(),
-                },
-                MinoBlock::AIR => unreachable!(),
+            .map(|(idx, &v)| {
+                match block {
+                    MinoBlock::AQUA => match idx % 4 {
+                        RED_VALUE => v.saturating_sub(64),
+                        BLUE_VALUE | GREEN_VALUE => v.saturating_add(80),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                    MinoBlock::YELLOW => match idx % 4 {
+                        RED_VALUE | GREEN_VALUE => v.saturating_add(80),
+                        BLUE_VALUE => v.saturating_sub(64),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                    MinoBlock::PURPLE => match idx % 4 {
+                        RED_VALUE | BLUE_VALUE => v.saturating_add(80),
+                        GREEN_VALUE => v.saturating_sub(64),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                    MinoBlock::BLUE => match idx % 4 {
+                        BLUE_VALUE => v.saturating_add(80),
+                        RED_VALUE | GREEN_VALUE => v.saturating_sub(64),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                    MinoBlock::ORANGE => match idx % 4 {
+                        RED_VALUE => v.saturating_add(172),
+                        GREEN_VALUE => v.saturating_add(48),
+                        BLUE_VALUE => v.saturating_sub(48),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                    MinoBlock::GREEN => match idx % 4 {
+                        GREEN_VALUE => v.saturating_add(80),
+                        RED_VALUE | BLUE_VALUE => v.saturating_sub(64),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                    MinoBlock::RED => match idx % 4 {
+                        RED_VALUE => v.saturating_add(80),
+                        GREEN_VALUE | BLUE_VALUE => v.saturating_sub(64),
+                        ALPHA_VALUE => 255u8,
+                        _ => unreachable!(),
+                    },
+                }
             })
             .collect::<Vec<_>>();
 
-        let img = graphics::Image::from_rgba8(ctx, w, h, rgba.as_slice())?;
-        Ok(Some(img))
+        Ok(graphics::Image::from_rgba8(ctx, w, h, rgba.as_slice())?)
     }
 }
 
