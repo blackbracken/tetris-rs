@@ -12,7 +12,7 @@ use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
-use crate::input::{pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right};
+use crate::input::{pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_down, pressed_up};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
@@ -262,16 +262,14 @@ fn update_to_drop(
         }
     }
 
-    let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W)
-        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadUp));
+    let pressed_up = pressed_up(ctx);
     if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
         if let Some(_) = state.game.drop_hardly() {
             on_put_dropping_mino(ctx, state, asset)?;
         }
     }
 
-    let pressed_down = keyboard::is_key_pressed(ctx, KeyCode::S)
-        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadDown));
+    let pressed_down = pressed_down(ctx);
     if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
         if state.game.board.dropping_mino_status() == DroppingMinoStatus::InAir {
             state.game.drop_softly();
