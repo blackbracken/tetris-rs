@@ -188,11 +188,30 @@ fn update_to_drop(
     state: &mut Play40LineState,
     asset: &mut Asset,
 ) -> TetrisResult {
-    const DROP_INTERVAL: Duration = Duration::new(1, 0);
+    const NATURAL_DROP_INTERVAL: Duration = Duration::new(1, 0);
 
-    fn recognizes_as_dropping_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
+    fn recognizes_as_hard_drop_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
         const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
-        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 2;
+        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 4;
+
+        if pressed {
+            let inputs = state.continuous_inputs
+                .entry(key_input)
+                .or_insert(0);
+            *inputs += 1;
+            let inputs = *inputs;
+
+            inputs == 1 || (inputs >= CONTINUOUS_WAIT && inputs % CONTINUOUS_INTERVAL == 0)
+        } else {
+            state.continuous_inputs.insert(key_input, 0);
+
+            false
+        }
+    }
+
+    fn recognizes_as_soft_drop_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
+        const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
+        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 20;
 
         if pressed {
             let inputs = state.continuous_inputs
@@ -210,12 +229,19 @@ fn update_to_drop(
     }
 
     let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W);
-    if recognizes_as_dropping_input(state, pressed_up, KeyInput::Up) {
+    if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
         state.game.drop_hardly();
         asset.audio.play_se(ctx, Se::MinoDropHardly);
     }
 
-    if state.last_dropped + DROP_INTERVAL < state.ingame_elapsed {
+    let pressed_down = keyboard::is_key_pressed(ctx, KeyCode::S);
+    if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
+        state.game.drop_softly();
+        state.last_dropped = state.ingame_elapsed;
+        asset.audio.play_se(ctx, Se::MinoDropHardly);
+    }
+
+    if state.last_dropped + NATURAL_DROP_INTERVAL < state.ingame_elapsed {
         let r = state.game.drop_softly();
 
         match r {
