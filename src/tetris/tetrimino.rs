@@ -26,14 +26,6 @@ impl Tetrimino {
         }
     }
 
-    pub fn edge_length(&self) -> usize {
-        match self {
-            T | S | Z | L | J => 3,
-            O => 2,
-            I => 4,
-        }
-    }
-
     pub fn shapes(&self) -> HashMap<MinoRotation, MinoShape> {
         match self {
             T => maplit::hashmap! {

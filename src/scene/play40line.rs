@@ -3,18 +3,13 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
-use ggez::event::KeyCode;
 use ggez::graphics::{DrawMode, PxScale, Rect};
-use ggez::input::gamepad::gamepads;
-use ggez::input::gamepad::gilrs::Button;
-use ggez::input::keyboard;
 use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
-use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
 use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
 use crate::tetris::game::{DropResult, Game, Point};
@@ -275,14 +270,14 @@ fn update_to_drop(
         if state.game.board.dropping_mino_status() == DroppingMinoStatus::InAir {
             state.game.drop_softly();
             state.last_dropped = state.ingame_elapsed;
-            asset.audio.play_se(ctx, Se::MinoDropSoftly);
+            asset.audio.play_se(ctx, Se::MinoDropSoftly)?;
         }
     }
 
     if state.last_dropped + NATURAL_DROP_INTERVAL < state.ingame_elapsed {
         match state.game.drop_softly() {
             DropResult::SoftDropped => {
-                asset.audio.play_se(ctx, Se::MinoDropSoftly);
+                asset.audio.play_se(ctx, Se::MinoDropSoftly)?;
             }
             DropResult::Put => {
                 on_put_dropping_mino(ctx, state, asset)?;
@@ -332,7 +327,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     match state.countdown {
         Some(0) | None => {
             if let Some(held) = state.game.hold_mino {
-                draw_hold_mino(ctx, asset, &held);
+                draw_hold_mino(ctx, asset, &held)?;
             }
             draw_next_minos(ctx, asset, state.game.bag.peek(5).as_slice())?;
             draw_minos_on_field(ctx, asset, state)?;

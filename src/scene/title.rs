@@ -2,15 +2,12 @@ use std::collections::HashMap;
 
 use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{Color, PxScale};
-use ggez::input::keyboard;
-use ggez::input::keyboard::KeyCode;
 use rand::random;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::input::{pressed_down, pressed_enter, pressed_up};
 use crate::router::{Next, Ticket};
-use crate::router::SceneState::ForTitle;
 
 #[derive(Clone)]
 pub struct TitleState {

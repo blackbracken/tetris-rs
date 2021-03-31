@@ -1,10 +1,9 @@
 use std::collections::VecDeque;
-use std::convert::TryFrom;
 
 use rand::prelude::SliceRandom;
 
 use crate::tetris::board::{Board, DroppingMinoStatus, MinoEntity};
-use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
+use crate::tetris::tetrimino::Tetrimino;
 
 pub struct Game {
     pub board: Board,

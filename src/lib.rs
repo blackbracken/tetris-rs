@@ -6,7 +6,6 @@ use std::mem;
 use std::time::Duration;
 
 use ggez::{Context, ContextBuilder, event, GameResult};
-use ggez::conf::{FullscreenType, NumSamples, WindowMode, WindowSetup};
 use ggez::event::{EventHandler, KeyCode, KeyMods};
 use ggez::timer;
 
