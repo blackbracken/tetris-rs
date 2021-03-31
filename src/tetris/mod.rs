@@ -7,3 +7,4 @@ macro_rules! rect_vec {
 
 pub(crate) mod game;
 pub(crate) mod tetrimino;
+pub(crate) mod board;

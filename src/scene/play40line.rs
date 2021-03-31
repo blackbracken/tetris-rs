@@ -12,11 +12,12 @@ use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
-use crate::input::{pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_down, pressed_up};
+use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::game::{DroppingMinoStatus, DropResult, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, Point};
+use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
+use crate::tetris::game::{DropResult, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
@@ -423,17 +424,17 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
 
 fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
     let field = &state.game.board.field();
-    for y in 0..FIELD_VISIBLE_UNIT_HEIGHT {
+    for y in 0..(FIELD_VISIBLE_UNIT_HEIGHT + 1) {
         for x in 0..FIELD_UNIT_WIDTH {
             let entity = field
-                .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT))
+                .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT - 1))
                 .and_then(|array| array.get(x))
                 .unwrap();
 
             if let Some(block) = entity.block() {
                 let img = asset.image.mino_block(ctx, &block)?;
                 let x = x as f32;
-                let y = y as f32;
+                let y = y as f32 - 1.;
 
                 graphics::draw(
                     ctx,
