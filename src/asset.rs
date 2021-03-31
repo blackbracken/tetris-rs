@@ -198,7 +198,6 @@ impl Audio {
                     }
                     Bgm::InGame => {
                         src.set_volume(0.12);
-                        src.set_pitch(0.9);
                         src
                     }
                 }
@@ -239,7 +238,7 @@ impl Audio {
                     }
                     Se::MinoDropSoftly => {
                         src.set_volume(0.15);
-                    },
+                    }
                     Se::MinoDropHardly => {
                         src.set_volume(0.6);
                         src.set_pitch(0.65);
@@ -294,15 +293,17 @@ pub struct Color {
     pub panel: graphics::Color,
     pub separator: graphics::Color,
     pub grid_line: graphics::Color,
+    pub frame: graphics::Color,
 }
 
 impl Color {
     fn new() -> Color {
         Color {
             background: graphics::Color::from_rgb(24, 24, 24),
-            panel: graphics::Color::from_rgba(48, 240, 255, 16),
+            panel: graphics::Color::from_rgba(128, 255, 255, 32),
             separator: graphics::Color::from_rgb(64, 64, 64),
             grid_line: graphics::Color::from_rgba(24, 24, 24, 128),
+            frame: graphics::Color::from_rgb(148, 148, 148),
         }
     }
 }

@@ -26,10 +26,12 @@ const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_U
 const SIDE_PANEL_WIDTH: f32 = 4. * HALF_BLOCK_LENGTH;
 const MINO_SPACE_IN_SIDE_PANEL_HEIGHT: f32 = HALF_BLOCK_LENGTH * 6.;
 
-const HOLD_ORIGIN_X: f32 = FIELD_ORIGIN_X - 16. - SIDE_PANEL_WIDTH;
+const SIDE_PANEL_PADDING: f32 = BLOCK_LENGTH;
+
+const HOLD_ORIGIN_X: f32 = FIELD_ORIGIN_X - SIDE_PANEL_PADDING - SIDE_PANEL_WIDTH;
 const HOLD_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
-const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + 16.;
+const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + SIDE_PANEL_PADDING;
 const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 pub struct Play40LineState {
@@ -320,7 +322,7 @@ enum KeyInput {
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
     graphics::clear(ctx, asset.color.background);
 
-    draw_field_grid(ctx, asset)?;
+    draw_field(ctx, asset)?;
     draw_hold_panel(ctx, asset)?;
     draw_next_panel(ctx, asset)?;
 
@@ -342,29 +344,29 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     Ok(())
 }
 
-fn draw_field_grid(ctx: &mut Context, asset: &Asset) -> GameResult {
+fn draw_field(ctx: &mut Context, asset: &Asset) -> GameResult {
     const FIELD_WIDTH: f32 = BLOCK_LENGTH * (FIELD_UNIT_WIDTH as f32);
-    const FIELD_HEIGHT: f32 = BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32);
+    const FIELD_HEIGHT: f32 = BLOCK_LENGTH * ((FIELD_VISIBLE_UNIT_HEIGHT + 1) as f32);
 
-    let rect = graphics::Mesh::new_rectangle(
+    let background = graphics::Mesh::new_rectangle(
         ctx,
         DrawMode::fill(),
         Rect::new(
             FIELD_ORIGIN_X,
-            FIELD_ORIGIN_Y,
+            FIELD_ORIGIN_Y - BLOCK_LENGTH,
             FIELD_WIDTH,
             FIELD_HEIGHT,
         ),
         asset.color.panel,
     )?;
-    graphics::draw(ctx, &rect, graphics::DrawParam::default())?;
+    graphics::draw(ctx, &background, graphics::DrawParam::default())?;
 
     for x in (0..=FIELD_UNIT_WIDTH).map(|x| FIELD_ORIGIN_X + (x as f32) * BLOCK_LENGTH) {
         let line = graphics::Mesh::new_line(
             ctx,
             &[
-                [x, FIELD_ORIGIN_Y],
-                [x, FIELD_ORIGIN_Y + FIELD_HEIGHT]
+                [x, FIELD_ORIGIN_Y - BLOCK_LENGTH],
+                [x, FIELD_ORIGIN_Y - BLOCK_LENGTH + FIELD_HEIGHT]
             ],
             1.,
             asset.color.grid_line,
@@ -372,7 +374,7 @@ fn draw_field_grid(ctx: &mut Context, asset: &Asset) -> GameResult {
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
 
-    for y in (0..=FIELD_VISIBLE_UNIT_HEIGHT).map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH) {
+    for y in (-1..=(FIELD_VISIBLE_UNIT_HEIGHT as isize)).map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH) {
         let line = graphics::Mesh::new_line(
             ctx,
             &[
@@ -384,6 +386,19 @@ fn draw_field_grid(ctx: &mut Context, asset: &Asset) -> GameResult {
         )?;
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
+
+    let frame = graphics::Mesh::new_rectangle(
+        ctx,
+        DrawMode::stroke(HALF_BLOCK_LENGTH),
+        Rect::new(
+            FIELD_ORIGIN_X - HALF_BLOCK_LENGTH / 2.,
+            FIELD_ORIGIN_Y - HALF_BLOCK_LENGTH * 3. / 2.,
+            FIELD_WIDTH + HALF_BLOCK_LENGTH - 1.0,
+            FIELD_HEIGHT - 1.0,
+        ),
+        asset.color.frame,
+    )?;
+    graphics::draw(ctx, &frame, graphics::DrawParam::default())?;
 
     Ok(())
 }
@@ -419,28 +434,43 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
 
 fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
     let field = &state.game.board.field();
-    for y in 0..(FIELD_VISIBLE_UNIT_HEIGHT + 1) {
+    for y in 0..(FIELD_VISIBLE_UNIT_HEIGHT) {
         for x in 0..FIELD_UNIT_WIDTH {
             let entity = field
-                .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT - 1))
+                .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT))
                 .and_then(|array| array.get(x))
                 .unwrap();
 
             if let Some(block) = entity.block() {
                 let img = asset.image.mino_block(ctx, &block)?;
-                let x = x as f32;
-                let y = y as f32 - 1.;
+                let x = (FIELD_ORIGIN_X as f32) + (x as f32) * BLOCK_LENGTH;
+                let y = (FIELD_ORIGIN_Y as f32) + (y as f32) * BLOCK_LENGTH;
 
                 graphics::draw(
                     ctx,
                     img,
-                    graphics::DrawParam::default()
-                        .dest([
-                            (FIELD_ORIGIN_X as f32) + (x * BLOCK_LENGTH) as f32,
-                            (FIELD_ORIGIN_Y as f32) + (y * BLOCK_LENGTH) as f32,
-                        ]),
+                    graphics::DrawParam::default().dest([x, y]),
                 )?;
             }
+        }
+    }
+
+    let line = field
+        .get(FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT - 1)
+        .unwrap();
+    for (x, e) in line.iter().enumerate() {
+        if let Some(block) = e.block() {
+            let img = asset.image.mino_block(ctx, &block)?;
+            let x = (FIELD_ORIGIN_X as f32) + (x as f32) * BLOCK_LENGTH;
+            let y = (FIELD_ORIGIN_Y as f32) - BLOCK_LENGTH / 2.;
+
+            graphics::draw(
+                ctx,
+                img,
+                graphics::DrawParam::default()
+                    .src(graphics::Rect::new(0., 0.5, 1., 0.5))
+                    .dest([x, y]),
+            )?;
         }
     }
 
