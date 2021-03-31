@@ -24,6 +24,12 @@ const FONT_SIZE: f32 = 24.;
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
 const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
 
+const SIDE_PANEL_WIDTH: f32 = 4. * HALF_BLOCK_LENGTH;
+const MINO_SPACE_IN_SIDE_PANEL_HEIGHT: f32 = HALF_BLOCK_LENGTH * 6.;
+
+const HOLD_ORIGIN_X: f32 = FIELD_ORIGIN_X - 16. - SIDE_PANEL_WIDTH;
+const HOLD_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
+
 const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + 16.;
 const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
@@ -289,6 +295,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     graphics::clear(ctx, asset.color.background);
 
     draw_field_grid(ctx, asset)?;
+    draw_hold_panel(ctx, asset)?;
     draw_next_panel(ctx, asset)?;
 
     match state.countdown {
@@ -411,10 +418,47 @@ fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineS
     Ok(())
 }
 
-const NEXT_MINOS_AMOUNT: usize = 5;
-const NEXT_MINO_SPACE_LENGTH: f32 = HALF_BLOCK_LENGTH * 6.;
+fn draw_hold_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
+    let text = graphics::Text::new(
+        graphics::TextFragment::new("HOLD")
+            .font(asset.font.vt323)
+            .scale(PxScale::from(FONT_SIZE))
+    );
+    graphics::draw(
+        ctx,
+        &text,
+        graphics::DrawParam::default()
+            .dest([HOLD_ORIGIN_X, HOLD_ORIGIN_Y - FONT_SIZE]),
+    )?;
+
+    let line = graphics::Mesh::new_line(
+        ctx,
+        &[
+            [HOLD_ORIGIN_X, HOLD_ORIGIN_Y],
+            [HOLD_ORIGIN_X + SIDE_PANEL_WIDTH, HOLD_ORIGIN_Y]
+        ],
+        2.,
+        asset.color.separator,
+    )?;
+    graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+
+    let line = graphics::Mesh::new_line(
+        ctx,
+        &[
+            [HOLD_ORIGIN_X, HOLD_ORIGIN_Y + MINO_SPACE_IN_SIDE_PANEL_HEIGHT],
+            [HOLD_ORIGIN_X + SIDE_PANEL_WIDTH, HOLD_ORIGIN_Y + MINO_SPACE_IN_SIDE_PANEL_HEIGHT]
+        ],
+        1.,
+        asset.color.separator,
+    )?;
+    graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+
+    Ok(())
+}
 
 fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
+    const NEXT_MINOS_AMOUNT: usize = 5;
+
     let text = graphics::Text::new(
         graphics::TextFragment::new("NEXT")
             .font(asset.font.vt323)
@@ -431,7 +475,7 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
         ctx,
         &[
             [NEXT_ORIGIN_X, NEXT_ORIGIN_Y],
-            [NEXT_ORIGIN_X + 4. * HALF_BLOCK_LENGTH, NEXT_ORIGIN_Y]
+            [NEXT_ORIGIN_X + SIDE_PANEL_WIDTH, NEXT_ORIGIN_Y]
         ],
         2.,
         asset.color.separator,
@@ -439,12 +483,12 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     graphics::draw(ctx, &line, graphics::DrawParam::default())?;
 
     for idx in 1..=NEXT_MINOS_AMOUNT {
-        let y = NEXT_ORIGIN_Y + (idx as f32) * NEXT_MINO_SPACE_LENGTH;
+        let y = NEXT_ORIGIN_Y + (idx as f32) * MINO_SPACE_IN_SIDE_PANEL_HEIGHT;
         let sep = graphics::Mesh::new_line(
             ctx,
             &[
                 [NEXT_ORIGIN_X, y],
-                [NEXT_ORIGIN_X + 4. * HALF_BLOCK_LENGTH, y]
+                [NEXT_ORIGIN_X + SIDE_PANEL_WIDTH, y]
             ],
             1.,
             asset.color.separator,
@@ -463,7 +507,7 @@ fn draw_next_minos(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) ->
             _ => 0.,
         };
         let y = NEXT_ORIGIN_Y
-            + (idx as f32) * NEXT_MINO_SPACE_LENGTH
+            + (idx as f32) * MINO_SPACE_IN_SIDE_PANEL_HEIGHT
             + 2. * HALF_BLOCK_LENGTH
             + match mino {
             Tetrimino::I => -HALF_BLOCK_LENGTH,
