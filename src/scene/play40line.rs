@@ -5,6 +5,8 @@ use std::time::Duration;
 use ggez::{Context, GameResult, graphics};
 use ggez::event::KeyCode;
 use ggez::graphics::{DrawMode, PxScale, Rect};
+use ggez::input::gamepad::gamepads;
+use ggez::input::gamepad::gilrs::Button;
 use ggez::input::keyboard;
 use ggez::timer;
 
@@ -154,32 +156,34 @@ fn update_to_move(
         }
     }
 
-    let pressed_move_left = [KeyCode::A, KeyCode::Left]
-        .iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    let pressed_move_left = [KeyCode::A, KeyCode::Left].iter()
+        .any(|&key| keyboard::is_key_pressed(ctx, key))
+        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadLeft));
     if recognizes_as_moving_input(state, pressed_move_left, KeyInput::MoveLeft) {
         if state.game.move_left() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_move_right = [KeyCode::D, KeyCode::Right]
-        .iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    let pressed_move_right = [KeyCode::D, KeyCode::Right].iter()
+        .any(|&key| keyboard::is_key_pressed(ctx, key))
+        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadRight));
     if recognizes_as_moving_input(state, pressed_move_right, KeyInput::MoveRight) {
         if state.game.move_right() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_spin_left = keyboard::is_key_pressed(ctx, KeyCode::J);
+    let pressed_spin_left = keyboard::is_key_pressed(ctx, KeyCode::J)
+        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::South));
     if recognizes_as_spinning_input(state, pressed_spin_left, KeyInput::SpinLeft) {
         if state.game.spin_left() {
             asset.audio.play_se(ctx, Se::MinoSpin)?;
         }
     }
 
-    let pressed_spin_right = keyboard::is_key_pressed(ctx, KeyCode::K);
+    let pressed_spin_right = keyboard::is_key_pressed(ctx, KeyCode::K)
+        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::East));
     if recognizes_as_spinning_input(state, pressed_spin_right, KeyInput::SpinRight) {
         if state.game.spin_right() {
             asset.audio.play_se(ctx, Se::MinoSpin)?;
@@ -234,14 +238,16 @@ fn update_to_drop(
         }
     }
 
-    let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W);
+    let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W)
+        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadUp));
     if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
         if let Some(_) = state.game.drop_hardly() {
             on_put_dropping_mino(ctx, state, asset)?;
         }
     }
 
-    let pressed_down = keyboard::is_key_pressed(ctx, KeyCode::S);
+    let pressed_down = keyboard::is_key_pressed(ctx, KeyCode::S)
+        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadDown));
     if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
         if state.game.board.dropping_mino_status() == DroppingMinoStatus::InAir {
             state.game.drop_softly();
