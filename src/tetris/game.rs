@@ -49,14 +49,20 @@ impl Game {
     }
 
     pub fn drop_softly(&mut self) -> DropResult {
-        self.board.drop_softly()
+        match self.board.drop_softly() {
+            DroppingMinoStatus::InAir => {
+                DropResult::SoftDropped
+            }
+            DroppingMinoStatus::OnGround => {
+                self.put_and_spawn(); // TODO: handle error
+                DropResult::Put
+            }
+        }
     }
 
-    pub fn drop_hardly(&mut self) -> bool {
-        self.board.drop_hardly();
-        self.put_and_spawn();
-
-        true
+    pub fn drop_hardly(&mut self) -> Option<usize> {
+        self.board.drop_hardly()
+            .filter(|_| self.put_and_spawn() == SpawnResult::Success)
     }
 
     fn spawn_mino(&mut self) -> SpawnResult {
@@ -85,6 +91,12 @@ impl Game {
         self.board.determine_dropping_mino();
         self.spawn_mino()
     }
+}
+
+pub enum DropResult {
+    SoftDropped,
+    Put,
+    Failed,
 }
 
 #[derive(Copy, Clone)]
@@ -125,6 +137,17 @@ impl Board {
         }
 
         field
+    }
+
+    pub fn dropping_mino_status(&self) -> DroppingMinoStatus {
+        let mut clone = self.clone();
+        clone.dropping_point.y += 1;
+
+        if clone.establishes_field() {
+            DroppingMinoStatus::InAir
+        } else {
+            DroppingMinoStatus::OnGround
+        }
     }
 
     fn try_move_x(&mut self, addition: isize) -> bool {
@@ -168,45 +191,26 @@ impl Board {
             .is_some()
     }
 
-    fn drop_softly(&mut self) -> DropResult {
-        let mut clone = self.clone();
-
-        clone.dropping_point.y += 1;
-
-        if clone.establishes_field() {
-            self.dropping_point.y += 1;
-
-            clone.dropping_point.y += 1;
-            if clone.establishes_field() {
-                DropResult::InAir
-            } else {
-                DropResult::OnGround
+    fn drop_softly(&mut self) -> DroppingMinoStatus {
+        let status = self.dropping_mino_status();
+        match status {
+            DroppingMinoStatus::InAir => {
+                self.dropping_point.y += 1;
             }
-        } else {
-            clone.dropping_point.y -= 1;
-
-            if clone.establishes_field() {
-                DropResult::OnGround
-            } else {
-                DropResult::Failure
-            }
+            DroppingMinoStatus::OnGround => ()
         }
+
+        status
     }
 
     fn drop_hardly(&mut self) -> Option<usize> {
         let mut n = 0;
         loop {
             match self.drop_softly() {
-                DropResult::InAir => { n += 1; }
-                DropResult::OnGround => {
-                    n += 1;
-                    break;
-                }
-                DropResult::Failure => { return None; }
+                DroppingMinoStatus::InAir => { n += 1; }
+                DroppingMinoStatus::OnGround => { return Some(n); }
             }
         }
-
-        Some(n)
     }
 
     fn determine_dropping_mino(&mut self) {
@@ -265,10 +269,9 @@ pub enum SpawnResult {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum DropResult {
+pub enum DroppingMinoStatus {
     InAir,
     OnGround,
-    Failure,
 }
 
 pub struct MinoBag {
@@ -693,7 +696,7 @@ mod tests {
     fn drop_t_softly() {
         let mut board = Board::new(Tetrimino::T);
 
-        assert_eq!(board.drop_softly(), DropResult::InAir);
+        assert_eq!(board.drop_softly(), DroppingMinoStatus::InAir);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

@@ -13,7 +13,7 @@ use crate::asset::{Asset, Bgm, Se};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::game::{DropResult, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, Point};
+use crate::tetris::game::{DroppingMinoStatus, DropResult, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
@@ -99,7 +99,7 @@ pub fn update(
         update_to_move(ctx, &mut state, asset)?;
 
         // TODO: implement
-        match update_to_drop(ctx, &mut state, asset) {
+        match update_to_drop(ctx, &mut state, asset)? {
             TetrisResult::Continue => {}
             TetrisResult::End => {}
         }
@@ -187,7 +187,7 @@ fn update_to_drop(
     ctx: &mut Context,
     state: &mut Play40LineState,
     asset: &mut Asset,
-) -> TetrisResult {
+) -> GameResult<TetrisResult> {
     const NATURAL_DROP_INTERVAL: Duration = Duration::new(1, 0);
 
     fn recognizes_as_hard_drop_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
@@ -230,33 +230,44 @@ fn update_to_drop(
 
     let pressed_up = keyboard::is_key_pressed(ctx, KeyCode::W);
     if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
-        state.game.drop_hardly();
-        asset.audio.play_se(ctx, Se::MinoDropHardly);
+        if let Some(_) = state.game.drop_hardly() {
+            on_put_dropping_mino(ctx, state, asset)?;
+        }
     }
 
     let pressed_down = keyboard::is_key_pressed(ctx, KeyCode::S);
     if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
-        state.game.drop_softly();
-        state.last_dropped = state.ingame_elapsed;
-        asset.audio.play_se(ctx, Se::MinoDropSoftly);
+        if state.game.board.dropping_mino_status() == DroppingMinoStatus::InAir {
+            state.game.drop_softly();
+            state.last_dropped = state.ingame_elapsed;
+            asset.audio.play_se(ctx, Se::MinoDropSoftly);
+        }
     }
 
     if state.last_dropped + NATURAL_DROP_INTERVAL < state.ingame_elapsed {
-        let r = state.game.drop_softly();
-
-        match r {
-            // TODO: implement
-            DropResult::InAir => {}
-            DropResult::OnGround => {}
-            DropResult::Failure => {
-                return TetrisResult::End;
+        match state.game.drop_softly() {
+            DropResult::SoftDropped => {
+                asset.audio.play_se(ctx, Se::MinoDropSoftly);
+            }
+            DropResult::Put => {
+                on_put_dropping_mino(ctx, state, asset)?;
+            }
+            DropResult::Failed => {
+                return Ok(TetrisResult::End);
             }
         }
 
         state.last_dropped = state.ingame_elapsed;
     }
 
-    TetrisResult::Continue
+    Ok(TetrisResult::Continue)
+}
+
+fn on_put_dropping_mino(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset) -> GameResult {
+    state.continuous_inputs.retain(|input, _| [KeyInput::Up, KeyInput::Down].contains(input));
+    asset.audio.play_se(ctx, Se::MinoDropHardly)?;
+
+    Ok(())
 }
 
 enum TetrisResult {

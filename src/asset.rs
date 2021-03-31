@@ -238,10 +238,10 @@ impl Audio {
                         src.set_volume(0.75);
                     }
                     Se::MinoDropSoftly => {
-                        src.set_volume(0.3);
+                        src.set_volume(0.15);
                     },
                     Se::MinoDropHardly => {
-                        src.set_volume(0.4);
+                        src.set_volume(0.6);
                         src.set_pitch(0.65);
                     }
                 }
