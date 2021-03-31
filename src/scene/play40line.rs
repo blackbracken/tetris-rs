@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
-use ggez::graphics::{DrawMode, PxScale, Rect};
+use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
 use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
@@ -11,7 +11,7 @@ use crate::asset::{Asset, Bgm, Se};
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
+use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, MinoEntity};
 use crate::tetris::game::{DropResult, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
@@ -333,6 +333,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
             }
             draw_next_minos(ctx, asset, state.game.bag.peek(5).as_slice())?;
             draw_minos_on_field(ctx, asset, state)?;
+            draw_dropping_mino_prediction(ctx, state)?;
         }
         Some(c) => {
             draw_count_down(ctx, asset, c)?;
@@ -470,6 +471,44 @@ fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineS
                 graphics::DrawParam::default()
                     .src(graphics::Rect::new(0., 0.5, 1., 0.5))
                     .dest([x, y]),
+            )?;
+        }
+    }
+
+    Ok(())
+}
+
+fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> GameResult {
+    const PREDICTION_PADDING: f32 = 3.;
+
+    let field = state.game.board.field();
+
+    for prediction in state.game.board.calc_dropping_mino_prediction() {
+        let entity = field
+            .get(prediction.y as usize)
+            .and_then(|line| line.get(prediction.x as usize))
+            .unwrap();
+
+        if entity.is_air() {
+            let x = (FIELD_ORIGIN_X as f32) + (prediction.x as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
+            let y = (FIELD_ORIGIN_Y as f32) + ((prediction.y - 2) as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
+
+            let square = graphics::Mesh::new_rectangle(
+                ctx,
+                DrawMode::stroke(2.),
+                Rect::new(
+                    x,
+                    y,
+                    BLOCK_LENGTH - 2. * PREDICTION_PADDING,
+                    BLOCK_LENGTH - 2. * PREDICTION_PADDING,
+                ),
+                graphics::Color::from_rgb(32, 32, 32),
+            )?;
+
+            graphics::draw(
+                ctx,
+                &square,
+                DrawParam::default(),
             )?;
         }
     }

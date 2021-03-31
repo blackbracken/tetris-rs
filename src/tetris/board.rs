@@ -147,6 +147,21 @@ impl Board {
         }
     }
 
+    pub fn calc_dropping_mino_prediction(&self) -> Vec<Point> {
+        let mut clone = self.clone();
+
+        loop {
+            clone.dropping_point.y += 1;
+
+            if !clone.establishes_field() {
+                clone.dropping_point.y -= 1;
+                break;
+            }
+        }
+
+        clone.calc_dropping_mino_points()
+    }
+
     fn establishes_field(&self) -> bool {
         self.calc_dropping_mino_points().iter()
             .all(|&point| {
@@ -223,6 +238,10 @@ impl MinoEntity {
             MinoEntity::RED => Some(RED),
             MinoEntity::AIR => None,
         }
+    }
+
+    pub fn is_air(&self) -> bool {
+        self == &MinoEntity::AIR
     }
 }
 
