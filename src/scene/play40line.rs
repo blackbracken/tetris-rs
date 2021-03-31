@@ -238,7 +238,7 @@ fn update_to_drop(
     if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
         state.game.drop_softly();
         state.last_dropped = state.ingame_elapsed;
-        asset.audio.play_se(ctx, Se::MinoDropHardly);
+        asset.audio.play_se(ctx, Se::MinoDropSoftly);
     }
 
     if state.last_dropped + NATURAL_DROP_INTERVAL < state.ingame_elapsed {
