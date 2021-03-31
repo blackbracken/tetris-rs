@@ -17,6 +17,7 @@ mod scene;
 mod router;
 mod asset;
 mod tetris;
+mod input;
 
 pub const FPS: u32 = 60;
 pub const WINDOW_WIDTH: f32 = 960.;

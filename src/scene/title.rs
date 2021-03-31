@@ -8,6 +8,7 @@ use rand::random;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
+use crate::input::{pressed_down, pressed_enter, pressed_up};
 use crate::router::{Next, Ticket};
 use crate::router::SceneState::ForTitle;
 
@@ -92,9 +93,7 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> GameRe
     }
     state.particles.retain(|&particle| particle.y > -30.);
 
-    let pressed_up = [KeyCode::W, KeyCode::Up]
-        .iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    let pressed_up = pressed_up(ctx);
     if pressed_up && !state.pressed_up_before {
         asset.audio.play_se(ctx, Se::MenuClick)?;
 
@@ -104,9 +103,7 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> GameRe
     }
     state.pressed_up_before = pressed_up;
 
-    let pressed_down = [KeyCode::S, KeyCode::Down]
-        .iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key));
+    let pressed_down = pressed_down(ctx);
     if pressed_down && !state.pressed_down_before {
         asset.audio.play_se(ctx, Se::MenuClick)?;
 
@@ -116,7 +113,7 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> GameRe
     }
     state.pressed_down_before = pressed_down;
 
-    if keyboard::is_key_pressed(ctx, KeyCode::Space) {
+    if pressed_enter(ctx) {
         asset.audio.play_se(ctx, Se::MenuClick)?;
 
         Ok(

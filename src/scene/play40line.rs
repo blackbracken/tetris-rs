@@ -12,6 +12,7 @@ use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
+use crate::input::{pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
@@ -98,7 +99,7 @@ pub fn update(
     }
 
     if state.countdown == None {
-        if keyboard::is_key_pressed(ctx, KeyCode::Escape) {
+        if pressed_pause(ctx) {
             return Ok(Next::transit(ShowTitle));
         }
 
@@ -156,34 +157,28 @@ fn update_to_move(
         }
     }
 
-    let pressed_move_left = [KeyCode::A, KeyCode::Left].iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key))
-        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadLeft));
+    let pressed_move_left = pressed_move_left(ctx);
     if recognizes_as_moving_input(state, pressed_move_left, KeyInput::MoveLeft) {
         if state.game.move_left() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_move_right = [KeyCode::D, KeyCode::Right].iter()
-        .any(|&key| keyboard::is_key_pressed(ctx, key))
-        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::DPadRight));
+    let pressed_move_right = pressed_move_right(ctx);
     if recognizes_as_moving_input(state, pressed_move_right, KeyInput::MoveRight) {
         if state.game.move_right() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_spin_left = keyboard::is_key_pressed(ctx, KeyCode::J)
-        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::South));
+    let pressed_spin_left = pressed_spin_left(ctx);
     if recognizes_as_spinning_input(state, pressed_spin_left, KeyInput::SpinLeft) {
         if state.game.spin_left() {
             asset.audio.play_se(ctx, Se::MinoSpin)?;
         }
     }
 
-    let pressed_spin_right = keyboard::is_key_pressed(ctx, KeyCode::K)
-        || gamepads(ctx).any(|(_, pad)| pad.is_pressed(Button::East));
+    let pressed_spin_right = pressed_spin_right(ctx);
     if recognizes_as_spinning_input(state, pressed_spin_right, KeyInput::SpinRight) {
         if state.game.spin_right() {
             asset.audio.play_se(ctx, Se::MinoSpin)?;
