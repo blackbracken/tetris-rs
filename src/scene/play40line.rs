@@ -12,7 +12,7 @@ use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
-use crate::input::{pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right};
+use crate::input::{pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right};
 use crate::router::Next;
 use crate::router::SceneState::ForPlay40Line;
 use crate::router::Ticket::ShowTitle;
@@ -105,6 +105,7 @@ pub fn update(
 
         state.ingame_elapsed += diff_from_last_frame;
 
+        update_to_hold(ctx, &mut state)?;
         update_to_move(ctx, &mut state, asset)?;
 
         // TODO: implement
@@ -115,6 +116,34 @@ pub fn update(
     }
 
     Ok(Next::do_continue(state.into()))
+}
+
+fn update_to_hold(
+    ctx: &Context,
+    state: &mut Play40LineState,
+) -> GameResult {
+    fn recognizes_as_hold_input(state: &mut Play40LineState, pressed: bool) -> bool {
+        if pressed {
+            let inputs = state.continuous_inputs
+                .entry(KeyInput::Hold)
+                .or_insert(0);
+            *inputs += 1;
+            let inputs = *inputs;
+
+            inputs == 1
+        } else {
+            state.continuous_inputs.insert(KeyInput::Hold, 0);
+
+            false
+        }
+    }
+
+    let pressed_hold = pressed_hold(ctx);
+    if recognizes_as_hold_input(state, pressed_hold) {
+        state.game.try_swap_hold()
+    }
+
+    Ok(())
 }
 
 fn update_to_move(
@@ -291,6 +320,7 @@ enum KeyInput {
     MoveRight,
     SpinLeft,
     SpinRight,
+    Hold,
 }
 
 pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> GameResult {
@@ -302,6 +332,9 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
     match state.countdown {
         Some(0) | None => {
+            if let Some(held) = state.game.hold_mino {
+                draw_hold_mino(ctx, asset, &held);
+            }
             draw_next_minos(ctx, asset, state.game.bag.peek(5).as_slice())?;
             draw_minos_on_field(ctx, asset, state)?;
         }
@@ -454,6 +487,26 @@ fn draw_hold_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
         asset.color.separator,
     )?;
     graphics::draw(ctx, &line, graphics::DrawParam::default())?;
+
+    Ok(())
+}
+
+fn draw_hold_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino) -> GameResult {
+    let x = HOLD_ORIGIN_X + match mino {
+        Tetrimino::O => HALF_BLOCK_LENGTH,
+        _ => 0.,
+    };
+    let y = HOLD_ORIGIN_Y + 2. * HALF_BLOCK_LENGTH + match mino {
+        Tetrimino::I => -HALF_BLOCK_LENGTH,
+        _ => 0.,
+    };
+
+    draw_mini_mino(
+        ctx,
+        asset,
+        mino,
+        (x, y).into(),
+    )?;
 
     Ok(())
 }

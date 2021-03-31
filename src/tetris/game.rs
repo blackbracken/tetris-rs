@@ -19,6 +19,8 @@ pub type Field = [[MinoEntity; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
 pub struct Game {
     pub board: Board,
     pub bag: MinoBag,
+    pub hold_mino: Option<Tetrimino>,
+    pub did_already_hold: bool,
 }
 
 impl Game {
@@ -29,6 +31,8 @@ impl Game {
         Game {
             board: Board::new(dropping),
             bag,
+            hold_mino: None,
+            did_already_hold: false,
         }
     }
 
@@ -65,9 +69,29 @@ impl Game {
             .filter(|_| self.put_and_spawn() == SpawnResult::Success)
     }
 
-    fn spawn_mino(&mut self) -> SpawnResult {
-        let mino = self.bag.pop();
+    pub fn try_swap_hold(&mut self) {
+        if !self.did_already_hold {
+            self.did_already_hold = true;
 
+            match self.hold_mino {
+                Some(spawned) => {
+                    let held = self.board.dropping;
+
+                    self.hold_mino = Some(held);
+                    self.spawn_mino(spawned);
+                }
+                None => {
+                    let spawned = self.bag.queue.pop_front().unwrap();
+                    let held = self.board.dropping;
+
+                    self.hold_mino = Some(held);
+                    self.spawn_mino(spawned);
+                }
+            }
+        }
+    }
+
+    fn spawn_mino(&mut self, mino: Tetrimino) -> SpawnResult {
         self.board.dropping = mino;
         self.board.dropping_point = SPAWN_POINT;
         self.board.dropping_rotation = MinoRotation::default();
@@ -83,13 +107,20 @@ impl Game {
         SpawnResult::Success
     }
 
+    fn spawn_mino_from_bag(&mut self) -> SpawnResult {
+        self.did_already_hold = false;
+
+        let mino = self.bag.pop();
+        self.spawn_mino(mino)
+    }
+
     fn put_and_spawn(&mut self) -> SpawnResult {
         if !self.board.establishes_field() {
             return SpawnResult::Fail;
         }
 
         self.board.determine_dropping_mino();
-        self.spawn_mino()
+        self.spawn_mino_from_bag()
     }
 }
 
@@ -821,7 +852,7 @@ mod tests {
     fn spawn_mino_j() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::J).into();
-        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+        assert_eq!(game.spawn_mino_from_bag(), SpawnResult::Success);
 
         let expected = [
             [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -853,7 +884,7 @@ mod tests {
     fn spawn_mino_i() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::I).into();
-        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+        assert_eq!(game.spawn_mino_from_bag(), SpawnResult::Success);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -885,7 +916,7 @@ mod tests {
     fn spawn_mino_o() {
         let mut game = Game::new();
         game.bag.queue = vec!(Tetrimino::O).into();
-        assert_eq!(game.spawn_mino(), SpawnResult::Success);
+        assert_eq!(game.spawn_mino_from_bag(), SpawnResult::Success);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

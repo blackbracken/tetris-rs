@@ -23,7 +23,7 @@ pub fn pressed_pause(ctx: &Context) -> bool {
 pub fn pressed_up(ctx: &Context) -> bool {
     pressed_either(
         ctx,
-        &[KeyCode::Up],
+        &[KeyCode::Up, KeyCode::W],
         &[Button::DPadUp],
     )
 }
@@ -31,7 +31,7 @@ pub fn pressed_up(ctx: &Context) -> bool {
 pub fn pressed_down(ctx: &Context) -> bool {
     pressed_either(
         ctx,
-        &[KeyCode::Down],
+        &[KeyCode::Down, KeyCode::S],
         &[Button::DPadDown],
     )
 }
@@ -65,6 +65,14 @@ pub fn pressed_spin_right(ctx: &Context) -> bool {
         ctx,
         &[KeyCode::K],
         &[Button::East],
+    )
+}
+
+pub fn pressed_hold(ctx: &Context) -> bool {
+    pressed_either(
+        ctx,
+        &[KeyCode::Space],
+        &[Button::LeftTrigger],
     )
 }
 
