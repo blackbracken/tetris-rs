@@ -206,9 +206,13 @@ impl Board {
         let kicks = kicks.get(&rotation).unwrap();
 
         let manipulation = |board: &mut Board, kick: &Point| {
+            let mul = match direction {
+                SpinDirection::Left => -1,
+                SpinDirection::Right => 1,
+            };
             board.dropping_rotation = rotation;
-            board.dropping_point.x += kick.x;
-            board.dropping_point.y += kick.y;
+            board.dropping_point.x += kick.x * mul;
+            board.dropping_point.y += kick.y * mul;
         };
 
         kicks.into_iter()
