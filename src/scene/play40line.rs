@@ -277,6 +277,7 @@ fn update_to_drop(
 
 fn on_put_dropping_mino(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset) -> GameResult {
     state.continuous_inputs.retain(|input, _| [KeyInput::Up, KeyInput::Down].contains(input));
+    state.last_dropped = state.ingame_elapsed;
     asset.audio.play_se(ctx, Se::MinoDropHardly)?;
 
     Ok(())
