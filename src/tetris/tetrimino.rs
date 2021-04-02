@@ -2,11 +2,12 @@ use core::ops;
 use std::collections::HashMap;
 use std::ops::Add;
 
+use ggez::graphics;
+
 use MinoRotation::*;
 use Tetrimino::*;
 
 use crate::macros::rect_vec;
-
 use crate::tetris::game::{MinoBlock, Point, SpinDirection};
 
 type MinoShape = Vec<Vec<bool>>;

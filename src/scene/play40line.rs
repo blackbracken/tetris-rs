@@ -7,7 +7,7 @@ use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
 use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::asset::{Asset, Bgm, Se};
+use crate::asset::{Asset, Bgm, Se, Color};
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
@@ -502,7 +502,7 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
                     BLOCK_LENGTH - 2. * PREDICTION_PADDING,
                     BLOCK_LENGTH - 2. * PREDICTION_PADDING,
                 ),
-                graphics::Color::from_rgb(32, 32, 32),
+                Color::block(&state.game.board.dropping.block()),
             )?;
 
             graphics::draw(

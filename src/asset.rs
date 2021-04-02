@@ -5,6 +5,7 @@ use ggez::{audio, Context, GameResult, graphics};
 use ggez::audio::SoundSource;
 
 use crate::tetris::game::MinoBlock;
+use crate::tetris::tetrimino::Tetrimino;
 
 pub struct Asset {
     pub image: Image,
@@ -304,6 +305,18 @@ impl Color {
             separator: graphics::Color::from_rgb(64, 64, 64),
             grid_line: graphics::Color::from_rgba(24, 24, 24, 128),
             frame: graphics::Color::from_rgb(148, 148, 148),
+        }
+    }
+
+    pub fn block(block: &MinoBlock) -> graphics::Color {
+        match block {
+            MinoBlock::AQUA => graphics::Color::from_rgb(32, 184, 184),
+            MinoBlock::YELLOW => graphics::Color::from_rgb(184, 184, 32),
+            MinoBlock::PURPLE => graphics::Color::from_rgb(184, 32, 184),
+            MinoBlock::BLUE => graphics::Color::from_rgb(32, 32, 184),
+            MinoBlock::ORANGE => graphics::Color::from_rgb(255, 148, 64),
+            MinoBlock::GREEN => graphics::Color::from_rgb(32, 184, 32),
+            MinoBlock::RED => graphics::Color::from_rgb(184, 32, 32),
         }
     }
 }
