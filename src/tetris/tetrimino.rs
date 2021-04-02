@@ -1,9 +1,11 @@
+use core::ops;
 use std::collections::HashMap;
+use std::ops::Add;
 
 use MinoRotation::*;
 use Tetrimino::*;
 
-use crate::tetris::game::{MinoBlock, Point};
+use crate::tetris::game::{MinoBlock, Point, SpinDirection};
 
 type MinoShape = Vec<Vec<bool>>;
 
@@ -185,74 +187,85 @@ impl Tetrimino {
         }
     }
 
-    pub fn wall_kicks(&self) -> HashMap<MinoRotation, [Point; 5]> {
+    // The field on tetris-rs is positive as Y increases downward, so Y needs to be multiplied by -1.
+    pub fn wall_kick(&self, from: &MinoRotation, direction: &SpinDirection, idx: usize) -> Option<WallKickOffset> {
+        let to = from.spin(direction);
+
         match self {
-            T | S | Z | L | J => maplit::hashmap! {
-                Clockwise => [
-                        (0, 0).into(),
-                        (-1, 0).into(),
-                        (-1, -1).into(),
-                        (0, 2).into(),
-                        (-1, 2).into(),
-                ],
-                Clockwise90 => [
-                        (0, 0).into(),
-                        (1, 0).into(),
-                        (1, 1).into(),
-                        (0, -2).into(),
-                        (1, -2).into(),
-                ],
-                Clockwise180 => [
-                        (0, 0).into(),
-                        (1, 0).into(),
-                        (1, -1).into(),
-                        (0, 2).into(),
-                        (1, 2).into(),
-                ],
-                Clockwise270 => [
-                        (0, 0).into(),
-                        (-1, 0).into(),
-                        (-1, 1).into(),
-                        (0, -2).into(),
-                        (-1, -2).into(),
-                ],
-            },
-            O => maplit::hashmap! {
-                Clockwise => [(0, 0).into(); 5],
-                Clockwise90 => [(0, 0).into(); 5],
-                Clockwise180 => [(0, 0).into(); 5],
-                Clockwise270 => [(0, 0).into(); 5],
-            },
-            I => maplit::hashmap! {
-                Clockwise => [
-                        (0, 0).into(),
-                        (-2, 0).into(),
-                        (1, 0).into(),
-                        (-2, 1).into(),
-                        (1, -2).into(),
-                ],
-                Clockwise90 => [
-                        (0, 0).into(),
-                        (-1, 0).into(),
-                        (2, 0).into(),
-                        (-1, -2).into(),
-                        (2, 1).into(),
-                ],
-                Clockwise180 => [
-                        (0, 0).into(),
-                        (2, 0).into(),
-                        (-1, 0).into(),
-                        (2, -1).into(),
-                        (-1, -2).into(),
-                ],
-                Clockwise270 => [
-                        (0, 0).into(),
-                        (1, 0).into(),
-                        (-2, 0).into(),
-                        (1, 2).into(),
-                        (-2, -1).into(),
-                ],
-            },
+            // ref. https://tetrisch.github.io/main/srs.html
+            T | S | Z | L | J => {
+                let _0: WallKickOffset = (0, 0).into();
+
+                let _1: WallKickOffset = match to {
+                    Clockwise90 => (-1, 0),
+                    Clockwise270 => (1, 0),
+                    Clockwise | Clockwise180 => match direction {
+                        SpinDirection::Right => (-1, 0),
+                        SpinDirection::Left => (1, 0),
+                    }
+                }.into();
+
+                let _2: WallKickOffset = match to {
+                    Clockwise90 | Clockwise270 => (0, -1),
+                    Clockwise | Clockwise180 => (0, 1),
+                }.into();
+                let _2 = _2 + &_1;
+
+                let _3: WallKickOffset = match to {
+                    Clockwise90 | Clockwise270 => (0, 2),
+                    Clockwise | Clockwise180 => (0, -2),
+                }.into();
+
+                let _4: WallKickOffset = match to {
+                    Clockwise90 => (-1, 0),
+                    Clockwise270 => (1, 0),
+                    Clockwise | Clockwise180 => match direction {
+                        SpinDirection::Right => (-1, 0),
+                        SpinDirection::Left => (1, 0),
+                    },
+                }.into();
+                let _4 = _4 + &_3;
+
+                [_0, _1, _2, _3, _4].get(idx).map(|offset| offset.clone())
+            }
+
+            O => Some((0, 0).into()),
+
+            // ref. https://tetris.fandom.com/wiki/SRS/
+            I => {
+                let offsets: [(isize, isize); 5] = match to {
+                    Clockwise => [
+                        (0, 0),
+                        (-2, 0),
+                        (1, 0),
+                        (-2, 1),
+                        (1, -2),
+                    ],
+                    Clockwise90 => [
+                        (0, 0),
+                        (-1, 0),
+                        (2, 0),
+                        (-1, -2),
+                        (2, 1),
+                    ],
+                    Clockwise180 => [
+                        (0, 0),
+                        (2, 0),
+                        (-1, 0),
+                        (2, -1),
+                        (-1, -2),
+                    ],
+                    Clockwise270 => [
+                        (0, 0),
+                        (1, 0),
+                        (-2, 0),
+                        (1, 2),
+                        (-2, -1),
+                    ],
+                };
+
+                offsets.get(idx).map(|&offset| offset.into())
+            }
         }
     }
 
@@ -275,16 +288,50 @@ impl Tetrimino {
     }
 }
 
+#[derive(Copy, Clone)]
+pub struct WallKickOffset {
+    pub x: isize,
+    pub y: isize,
+}
+
+impl WallKickOffset {
+    fn new(x: isize, y: isize) -> WallKickOffset {
+        WallKickOffset { x, y }
+    }
+}
+
+impl Into<WallKickOffset> for (isize, isize) {
+    fn into(self) -> WallKickOffset {
+        WallKickOffset::new(self.0, self.1)
+    }
+}
+
+impl ops::Add<&WallKickOffset> for WallKickOffset {
+    type Output = WallKickOffset;
+
+    fn add(self, rhs: &WallKickOffset) -> Self::Output {
+        WallKickOffset::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
 // clockwise angles starts at 12 o'clock position
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MinoRotation {
-    Clockwise,
-    Clockwise90,
-    Clockwise180,
-    Clockwise270,
+    Clockwise = 0,
+    Clockwise90 = 90,
+    Clockwise180 = 180,
+    Clockwise270 = 270,
 }
 
+// TODO: calc numerically
 impl MinoRotation {
+    pub fn spin(&self, direction: &SpinDirection) -> MinoRotation {
+        match direction {
+            SpinDirection::Left => self.left(),
+            SpinDirection::Right => self.right(),
+        }
+    }
+
     pub fn left(&self) -> MinoRotation {
         match self {
             Clockwise => Clockwise270,
@@ -300,6 +347,15 @@ impl MinoRotation {
             Clockwise90 => Clockwise180,
             Clockwise180 => Clockwise270,
             Clockwise270 => Clockwise,
+        }
+    }
+
+    fn inverse(&self) -> MinoRotation {
+        match self {
+            Clockwise => Clockwise180,
+            Clockwise90 => Clockwise270,
+            Clockwise180 => Clockwise,
+            Clockwise270 => Clockwise90,
         }
     }
 }

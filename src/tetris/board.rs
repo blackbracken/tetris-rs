@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use crate::tetris::game::{MinoBlock, Point, SpinDirection};
-use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
+use crate::tetris::tetrimino::{MinoRotation, Tetrimino, WallKickOffset};
 
 pub const FIELD_UNIT_WIDTH: usize = 10;
 pub const FIELD_UNIT_HEIGHT: usize = 22;
@@ -91,32 +91,27 @@ impl Board {
     }
 
     pub fn try_spin(&mut self, direction: SpinDirection) -> bool {
-        let rotation = match direction {
-            SpinDirection::Left => self.dropping_rotation.left(),
-            SpinDirection::Right => self.dropping_rotation.right(),
-        };
-        let kicks = self.dropping.wall_kicks();
-        let kicks = kicks.get(&rotation).unwrap();
+        fn spin_with_offset(board: &mut Board, direction: &SpinDirection, offset: &WallKickOffset) {
+            board.dropping_rotation = board.dropping_rotation.spin(direction);
+            board.dropping_point.x += offset.x;
+            board.dropping_point.y += offset.y;
+        }
 
-        let manipulation = |board: &mut Board, kick: &Point| {
-            let mul = match direction {
-                SpinDirection::Left => -1,
-                SpinDirection::Right => 1,
-            };
-            board.dropping_rotation = rotation;
-            board.dropping_point.x += kick.x * mul;
-            board.dropping_point.y += kick.y * mul;
-        };
-
-        kicks.into_iter()
-            .find(|&kick| {
-                let clone = &mut self.clone();
-                manipulation(clone, kick);
+        let offset = (0..5).into_iter()
+            .flat_map(|idx| self.dropping.wall_kick(&self.dropping_rotation, &direction, idx))
+            .find(|offset| {
+                let mut clone = self.clone();
+                spin_with_offset(&mut clone, &direction, offset);
 
                 clone.establishes_field()
-            })
-            .map(|kick| manipulation(self, kick))
-            .is_some()
+            });
+
+        if let Some(offset) = offset {
+            spin_with_offset(self, &direction, &offset);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn drop_softly(&mut self) -> DroppingMinoStatus {
