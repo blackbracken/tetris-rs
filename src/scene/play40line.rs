@@ -7,7 +7,8 @@ use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
 use ggez::timer;
 
 use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::asset::{Asset, Bgm, Se, Color};
+use crate::asset::{Asset, Bgm, Se};
+use crate::asset::Color as AssetColor;
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
@@ -482,6 +483,8 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
     const PREDICTION_PADDING: f32 = 3.;
 
     let field = state.game.board.field();
+    let color = AssetColor::block(&state.game.board.dropping.block());
+    let color = graphics::Color::from([color.r, color.g, color.b, 0.85]);
 
     for prediction in state.game.board.calc_dropping_mino_prediction() {
         let entity = field
@@ -493,6 +496,7 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
             let x = (FIELD_ORIGIN_X as f32) + (prediction.x as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
             let y = (FIELD_ORIGIN_Y as f32) + ((prediction.y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as isize) as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
 
+
             let square = graphics::Mesh::new_rectangle(
                 ctx,
                 DrawMode::stroke(2.),
@@ -502,7 +506,7 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
                     BLOCK_LENGTH - 2. * PREDICTION_PADDING,
                     BLOCK_LENGTH - 2. * PREDICTION_PADDING,
                 ),
-                Color::block(&state.game.board.dropping.block()),
+                color,
             )?;
 
             graphics::draw(
