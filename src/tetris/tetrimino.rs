@@ -5,6 +5,8 @@ use std::ops::Add;
 use MinoRotation::*;
 use Tetrimino::*;
 
+use crate::macros::rect_vec;
+
 use crate::tetris::game::{MinoBlock, Point, SpinDirection};
 
 type MinoShape = Vec<Vec<bool>>;
@@ -188,7 +190,7 @@ impl Tetrimino {
     }
 
     // The field on tetris-rs is positive as Y increases downward, so Y needs to be multiplied by -1.
-    pub fn wall_kick(&self, from: &MinoRotation, direction: &SpinDirection, idx: usize) -> Option<WallKickOffset> {
+    pub fn wall_kick_offsets(&self, from: &MinoRotation, direction: &SpinDirection) -> [WallKickOffset; 5] {
         let to = from.spin(direction);
 
         match self {
@@ -226,45 +228,43 @@ impl Tetrimino {
                 }.into();
                 let _4 = _4 + &_3;
 
-                [_0, _1, _2, _3, _4].get(idx).map(|offset| offset.clone())
+                [_0, _1, _2, _3, _4]
             }
 
-            O => Some((0, 0).into()),
+            O => [(0, 0).into(); 5],
 
             // ref. https://tetris.fandom.com/wiki/SRS/
             I => {
-                let offsets: [(isize, isize); 5] = match to {
+                match to {
                     Clockwise => [
-                        (0, 0),
-                        (-2, 0),
-                        (1, 0),
-                        (-2, 1),
-                        (1, -2),
+                        (0, 0).into(),
+                        (-2, 0).into(),
+                        (1, 0).into(),
+                        (-2, 1).into(),
+                        (1, -2).into(),
                     ],
                     Clockwise90 => [
-                        (0, 0),
-                        (-1, 0),
-                        (2, 0),
-                        (-1, -2),
-                        (2, 1),
+                        (0, 0).into(),
+                        (-1, 0).into(),
+                        (2, 0).into(),
+                        (-1, -2).into(),
+                        (2, 1).into(),
                     ],
                     Clockwise180 => [
-                        (0, 0),
-                        (2, 0),
-                        (-1, 0),
-                        (2, -1),
-                        (-1, -2),
+                        (0, 0).into(),
+                        (2, 0).into(),
+                        (-1, 0).into(),
+                        (2, -1).into(),
+                        (-1, -2).into(),
                     ],
                     Clockwise270 => [
-                        (0, 0),
-                        (1, 0),
-                        (-2, 0),
-                        (1, 2),
-                        (-2, -1),
+                        (0, 0).into(),
+                        (1, 0).into(),
+                        (-2, 0).into(),
+                        (1, 2).into(),
+                        (-2, -1).into(),
                     ],
-                };
-
-                offsets.get(idx).map(|&offset| offset.into())
+                }
             }
         }
     }

@@ -98,7 +98,10 @@ impl Board {
         }
 
         let offset = (0..5).into_iter()
-            .flat_map(|idx| self.dropping.wall_kick(&self.dropping_rotation, &direction, idx))
+            .flat_map(|idx| {
+                let offsets = self.dropping.wall_kick_offsets(&self.dropping_rotation, &direction);
+                offsets.get(idx).map(|r| r.clone())
+            })
             .find(|offset| {
                 let mut clone = self.clone();
                 spin_with_offset(&mut clone, &direction, offset);

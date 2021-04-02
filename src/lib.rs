@@ -1,6 +1,7 @@
 #![feature(duration_zero)]
 #![feature(duration_saturating_ops)]
 #![feature(duration_consts_2)]
+#![feature(pub_macro_rules)]
 
 use std::mem;
 use std::time::Duration;
@@ -12,6 +13,7 @@ use ggez::timer;
 use crate::asset::Asset;
 use crate::router::{Next, SceneState, Ticket};
 
+mod macros;
 mod scene;
 mod router;
 mod asset;
