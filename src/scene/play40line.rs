@@ -491,7 +491,7 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
 
         if entity.is_air() {
             let x = (FIELD_ORIGIN_X as f32) + (prediction.x as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
-            let y = (FIELD_ORIGIN_Y as f32) + ((prediction.y - 2) as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
+            let y = (FIELD_ORIGIN_Y as f32) + ((prediction.y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as isize) as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
 
             let square = graphics::Mesh::new_rectangle(
                 ctx,

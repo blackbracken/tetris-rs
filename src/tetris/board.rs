@@ -4,12 +4,12 @@ use crate::tetris::game::{MinoBlock, Point, SpinDirection};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino, WallKickOffset};
 
 pub const FIELD_UNIT_WIDTH: usize = 10;
-pub const FIELD_UNIT_HEIGHT: usize = 22;
+pub const FIELD_UNIT_HEIGHT: usize = 21;
 pub const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 pub type Field = [[MinoEntity; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
 
-pub const SPAWN_POINT: Point = Point { x: 4, y: 2 };
+pub const SPAWN_POINT: Point = Point { x: 4, y: 1 };
 
 #[derive(Copy, Clone)]
 pub struct Board {
