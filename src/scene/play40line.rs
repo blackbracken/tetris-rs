@@ -109,7 +109,9 @@ pub fn update(
 
         // TODO: implement
         match update_to_drop(ctx, &mut state, asset)? {
-            TetrisResult::Continue => {}
+            TetrisResult::Continue => {
+                state.game.remove_lines();
+            }
             TetrisResult::End => {}
         }
     }

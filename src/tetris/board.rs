@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::convert::TryFrom;
 
 use crate::tetris::game::{MinoBlock, Point, SpinDirection};
@@ -8,6 +9,7 @@ pub const FIELD_UNIT_HEIGHT: usize = 21;
 pub const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 pub type Field = [[MinoEntity; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
+pub type RemovedLines = Vec<usize>;
 
 pub const SPAWN_POINT: Point = Point { x: 4, y: 1 };
 
@@ -160,6 +162,34 @@ impl Board {
         clone.calc_dropping_mino_points()
     }
 
+    pub fn remove_lines(&mut self) -> Option<usize> {
+        let mut field: VecDeque<Vec<MinoEntity>> = self.confirmed_field.iter()
+            .map(|line| Box::new(line).to_vec())
+            .collect::<Vec<_>>()
+            .into();
+
+        field.retain(|line| line.iter().any(|e| e.is_air()));
+        let removed = FIELD_UNIT_HEIGHT - field.len();
+        for _ in 0..removed {
+            field.push_front([MinoEntity::AIR; FIELD_UNIT_WIDTH].to_vec())
+        }
+
+        for y in 0..FIELD_UNIT_HEIGHT {
+            for x in 0..FIELD_UNIT_WIDTH {
+                self.confirmed_field[y][x] = field[y][x];
+            }
+        }
+
+        Some(removed).filter(|&r| r != 0)
+    }
+
+    pub fn removed_lines(&self) -> RemovedLines {
+        self.confirmed_field.iter().enumerate()
+            .filter(|(y, line)| line.iter().all(|entity| !entity.is_air()))
+            .map(|(y, _)| y)
+            .collect()
+    }
+
     fn establishes_field(&self) -> bool {
         self.calc_dropping_mino_points().iter()
             .all(|&point| {
@@ -188,12 +218,12 @@ impl Board {
 
         shape.iter()
             .enumerate()
-            .flat_map(|(mass_y, line)| {
+            .flat_map(|(y, line)| {
                 line.iter()
                     .enumerate()
-                    .flat_map(|(mass_x, &exists)| {
-                        let x = dropping_at.x + (mass_x as isize) - center.x;
-                        let y = dropping_at.y + (mass_y as isize) - center.y;
+                    .flat_map(|(x, &exists)| {
+                        let x = dropping_at.x + (x as isize) - center.x;
+                        let y = dropping_at.y + (y as isize) - center.y;
 
                         Some((x, y).into()).filter(|_| exists)
                     })
