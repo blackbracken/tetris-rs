@@ -80,6 +80,10 @@ impl Game {
         }
     }
 
+    pub fn remove_lines(&mut self) {
+        self.board.remove_lines();
+    }
+
     fn put_and_spawn(&mut self) -> bool {
         self.board.determine_dropping_mino();
 
@@ -122,7 +126,7 @@ impl MinoBag {
         }
 
         (0..amount)
-            .map(|idx| self.queue.get(idx).unwrap().clone())
+            .map(|idx| self.queue.get(idx).unwrap().to_owned())
             .collect::<Vec<_>>()
     }
 

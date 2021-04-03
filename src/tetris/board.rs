@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::convert::TryFrom;
 
 use crate::tetris::game::{MinoBlock, Point, SpinDirection};
@@ -13,7 +14,7 @@ pub const SPAWN_POINT: Point = Point { x: 4, y: 1 };
 
 #[derive(Copy, Clone)]
 pub struct Board {
-    confirmed_field: Field,
+    pub confirmed_field: Field,
     pub dropping: Tetrimino,
     dropping_point: Point,
     dropping_rotation: MinoRotation,
@@ -34,7 +35,7 @@ impl Board {
     }
 
     pub fn field(&self) -> Field {
-        let mut field = self.confirmed_field.clone();
+        let mut field = self.confirmed_field.to_owned();
         let shapes = self.dropping.shapes();
         let shape = shapes.get(&self.dropping_rotation).unwrap();
 
@@ -64,7 +65,7 @@ impl Board {
     }
 
     pub fn dropping_mino_status(&self) -> DroppingMinoStatus {
-        let mut clone = self.clone();
+        let mut clone = self.to_owned();
         clone.dropping_point.y += 1;
 
         if clone.establishes_field() {
@@ -75,7 +76,7 @@ impl Board {
     }
 
     pub fn try_move_x(&mut self, addition: isize) -> bool {
-        let clone = &mut self.clone();
+        let clone = &mut self.to_owned();
 
         let manipulation = |board: &mut Board| {
             board.dropping_point.x += addition;
@@ -100,10 +101,10 @@ impl Board {
         let offset = (0..5).into_iter()
             .flat_map(|idx| {
                 let offsets = self.dropping.wall_kick_offsets(&self.dropping_rotation, &direction);
-                offsets.get(idx).map(|r| r.clone())
+                offsets.get(idx).map(|o| o.to_owned())
             })
             .find(|offset| {
-                let mut clone = self.clone();
+                let mut clone = self.to_owned();
                 spin_with_offset(&mut clone, &direction, offset);
 
                 clone.establishes_field()
@@ -146,7 +147,7 @@ impl Board {
     }
 
     pub fn calc_dropping_mino_prediction(&self) -> Vec<Point> {
-        let mut clone = self.clone();
+        let mut clone = self.to_owned();
 
         loop {
             clone.dropping_point.y += 1;
@@ -158,6 +159,62 @@ impl Board {
         }
 
         clone.calc_dropping_mino_points()
+    }
+
+    pub fn remove_lines(&mut self) -> Option<usize> {
+        if let Some(removed) = self.calc_removed_lines() {
+            let mut field: VecDeque<Vec<MinoEntity>> = self.confirmed_field.iter()
+                .enumerate()
+                .filter(|(idx, _)| !removed.contains(idx))
+                .map(|(_, line)| Box::new(line).to_vec())
+                .collect::<Vec<_>>()
+                .into();
+            for _ in 0..removed.len() {
+                field.push_front([MinoEntity::AIR; FIELD_UNIT_WIDTH].to_vec())
+            }
+
+            for y in 0..FIELD_UNIT_HEIGHT {
+                for x in 0..FIELD_UNIT_WIDTH {
+                    self.confirmed_field[y][x] = field[y][x];
+                }
+            }
+
+            Some(removed.len()).filter(|&r| r != 0)
+        } else {
+            None
+        }
+    }
+
+    pub fn calc_removed_lines(&self) -> Option<Vec<usize>> {
+        let lines = self.confirmed_field.iter().enumerate()
+            .filter(|(_, line)| line.iter().all(|entity| !entity.is_air()))
+            .map(|(y, _)| y)
+            .collect::<Vec<_>>();
+
+        Some(lines).filter(|l| !l.is_empty())
+    }
+
+    pub fn calc_dropping_mino_points(&self) -> Vec<Point> {
+        let shapes = self.dropping.shapes();
+        let shape = shapes.get(&self.dropping_rotation).unwrap();
+
+        let center = &self.dropping.center();
+        let dropping_at = &self.dropping_point;
+
+        shape.iter()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.iter()
+                    .enumerate()
+                    .flat_map(|(x, &exists)| {
+                        let x = dropping_at.x + (x as isize) - center.x;
+                        let y = dropping_at.y + (y as isize) - center.y;
+
+                        Some((x, y).into()).filter(|_| exists)
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
     }
 
     fn establishes_field(&self) -> bool {
@@ -177,29 +234,6 @@ impl Board {
 
                 false
             })
-    }
-
-    fn calc_dropping_mino_points(&self) -> Vec<Point> {
-        let shapes = self.dropping.shapes();
-        let shape = shapes.get(&self.dropping_rotation).unwrap();
-
-        let center = &self.dropping.center();
-        let dropping_at = &self.dropping_point;
-
-        shape.iter()
-            .enumerate()
-            .flat_map(|(mass_y, line)| {
-                line.iter()
-                    .enumerate()
-                    .flat_map(|(mass_x, &exists)| {
-                        let x = dropping_at.x + (mass_x as isize) - center.x;
-                        let y = dropping_at.y + (mass_y as isize) - center.y;
-
-                        Some((x, y).into()).filter(|_| exists)
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>()
     }
 }
 

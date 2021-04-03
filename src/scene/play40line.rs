@@ -12,7 +12,7 @@ use crate::asset::Color as AssetColor;
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, MinoEntity};
+use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
 use crate::tetris::game::{DropResult, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
@@ -35,11 +35,13 @@ const HOLD_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + SIDE_PANEL_PADDING;
 const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
+const VISIBLE_NEXT_MINO_AMOUNT: usize = 5;
+
 pub struct Play40LineState {
     game: Game,
     ingame_elapsed: Duration,
-    // TODO: generalize (e.g. scheduler)
     last_dropped: Duration,
+    animation_removing: Option<RemovingLineAnimation>,
     countdown: Option<u64>,
     start_countdown_at: Duration,
     continuous_inputs: HashMap<KeyInput, usize>,
@@ -52,6 +54,7 @@ impl Play40LineState {
                 game: Game::new(),
                 ingame_elapsed: Duration::ZERO,
                 last_dropped: Duration::ZERO,
+                animation_removing: None,
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
                 continuous_inputs: HashMap::new(),
@@ -72,6 +75,9 @@ pub fn update(
 ) -> GameResult<Next> {
     const COUNTDOWN_SEC: u64 = 3;
 
+    // TODO: make a system to manage animations better
+    let in_animating = state.countdown.is_some() || state.animation_removing.is_some();
+
     let countdown = match state.countdown {
         None | Some(0) => None,
         Some(_) => {
@@ -81,7 +87,6 @@ pub fn update(
             Some(max(0, COUNTDOWN_SEC - diff))
         }
     };
-
     if state.countdown != countdown {
         match countdown {
             Some(0) => {
@@ -97,7 +102,16 @@ pub fn update(
         state.countdown = countdown;
     }
 
-    if state.countdown == None {
+    if let Some(ref mut anim) = state.animation_removing {
+        anim.elapsed += diff_from_last_frame;
+
+        if anim.is_finished() {
+            state.animation_removing = None;
+            state.game.remove_lines();
+        }
+    }
+
+    if !in_animating {
         if pressed_pause(ctx) {
             return Ok(Next::transit(ShowTitle));
         }
@@ -107,10 +121,15 @@ pub fn update(
         update_to_hold(ctx, &mut state)?;
         update_to_move(ctx, &mut state, asset)?;
 
-        // TODO: implement
         match update_to_drop(ctx, &mut state, asset)? {
-            TetrisResult::Continue => {}
-            TetrisResult::End => {}
+            DropEvent::Nothing => (),
+            DropEvent::Dropped => {
+                if let Some(lines) = state.game.board.calc_removed_lines() {
+                    state.animation_removing = Some(RemovingLineAnimation::new(lines));
+                }
+            }
+            // TODO: implement
+            DropEvent::Ended => {}
         }
     }
 
@@ -220,8 +239,16 @@ fn update_to_drop(
     ctx: &mut Context,
     state: &mut Play40LineState,
     asset: &mut Asset,
-) -> GameResult<TetrisResult> {
+) -> GameResult<DropEvent> {
     const NATURAL_DROP_INTERVAL: Duration = Duration::new(1, 0);
+
+    fn on_put_dropping_mino(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset) -> GameResult {
+        state.continuous_inputs.retain(|input, _| [KeyInput::Up, KeyInput::Down].contains(input));
+        state.last_dropped = state.ingame_elapsed;
+        asset.audio.play_se(ctx, Se::MinoDropHardly)?;
+
+        Ok(())
+    }
 
     fn recognizes_as_hard_drop_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
         const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
@@ -265,6 +292,8 @@ fn update_to_drop(
     if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
         if let Some(_) = state.game.drop_hardly() {
             on_put_dropping_mino(ctx, state, asset)?;
+
+            return Ok(DropEvent::Dropped);
         }
     }
 
@@ -274,39 +303,36 @@ fn update_to_drop(
             state.game.drop_softly();
             state.last_dropped = state.ingame_elapsed;
             asset.audio.play_se(ctx, Se::MinoDropSoftly)?;
+
+            return Ok(DropEvent::Dropped);
         }
     }
 
     if state.last_dropped + NATURAL_DROP_INTERVAL < state.ingame_elapsed {
-        match state.game.drop_softly() {
+        let event = match state.game.drop_softly() {
             DropResult::SoftDropped => {
                 asset.audio.play_se(ctx, Se::MinoDropSoftly)?;
+                DropEvent::Dropped
             }
             DropResult::Put => {
                 on_put_dropping_mino(ctx, state, asset)?;
+                DropEvent::Dropped
             }
-            DropResult::Failed => {
-                return Ok(TetrisResult::End);
-            }
-        }
+            DropResult::Failed => DropEvent::Ended,
+        };
 
         state.last_dropped = state.ingame_elapsed;
+
+        Ok(event)
+    } else {
+        Ok(DropEvent::Nothing)
     }
-
-    Ok(TetrisResult::Continue)
 }
 
-fn on_put_dropping_mino(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset) -> GameResult {
-    state.continuous_inputs.retain(|input, _| [KeyInput::Up, KeyInput::Down].contains(input));
-    state.last_dropped = state.ingame_elapsed;
-    asset.audio.play_se(ctx, Se::MinoDropHardly)?;
-
-    Ok(())
-}
-
-enum TetrisResult {
-    Continue,
-    End, // Success | Fail
+enum DropEvent {
+    Nothing,
+    Dropped,
+    Ended,
 }
 
 #[derive(Hash, Eq, PartialEq)]
@@ -332,9 +358,15 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
             if let Some(held) = state.game.hold_mino {
                 draw_hold_mino(ctx, asset, &held)?;
             }
-            draw_next_minos(ctx, asset, state.game.bag.peek(5).as_slice())?;
-            draw_minos_on_field(ctx, asset, state)?;
-            draw_dropping_mino_prediction(ctx, state)?;
+            draw_next_minos(ctx, asset, state.game.bag.peek(VISIBLE_NEXT_MINO_AMOUNT).as_slice())?;
+
+            if let Some(ref anim) = state.animation_removing {
+                draw_minos_on_confirmed_field(ctx, asset, state, false, &anim.lines)?;
+                anim.draw(ctx)?;
+            } else {
+                draw_minos_on_confirmed_field(ctx, asset, state, true, &Vec::new())?;
+                draw_dropping_mino_prediction(ctx, state)?;
+            }
         }
         Some(c) => {
             draw_count_down(ctx, asset, c)?;
@@ -434,9 +466,22 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
     Ok(())
 }
 
-fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineState) -> GameResult {
-    let field = &state.game.board.field();
-    for y in 0..(FIELD_VISIBLE_UNIT_HEIGHT) {
+fn draw_minos_on_confirmed_field(
+    ctx: &mut Context,
+    asset: &mut Asset,
+    state: &Play40LineState,
+    shows_dropping_mino: bool,
+    hidden_lines: &Vec<usize>,
+) -> GameResult {
+    let board = state.game.board;
+    let field = if shows_dropping_mino {
+        board.field()
+    } else {
+        board.confirmed_field
+    };
+
+    // 0-20th lines
+    for y in (0..(FIELD_VISIBLE_UNIT_HEIGHT)).into_iter().filter(|&n| !hidden_lines.contains(&(n + 1))) {
         for x in 0..FIELD_UNIT_WIDTH {
             let entity = field
                 .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT))
@@ -457,6 +502,7 @@ fn draw_minos_on_field(ctx: &mut Context, asset: &mut Asset, state: &Play40LineS
         }
     }
 
+    // 21st line
     let line = field
         .get(FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT - 1)
         .unwrap();
@@ -579,8 +625,6 @@ fn draw_hold_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino) -> Gam
 }
 
 fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
-    const NEXT_MINOS_AMOUNT: usize = 5;
-
     let text = graphics::Text::new(
         graphics::TextFragment::new("NEXT")
             .font(asset.font.vt323)
@@ -604,7 +648,7 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     )?;
     graphics::draw(ctx, &line, graphics::DrawParam::default())?;
 
-    for idx in 1..=NEXT_MINOS_AMOUNT {
+    for idx in 1..=VISIBLE_NEXT_MINO_AMOUNT {
         let y = NEXT_ORIGIN_Y + (idx as f32) * MINO_SPACE_IN_SIDE_PANEL_HEIGHT;
         let sep = graphics::Mesh::new_line(
             ctx,
@@ -670,4 +714,70 @@ fn draw_mini_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino, point:
     }
 
     Ok(())
+}
+
+struct RemovingLineAnimation {
+    lines: Vec<usize>,
+    elapsed: Duration,
+}
+
+const PHASE_1: Duration = Duration::from_secs_f32(0.3);
+const PHASE_2: Duration = Duration::from_secs_f32(0.75);
+
+impl RemovingLineAnimation {
+    fn new(lines: Vec<usize>) -> RemovingLineAnimation {
+        RemovingLineAnimation {
+            lines,
+            elapsed: Duration::ZERO,
+        }
+    }
+
+    fn draw(&self, ctx: &mut Context) -> GameResult {
+        let elapsed = self.elapsed;
+
+        if elapsed < PHASE_1 {
+            let alpha = 1. - (PHASE_1 - elapsed).as_secs_f32() / PHASE_1.as_secs_f32();
+            let color = graphics::Color::new(1., 1., 1., alpha);
+
+            for line in &self.lines {
+                let rect = graphics::Mesh::new_rectangle(
+                    ctx,
+                    DrawMode::fill(),
+                    Rect::new(
+                        FIELD_ORIGIN_X,
+                        FIELD_ORIGIN_Y + (*line as f32 - 1.) * BLOCK_LENGTH,
+                        (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH,
+                        BLOCK_LENGTH,
+                    ),
+                    color,
+                )?;
+
+                graphics::draw(ctx, &rect, DrawParam::default())?;
+            }
+        } else if elapsed < PHASE_2 {
+            let color = graphics::Color::from_rgb(255, 255, 255);
+
+            for line in &self.lines {
+                let rect = graphics::Mesh::new_rectangle(
+                    ctx,
+                    DrawMode::fill(),
+                    Rect::new(
+                        FIELD_ORIGIN_X,
+                        FIELD_ORIGIN_Y + (*line as f32 - 1.) * BLOCK_LENGTH,
+                        (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH,
+                        BLOCK_LENGTH,
+                    ),
+                    color,
+                )?;
+
+                graphics::draw(ctx, &rect, DrawParam::default())?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn is_finished(&self) -> bool {
+        self.elapsed > PHASE_2
+    }
 }

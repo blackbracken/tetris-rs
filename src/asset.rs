@@ -52,7 +52,7 @@ impl Image {
     pub fn mino_block<'a>(&'a mut self, ctx: &mut Context, block: &MinoBlock) -> GameResult<&'a graphics::Image> {
         if self.mino_block_images.get(block).is_none() {
             let _ = self.mino_block_images.insert(
-                block.clone(),
+                block.to_owned(),
                 self.gen_colorized_mino_block(ctx, block,
                 )?,
             );
@@ -184,7 +184,7 @@ impl Audio {
         self.stop_bgm();
 
         let src = self.bgm_data_map.get(&bgm)
-            .and_then(|data| audio::Source::from_data(ctx, data.clone()).ok())
+            .and_then(|data| audio::Source::from_data(ctx, data.to_owned()).ok())
             .map(|mut src| {
                 src.set_repeat(true);
                 src.set_query_interval(Duration::ZERO);
@@ -218,7 +218,7 @@ impl Audio {
 
     pub fn play_se(&self, ctx: &mut Context, se: Se) -> GameResult {
         let src = self.se_data_map.get(&se)
-            .and_then(|data| audio::Source::from_data(ctx, data.clone()).ok())
+            .and_then(|data| audio::Source::from_data(ctx, data.to_owned()).ok())
             .map(|mut src| {
                 match se {
                     Se::MenuClick => {

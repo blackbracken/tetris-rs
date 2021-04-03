@@ -1,8 +1,5 @@
 use core::ops;
 use std::collections::HashMap;
-use std::ops::Add;
-
-use ggez::graphics;
 
 use MinoRotation::*;
 use Tetrimino::*;
