@@ -5,7 +5,6 @@ use ggez::{audio, Context, GameResult, graphics};
 use ggez::audio::SoundSource;
 
 use crate::tetris::game::MinoBlock;
-use crate::tetris::tetrimino::Tetrimino;
 
 pub struct Asset {
     pub image: Image,
@@ -159,6 +158,7 @@ impl Audio {
                 Se::MinoSpin => "/sound/se/se_maoudamashii_se_pc03.mp3",
                 Se::MinoDropSoftly => "/sound/se/hhkb_fn_click.mp3",
                 Se::MinoDropHardly => "/sound/se/hhkb_fn_click.mp3",
+                Se::RemoveLine => "/sound/se/se_maoudamashii_onepoint09.mp3",
             }
         }
         let se_data_map = maplit::hashmap! {
@@ -169,6 +169,7 @@ impl Audio {
             Se::MinoSpin => audio::SoundData::new(ctx, se_path(Se::MinoSpin))?,
             Se::MinoDropSoftly => audio::SoundData::new(ctx, se_path(Se::MinoDropSoftly))?,
             Se::MinoDropHardly => audio::SoundData::new(ctx, se_path(Se::MinoDropHardly))?,
+            Se::RemoveLine => audio::SoundData::new(ctx, se_path(Se::RemoveLine))?,
         };
 
         Ok(
@@ -244,6 +245,9 @@ impl Audio {
                         src.set_volume(0.6);
                         src.set_pitch(0.65);
                     }
+                    Se::RemoveLine => {
+                        src.set_pitch(1.3);
+                    }
                 }
                 src
             });
@@ -271,6 +275,7 @@ pub enum Se {
     MinoSpin,
     MinoDropSoftly,
     MinoDropHardly,
+    RemoveLine,
 }
 
 pub struct Font {

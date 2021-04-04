@@ -125,6 +125,7 @@ pub fn update(
             DropEvent::Nothing => (),
             DropEvent::Dropped => {
                 if let Some(lines) = state.game.board.calc_removed_lines() {
+                    asset.audio.play_se(ctx, Se::RemoveLine)?;
                     state.animation_removing = Some(RemovingLineAnimation::new(lines));
                 }
             }
@@ -362,7 +363,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
             if let Some(ref anim) = state.animation_removing {
                 draw_minos_on_confirmed_field(ctx, asset, state, false, &anim.lines)?;
-                anim.draw(ctx)?;
+                anim.draw(ctx, asset)?;
             } else {
                 draw_minos_on_confirmed_field(ctx, asset, state, true, &Vec::new())?;
                 draw_dropping_mino_prediction(ctx, state)?;
@@ -721,8 +722,8 @@ struct RemovingLineAnimation {
     elapsed: Duration,
 }
 
-const PHASE_1: Duration = Duration::from_secs_f32(0.3);
-const PHASE_2: Duration = Duration::from_secs_f32(0.75);
+const REMOVING_LINE_ANIM_PHASE_1: Duration = Duration::from_secs_f32(0.4);
+const REMOVING_LINE_ANIM_PHASE_2: Duration = Duration::from_secs_f32(0.55);
 
 impl RemovingLineAnimation {
     fn new(lines: Vec<usize>) -> RemovingLineAnimation {
@@ -732,11 +733,11 @@ impl RemovingLineAnimation {
         }
     }
 
-    fn draw(&self, ctx: &mut Context) -> GameResult {
+    fn draw(&self, ctx: &mut Context, asset: &mut Asset) -> GameResult {
         let elapsed = self.elapsed;
 
-        if elapsed < PHASE_1 {
-            let alpha = 1. - (PHASE_1 - elapsed).as_secs_f32() / PHASE_1.as_secs_f32();
+        if elapsed < REMOVING_LINE_ANIM_PHASE_1 {
+            let alpha = 1. - (REMOVING_LINE_ANIM_PHASE_1 - elapsed).as_secs_f32() / REMOVING_LINE_ANIM_PHASE_1.as_secs_f32();
             let color = graphics::Color::new(1., 1., 1., alpha);
 
             for line in &self.lines {
@@ -754,18 +755,24 @@ impl RemovingLineAnimation {
 
                 graphics::draw(ctx, &rect, DrawParam::default())?;
             }
-        } else if elapsed < PHASE_2 {
-            let color = graphics::Color::from_rgb(255, 255, 255);
+        } else if elapsed < REMOVING_LINE_ANIM_PHASE_2 {
+            let percentage = (elapsed - REMOVING_LINE_ANIM_PHASE_1).as_secs_f32()
+                / (REMOVING_LINE_ANIM_PHASE_2 - REMOVING_LINE_ANIM_PHASE_1).as_secs_f32();
+            let color = graphics::Color::new(1., 1., 1., percentage);
 
-            for line in &self.lines {
+            for &line in &self.lines {
+                let y = FIELD_ORIGIN_Y + (line as f32 - 1.) * BLOCK_LENGTH
+                    + (BLOCK_LENGTH * percentage) / 2.;
+                let height = BLOCK_LENGTH - BLOCK_LENGTH * percentage;
+
                 let rect = graphics::Mesh::new_rectangle(
                     ctx,
                     DrawMode::fill(),
                     Rect::new(
                         FIELD_ORIGIN_X,
-                        FIELD_ORIGIN_Y + (*line as f32 - 1.) * BLOCK_LENGTH,
+                        y,
                         (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH,
-                        BLOCK_LENGTH,
+                        height,
                     ),
                     color,
                 )?;
@@ -778,6 +785,6 @@ impl RemovingLineAnimation {
     }
 
     fn is_finished(&self) -> bool {
-        self.elapsed > PHASE_2
+        self.elapsed > REMOVING_LINE_ANIM_PHASE_2
     }
 }
