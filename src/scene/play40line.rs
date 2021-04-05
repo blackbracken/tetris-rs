@@ -12,7 +12,7 @@ use crate::asset::Color as AssetColor;
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::board::{DroppingMinoStatus, FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
+use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, RemovedLines};
 use crate::tetris::game::{DropResult, Game, Point};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
@@ -71,7 +71,7 @@ pub fn update(
     ctx: &mut Context,
     mut state: Play40LineState,
     asset: &mut Asset,
-    diff_from_last_frame: Duration,
+    delta: Duration,
 ) -> GameResult<Next> {
     const COUNTDOWN_SEC: u64 = 3;
 
@@ -103,7 +103,7 @@ pub fn update(
     }
 
     if let Some(ref mut anim) = state.animation_removing {
-        anim.elapsed += diff_from_last_frame;
+        anim.elapsed += delta;
 
         if anim.is_finished() {
             state.animation_removing = None;
@@ -116,22 +116,20 @@ pub fn update(
             return Ok(Next::transit(ShowTitle));
         }
 
-        state.ingame_elapsed += diff_from_last_frame;
+        state.ingame_elapsed += delta;
 
         update_to_hold(ctx, &mut state)?;
         update_to_move(ctx, &mut state, asset)?;
 
-        match update_to_drop(ctx, &mut state, asset)? {
-            DropEvent::Nothing => (),
-            DropEvent::Dropped => {
-                if let Some(lines) = state.game.board.calc_removed_lines() {
-                    asset.audio.play_se(ctx, Se::RemoveLine)?;
-                    state.animation_removing = Some(RemovingLineAnimation::new(lines));
-                }
+        if let Some(removed_lines) = update_to_drop(ctx, &mut state, asset)? {
+            if !removed_lines.is_empty() {
+                asset.audio.play_se(ctx, Se::RemoveLine)?;
+                state.animation_removing = Some(RemovingLineAnimation::new(removed_lines));
             }
-            // TODO: implement
-            DropEvent::Ended => {}
-        }
+
+            // TODO: implement ending
+            let _ = state.game.put_and_spawn();
+        } else {}
     }
 
     Ok(Next::do_continue(state.into()))
@@ -240,13 +238,13 @@ fn update_to_drop(
     ctx: &mut Context,
     state: &mut Play40LineState,
     asset: &mut Asset,
-) -> GameResult<DropEvent> {
+) -> GameResult<Option<RemovedLines>> {
     const NATURAL_DROP_INTERVAL: Duration = Duration::new(1, 0);
 
     fn on_put_dropping_mino(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset) -> GameResult {
         state.continuous_inputs.retain(|input, _| [KeyInput::Up, KeyInput::Down].contains(input));
         state.last_dropped = state.ingame_elapsed;
-        asset.audio.play_se(ctx, Se::MinoDropHardly)?;
+        asset.audio.play_se(ctx, Se::MinoHardDrop)?;
 
         Ok(())
     }
@@ -291,49 +289,35 @@ fn update_to_drop(
 
     let pressed_up = pressed_up(ctx);
     if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
-        if let Some(_) = state.game.drop_hardly() {
-            on_put_dropping_mino(ctx, state, asset)?;
+        on_put_dropping_mino(ctx, state, asset)?;
 
-            return Ok(DropEvent::Dropped);
-        }
+        return Ok(Some(state.game.hard_drop()));
     }
 
     let pressed_down = pressed_down(ctx);
     if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
-        if state.game.board.dropping_mino_status() == DroppingMinoStatus::InAir {
-            state.game.drop_softly();
+        if state.game.board.to_owned().soft_drop() { // TODO: prepare safe accessor
             state.last_dropped = state.ingame_elapsed;
-            asset.audio.play_se(ctx, Se::MinoDropSoftly)?;
+            asset.audio.play_se(ctx, Se::MinoSoftDrop)?;
 
-            return Ok(DropEvent::Dropped);
+            return Ok(state.game.soft_drop());
         }
     }
 
     if state.last_dropped + NATURAL_DROP_INTERVAL < state.ingame_elapsed {
-        let event = match state.game.drop_softly() {
-            DropResult::SoftDropped => {
-                asset.audio.play_se(ctx, Se::MinoDropSoftly)?;
-                DropEvent::Dropped
-            }
-            DropResult::Put => {
-                on_put_dropping_mino(ctx, state, asset)?;
-                DropEvent::Dropped
-            }
-            DropResult::Failed => DropEvent::Ended,
-        };
+        let removed_lines = state.game.soft_drop();
 
-        state.last_dropped = state.ingame_elapsed;
+        if removed_lines.is_some() {
+            on_put_dropping_mino(ctx, state, asset)?;
+        } else {
+            state.last_dropped = state.ingame_elapsed;
+            asset.audio.play_se(ctx, Se::MinoSoftDrop)?;
+        }
 
-        Ok(event)
+        Ok(removed_lines)
     } else {
-        Ok(DropEvent::Nothing)
+        Ok(None)
     }
-}
-
-enum DropEvent {
-    Nothing,
-    Dropped,
-    Ended,
 }
 
 #[derive(Hash, Eq, PartialEq)]

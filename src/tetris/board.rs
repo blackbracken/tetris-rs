@@ -9,6 +9,7 @@ pub const FIELD_UNIT_HEIGHT: usize = 21;
 pub const FIELD_VISIBLE_UNIT_HEIGHT: usize = 20;
 
 pub type Field = [[MinoEntity; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT];
+pub type RemovedLines = Vec<usize>;
 
 pub const SPAWN_POINT: Point = Point { x: 4, y: 1 };
 
@@ -64,17 +65,6 @@ impl Board {
         self.establishes_field()
     }
 
-    pub fn dropping_mino_status(&self) -> DroppingMinoStatus {
-        let mut clone = self.to_owned();
-        clone.dropping_point.y += 1;
-
-        if clone.establishes_field() {
-            DroppingMinoStatus::InAir
-        } else {
-            DroppingMinoStatus::OnGround
-        }
-    }
-
     pub fn try_move_x(&mut self, addition: isize) -> bool {
         let clone = &mut self.to_owned();
 
@@ -118,26 +108,35 @@ impl Board {
         }
     }
 
-    pub fn drop_softly(&mut self) -> DroppingMinoStatus {
-        let status = self.dropping_mino_status();
-        match status {
-            DroppingMinoStatus::InAir => {
-                self.dropping_point.y += 1;
-            }
-            DroppingMinoStatus::OnGround => ()
+    pub fn soft_drop(&mut self) -> bool {
+        self.dropping_point.y += 1;
+
+        let can_drop = self.establishes_field();
+        if !can_drop {
+            self.dropping_point.y -= 1;
         }
 
-        status
+        can_drop
+        //let can_drop = self.establishes_field();
+        //if can_drop {
+        //    self.dropping_point.y += 1;
+        //    let can_drop = self.establishes_field();
+        //    self.dropping_point.y -= 1;
+//
+        //    can_drop
+        //} else {
+        //   self.dropping_point.y -= 1;
+        //    false
+        //}
     }
 
-    pub fn drop_hardly(&mut self) -> Option<usize> {
+    pub fn hard_drop(&mut self) -> usize {
         let mut n = 0;
-        loop {
-            match self.drop_softly() {
-                DroppingMinoStatus::InAir => { n += 1; }
-                DroppingMinoStatus::OnGround => { return Some(n); }
-            }
+        while self.soft_drop() {
+            n += 1;
         }
+
+        n
     }
 
     pub fn determine_dropping_mino(&mut self) {
@@ -161,37 +160,34 @@ impl Board {
         clone.calc_dropping_mino_points()
     }
 
-    pub fn remove_lines(&mut self) -> Option<usize> {
-        if let Some(removed) = self.calc_removed_lines() {
-            let mut field: VecDeque<Vec<MinoEntity>> = self.confirmed_field.iter()
-                .enumerate()
-                .filter(|(idx, _)| !removed.contains(idx))
-                .map(|(_, line)| Box::new(line).to_vec())
-                .collect::<Vec<_>>()
-                .into();
-            for _ in 0..removed.len() {
-                field.push_front([MinoEntity::AIR; FIELD_UNIT_WIDTH].to_vec())
-            }
+    // TODO: returns reward
+    pub fn remove_lines(&mut self) -> usize {
+        let removed_lines = self.calc_removed_lines();
 
-            for y in 0..FIELD_UNIT_HEIGHT {
-                for x in 0..FIELD_UNIT_WIDTH {
-                    self.confirmed_field[y][x] = field[y][x];
-                }
-            }
-
-            Some(removed.len()).filter(|&r| r != 0)
-        } else {
-            None
+        let mut field: VecDeque<Vec<MinoEntity>> = self.confirmed_field.iter()
+            .enumerate()
+            .filter(|(idx, _)| !removed_lines.contains(idx))
+            .map(|(_, line)| Box::new(line).to_vec())
+            .collect::<Vec<_>>()
+            .into();
+        for _ in 0..removed_lines.len() {
+            field.push_front([MinoEntity::AIR; FIELD_UNIT_WIDTH].to_vec())
         }
+
+        for y in 0..FIELD_UNIT_HEIGHT {
+            for x in 0..FIELD_UNIT_WIDTH {
+                self.confirmed_field[y][x] = field[y][x];
+            }
+        }
+
+        removed_lines.len()
     }
 
-    pub fn calc_removed_lines(&self) -> Option<Vec<usize>> {
-        let lines = self.confirmed_field.iter().enumerate()
+    pub fn calc_removed_lines(&self) -> RemovedLines {
+        self.confirmed_field.iter().enumerate()
             .filter(|(_, line)| line.iter().all(|entity| !entity.is_air()))
             .map(|(y, _)| y)
-            .collect::<Vec<_>>();
-
-        Some(lines).filter(|l| !l.is_empty())
+            .collect::<Vec<_>>()
     }
 
     pub fn calc_dropping_mino_points(&self) -> Vec<Point> {
@@ -235,12 +231,6 @@ impl Board {
                 false
             })
     }
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub enum DroppingMinoStatus {
-    InAir,
-    OnGround,
 }
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
@@ -499,10 +489,10 @@ mod tests {
     }
 
     #[test]
-    fn drop_t_softly() {
+    fn soft_drop_t() {
         let mut board = Board::new(Tetrimino::T);
 
-        assert_eq!(board.drop_softly(), DroppingMinoStatus::InAir);
+        assert_eq!(board.soft_drop(), DroppingMinoStatus::InAir);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -533,10 +523,10 @@ mod tests {
     }
 
     #[test]
-    fn drop_t_hardly() {
+    fn hard_drop_t() {
         let mut board = Board::new(Tetrimino::T);
 
-        assert_eq!(board.drop_hardly(), Some(19));
+        assert_eq!(board.hard_drop(), Some(19));
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -567,12 +557,12 @@ mod tests {
     }
 
     #[test]
-    fn drop_vertical_i_hardly() {
+    fn hard_drop_vertical_i() {
         let mut board = Board::new(Tetrimino::I);
 
         assert!(board.try_move_x(1));
         assert!(board.try_spin(SpinDirection::Right));
-        assert_eq!(board.drop_hardly(), Some(17));
+        assert_eq!(board.hard_drop(), Some(17));
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

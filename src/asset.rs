@@ -156,8 +156,8 @@ impl Audio {
                 Se::GameStart => "/sound/se/se_maoudamashii_instruments_drum1_tom3.mp3",
                 Se::MinoMove => "/sound/se/thinkpad_shift_click.mp3",
                 Se::MinoSpin => "/sound/se/se_maoudamashii_se_pc03.mp3",
-                Se::MinoDropSoftly => "/sound/se/hhkb_fn_click.mp3",
-                Se::MinoDropHardly => "/sound/se/hhkb_fn_click.mp3",
+                Se::MinoSoftDrop => "/sound/se/hhkb_fn_click.mp3",
+                Se::MinoHardDrop => "/sound/se/hhkb_fn_click.mp3",
                 Se::RemoveLine => "/sound/se/se_maoudamashii_onepoint09.mp3",
             }
         }
@@ -167,8 +167,8 @@ impl Audio {
             Se::GameStart => audio::SoundData::new(ctx, se_path(Se::GameStart))?,
             Se::MinoMove => audio::SoundData::new(ctx, se_path(Se::MinoMove))?,
             Se::MinoSpin => audio::SoundData::new(ctx, se_path(Se::MinoSpin))?,
-            Se::MinoDropSoftly => audio::SoundData::new(ctx, se_path(Se::MinoDropSoftly))?,
-            Se::MinoDropHardly => audio::SoundData::new(ctx, se_path(Se::MinoDropHardly))?,
+            Se::MinoSoftDrop => audio::SoundData::new(ctx, se_path(Se::MinoSoftDrop))?,
+            Se::MinoHardDrop => audio::SoundData::new(ctx, se_path(Se::MinoHardDrop))?,
             Se::RemoveLine => audio::SoundData::new(ctx, se_path(Se::RemoveLine))?,
         };
 
@@ -238,10 +238,10 @@ impl Audio {
                     Se::MinoSpin => {
                         src.set_volume(0.75);
                     }
-                    Se::MinoDropSoftly => {
+                    Se::MinoSoftDrop => {
                         src.set_volume(0.15);
                     }
-                    Se::MinoDropHardly => {
+                    Se::MinoHardDrop => {
                         src.set_volume(0.6);
                         src.set_pitch(0.65);
                     }
@@ -273,8 +273,8 @@ pub enum Se {
     GameStart,
     MinoMove,
     MinoSpin,
-    MinoDropSoftly,
-    MinoDropHardly,
+    MinoSoftDrop,
+    MinoHardDrop,
     RemoveLine,
 }
 

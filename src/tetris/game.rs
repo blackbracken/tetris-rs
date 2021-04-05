@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use rand::prelude::SliceRandom;
 
-use crate::tetris::board::{Board, DroppingMinoStatus, MinoEntity};
+use crate::tetris::board::{Board, MinoEntity, RemovedLines};
 use crate::tetris::tetrimino::Tetrimino;
 
 pub struct Game {
@@ -41,21 +41,24 @@ impl Game {
         self.board.try_spin(SpinDirection::Right)
     }
 
-    pub fn drop_softly(&mut self) -> DropResult {
-        match self.board.drop_softly() {
-            DroppingMinoStatus::InAir => {
-                DropResult::SoftDropped
-            }
-            DroppingMinoStatus::OnGround => {
-                self.put_and_spawn(); // TODO: handle error
-                DropResult::Put
-            }
+    pub fn soft_drop(&mut self) -> Option<RemovedLines> {
+        if self.board.soft_drop() {
+            // TODO: calculate score
+            None
+        } else {
+            let mut determined = self.board.to_owned();
+            determined.determine_dropping_mino();
+            Some(determined.calc_removed_lines())
         }
     }
 
-    pub fn drop_hardly(&mut self) -> Option<usize> {
-        self.board.drop_hardly()
-            .filter(|_| self.put_and_spawn())
+    pub fn hard_drop(&mut self) -> RemovedLines {
+        // TODO: calculate score
+        let _ = self.board.hard_drop();
+
+        let mut determined = self.board.to_owned();
+        determined.determine_dropping_mino();
+        determined.calc_removed_lines()
     }
 
     pub fn try_swap_hold(&mut self) {
@@ -84,7 +87,7 @@ impl Game {
         self.board.remove_lines();
     }
 
-    fn put_and_spawn(&mut self) -> bool {
+    pub fn put_and_spawn(&mut self) -> bool {
         self.board.determine_dropping_mino();
 
         self.did_already_hold = false;
