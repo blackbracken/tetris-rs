@@ -2,6 +2,7 @@
 #![feature(duration_saturating_ops)]
 #![feature(duration_consts_2)]
 #![feature(pub_macro_rules)]
+#![feature(map_into_keys_values)]
 
 use std::mem;
 use std::time::Duration;

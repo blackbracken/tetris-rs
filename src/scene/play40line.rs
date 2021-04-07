@@ -1,5 +1,6 @@
 use std::cmp::max;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::ops::AddAssign;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
@@ -44,7 +45,7 @@ pub struct Play40LineState {
     animation_removing: Option<RemovingLineAnimation>,
     countdown: Option<u64>,
     start_countdown_at: Duration,
-    continuous_inputs: HashMap<KeyInput, usize>,
+    continuous_input: ContinuousInput,
 }
 
 impl Play40LineState {
@@ -57,11 +58,109 @@ impl Play40LineState {
                 animation_removing: None,
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
-                continuous_inputs: HashMap::new(),
+                continuous_input: ContinuousInput::new(),
             }
         )
     }
 }
+
+struct ContinuousInput {
+    elapsed: Duration,
+    elapsed_from_continuous_first_input: HashMap<KeyInput, Duration>,
+    elapsed_from_continuous_last_input: HashMap<KeyInput, Duration>,
+
+    continuity_counter: u64,
+    last_input_at: HashMap<KeyInput, u64>,
+}
+
+impl ContinuousInput {
+    fn new() -> ContinuousInput {
+        ContinuousInput {
+            elapsed: Duration::ZERO,
+            elapsed_from_continuous_first_input: HashMap::new(),
+            elapsed_from_continuous_last_input: HashMap::new(),
+            last_input_at: HashMap::new(),
+            continuity_counter: 0,
+        }
+    }
+
+    fn inputted_just_before(&self, key: &KeyInput) -> bool {
+        self.last_input_at
+            .get(key)
+            .filter(|c| *c + 1 == self.continuity_counter)
+            .is_none()
+    }
+
+    pub fn elapse(&mut self, delta: Duration) {
+        self.elapsed += delta;
+        self.continuity_counter += 1;
+
+        let keys = self.elapsed_from_continuous_first_input
+            .iter()
+            .filter(|(k, _)| !self.inputted_just_before(k))
+            .map(|(k, _)| k.to_owned())
+            .collect::<Vec<_>>();
+        self.elapsed_from_continuous_first_input.retain(|key, _| keys.contains(key));
+
+        let keys = self.elapsed_from_continuous_last_input
+            .iter()
+            .filter(|(k, _)| !self.inputted_just_before(k))
+            .map(|(k, _)| k.to_owned())
+            .collect::<Vec<_>>();
+        self.elapsed_from_continuous_last_input.retain(|key, _| keys.contains(key));
+    }
+
+    pub fn input(&mut self, key: KeyInput) -> bool {
+        let valid = self.is_input_valid(&key);
+
+        self.last_input_at.insert(key, self.continuity_counter);
+        if valid {
+            self.elapsed_from_continuous_first_input.entry(key).or_insert(self.elapsed);
+            self.elapsed_from_continuous_last_input.insert(key, self.elapsed);
+        }
+
+        valid
+    }
+
+    fn is_input_valid(&self, key: &KeyInput) -> bool {
+        let inputted_just_before = self.inputted_just_before(key);
+        let first = self.elapsed_from_continuous_first_input.get(key)
+            .unwrap_or(&Duration::ZERO)
+            .to_owned();
+        let last = self.elapsed_from_continuous_last_input.get(key)
+            .unwrap_or(&Duration::ZERO)
+            .to_owned();
+
+        match key {
+            KeyInput::Up => {
+                inputted_just_before
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.25) < self.elapsed)
+            }
+            KeyInput::Down => {
+                inputted_just_before
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.03) < self.elapsed)
+            }
+            KeyInput::MoveLeft => {
+                inputted_just_before
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.03) < self.elapsed)
+            }
+            KeyInput::MoveRight => {
+                inputted_just_before
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.03) < self.elapsed)
+            }
+            KeyInput::SpinLeft => {
+                inputted_just_before
+            }
+            KeyInput::SpinRight => {
+                inputted_just_before
+            }
+            KeyInput::Hold => {
+                inputted_just_before
+            }
+        }
+    }
+}
+
 
 pub fn init(_ctx: &mut Context, asset: &mut Asset) {
     asset.audio.stop_bgm();
@@ -77,6 +176,7 @@ pub fn update(
 
     // TODO: make a system to manage animations better
     let in_animating = state.countdown.is_some() || state.animation_removing.is_some();
+    state.continuous_input.elapse(delta);
 
     let countdown = match state.countdown {
         None | Some(0) => None,
@@ -156,24 +256,7 @@ fn update_to_hold(
     ctx: &Context,
     state: &mut Play40LineState,
 ) -> GameResult {
-    fn recognizes_as_hold_input(state: &mut Play40LineState, pressed: bool) -> bool {
-        if pressed {
-            let inputs = state.continuous_inputs
-                .entry(KeyInput::Hold)
-                .or_insert(0);
-            *inputs += 1;
-            let inputs = *inputs;
-
-            inputs == 1
-        } else {
-            state.continuous_inputs.insert(KeyInput::Hold, 0);
-
-            false
-        }
-    }
-
-    let pressed_hold = pressed_hold(ctx);
-    if recognizes_as_hold_input(state, pressed_hold) {
+    if pressed_hold(ctx) && state.continuous_input.input(KeyInput::Hold) {
         state.game.try_swap_hold()
     }
 
@@ -185,64 +268,25 @@ fn update_to_move(
     state: &mut Play40LineState,
     asset: &mut Asset,
 ) -> GameResult {
-    fn recognizes_as_moving_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
-        const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
-        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 20;
-
-        if pressed {
-            let inputs = state.continuous_inputs
-                .entry(key_input)
-                .or_insert(0);
-            *inputs += 1;
-            let inputs = *inputs;
-
-            inputs == 1 || (inputs >= CONTINUOUS_WAIT && inputs % CONTINUOUS_INTERVAL == 0)
-        } else {
-            state.continuous_inputs.insert(key_input, 0);
-
-            false
-        }
-    }
-
-    fn recognizes_as_spinning_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
-        if pressed {
-            let inputs = state.continuous_inputs
-                .entry(key_input)
-                .or_insert(0);
-            *inputs += 1;
-            let inputs = *inputs;
-
-            inputs == 1
-        } else {
-            state.continuous_inputs.insert(key_input, 0);
-
-            false
-        }
-    }
-
-    let pressed_move_left = pressed_move_left(ctx);
-    if recognizes_as_moving_input(state, pressed_move_left, KeyInput::MoveLeft) {
+    if pressed_move_left(ctx) && state.continuous_input.input(KeyInput::MoveLeft) {
         if state.game.move_left() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_move_right = pressed_move_right(ctx);
-    if recognizes_as_moving_input(state, pressed_move_right, KeyInput::MoveRight) {
+    if pressed_move_right(ctx) && state.continuous_input.input(KeyInput::MoveRight) {
         if state.game.move_right() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
         }
     }
 
-    let pressed_spin_left = pressed_spin_left(ctx);
-    if recognizes_as_spinning_input(state, pressed_spin_left, KeyInput::SpinLeft) {
+    if pressed_spin_left(ctx) && state.continuous_input.input(KeyInput::SpinLeft) {
         if state.game.spin_left() {
             asset.audio.play_se(ctx, Se::MinoSpin)?;
         }
     }
 
-    let pressed_spin_right = pressed_spin_right(ctx);
-    if recognizes_as_spinning_input(state, pressed_spin_right, KeyInput::SpinRight) {
+    if pressed_spin_right(ctx) && state.continuous_input.input(KeyInput::SpinRight) {
         if state.game.spin_right() {
             asset.audio.play_se(ctx, Se::MinoSpin)?;
         }
@@ -255,64 +299,18 @@ fn update_to_drop(
     ctx: &mut Context,
     state: &mut Play40LineState,
 ) -> GameResult<DroppedOrNothing> {
-    const NATURAL_DROP_INTERVAL: Duration = Duration::new(1, 0);
-
-    fn recognizes_as_hard_drop_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
-        const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
-        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 4;
-
-        if pressed {
-            let inputs = state.continuous_inputs
-                .entry(key_input)
-                .or_insert(0);
-            *inputs += 1;
-            let inputs = *inputs;
-
-            inputs == 1 || (inputs >= CONTINUOUS_WAIT && inputs % CONTINUOUS_INTERVAL == 0)
-        } else {
-            state.continuous_inputs.insert(key_input, 0);
-
-            false
-        }
-    }
-
-    fn recognizes_as_soft_drop_input(state: &mut Play40LineState, pressed: bool, key_input: KeyInput) -> bool {
-        const CONTINUOUS_WAIT: usize = (FPS as usize) * 2 / 5;
-        const CONTINUOUS_INTERVAL: usize = (FPS as usize) / 20;
-
-        if pressed {
-            let inputs = state.continuous_inputs
-                .entry(key_input)
-                .or_insert(0);
-            *inputs += 1;
-            let inputs = *inputs;
-
-            inputs == 1 || (inputs >= CONTINUOUS_WAIT && inputs % CONTINUOUS_INTERVAL == 0)
-        } else {
-            state.continuous_inputs.insert(key_input, 0);
-
-            false
-        }
-    }
-
-    let pressed_up = pressed_up(ctx);
-    if recognizes_as_hard_drop_input(state, pressed_up, KeyInput::Up) {
-        state.continuous_inputs.retain(|input, _| [KeyInput::Up, KeyInput::Down].contains(input));
-
+    if pressed_up(ctx) && state.continuous_input.input(KeyInput::Up) {
         return Ok(DroppedOrNothing::dropped(Some(state.game.hard_drop())));
     }
 
-    let pressed_down = pressed_down(ctx);
-    if recognizes_as_soft_drop_input(state, pressed_down, KeyInput::Down) {
-        if state.game.board.to_owned().soft_drop() { // TODO: prepare safe accessor
-            return Ok(DroppedOrNothing::dropped(state.game.soft_drop()));
-        }
+    if pressed_down(ctx) && state.continuous_input.input(KeyInput::Down) {
+        return Ok(DroppedOrNothing::dropped(state.game.soft_drop()));
     }
 
     Ok(DroppedOrNothing::Nothing)
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 enum KeyInput {
     Up,
     Down,
