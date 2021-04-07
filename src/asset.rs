@@ -139,8 +139,8 @@ impl Audio {
         // for exhaustive checking on compile
         fn bgm_path(bgm: Bgm) -> &'static str {
             match bgm {
-                Bgm::Title => "/sound/bgm/bgm_maoudamashii_cyber18.mp3",
-                Bgm::InGame => "/sound/bgm/game_maoudamashii_7_rock44.mp3"
+                Bgm::Title => "/sound/bgm/bgm_classic_etc_scarboroughfair.wav",
+                Bgm::InGame => "/sound/bgm/bgm_classic_etc_korobushka.wav"
             }
         }
         let bgm_data_map = maplit::hashmap! {
@@ -194,12 +194,12 @@ impl Audio {
             .map(|mut src| {
                 match bgm {
                     Bgm::Title => {
-                        src.set_volume(0.15);
+                        src.set_volume(0.2);
                         src.set_fade_in(Duration::from_secs(2));
                         src
                     }
                     Bgm::InGame => {
-                        src.set_volume(0.12);
+                        src.set_volume(0.25);
                         src
                     }
                 }
