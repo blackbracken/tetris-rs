@@ -1,15 +1,35 @@
 use std::collections::VecDeque;
+use std::time::Duration;
 
 use rand::prelude::SliceRandom;
 
 use crate::tetris::board::{Board, MinoEntity, RemovedLines};
 use crate::tetris::tetrimino::Tetrimino;
 
+const NATURAL_DROP_INTERVAL: Duration = Duration::from_secs(1);
+
+pub type PutOrJustDropped = Option<RemovedLines>;
+
+// TODO: rename
+pub enum DroppedOrNothing {
+    Dropped(PutOrJustDropped),
+    Nothing,
+}
+
+impl DroppedOrNothing {
+    pub fn dropped(result: PutOrJustDropped) -> DroppedOrNothing {
+        DroppedOrNothing::Dropped(result)
+    }
+}
+
 pub struct Game {
     pub board: Board,
     pub bag: MinoBag,
     pub hold_mino: Option<Tetrimino>,
     pub did_already_hold: bool,
+
+    elapsed: Duration,
+    last_dropped: Duration,
 }
 
 impl Game {
@@ -22,26 +42,47 @@ impl Game {
             bag,
             hold_mino: None,
             did_already_hold: false,
+            elapsed: Duration::ZERO,
+            last_dropped: Duration::ZERO,
         }
     }
 
+    pub fn elapse(&mut self, delta: Duration) -> DroppedOrNothing {
+        self.elapsed += delta;
+
+        if self.last_dropped + NATURAL_DROP_INTERVAL < self.elapsed {
+            self.last_dropped = self.elapsed;
+            let result = self.soft_drop();
+
+            return DroppedOrNothing::dropped(result);
+        }
+
+        DroppedOrNothing::Nothing
+    }
+
     pub fn move_left(&mut self) -> bool {
+        self.last_dropped = self.elapsed;
         self.board.try_move_x(-1)
     }
 
     pub fn move_right(&mut self) -> bool {
+        self.last_dropped = self.elapsed;
         self.board.try_move_x(1)
     }
 
     pub fn spin_left(&mut self) -> bool {
+        self.last_dropped = self.elapsed;
         self.board.try_spin(SpinDirection::Left)
     }
 
     pub fn spin_right(&mut self) -> bool {
+        self.last_dropped = self.elapsed;
         self.board.try_spin(SpinDirection::Right)
     }
 
-    pub fn soft_drop(&mut self) -> Option<RemovedLines> {
+    pub fn soft_drop(&mut self) -> PutOrJustDropped {
+        self.last_dropped = self.elapsed;
+
         if self.board.soft_drop() {
             // TODO: calculate score
             None
@@ -63,6 +104,7 @@ impl Game {
 
     pub fn try_swap_hold(&mut self) {
         if !self.did_already_hold {
+            self.last_dropped = self.elapsed;
             self.did_already_hold = true;
 
             match self.hold_mino {
@@ -92,6 +134,8 @@ impl Game {
 
         self.did_already_hold = false;
         let mino = self.bag.pop();
+
+        self.last_dropped = self.elapsed;
 
         self.board.spawn(mino)
     }
