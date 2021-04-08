@@ -117,17 +117,6 @@ impl Board {
         }
 
         can_drop
-        //let can_drop = self.establishes_field();
-        //if can_drop {
-        //    self.dropping_point.y += 1;
-        //    let can_drop = self.establishes_field();
-        //    self.dropping_point.y -= 1;
-//
-        //    can_drop
-        //} else {
-        //   self.dropping_point.y -= 1;
-        //    false
-        //}
     }
 
     pub fn hard_drop(&mut self) -> usize {
@@ -147,7 +136,7 @@ impl Board {
 
     pub fn calc_dropping_mino_prediction(&self) -> Vec<Point> {
         let mut clone = self.to_owned();
-        clone.dropping_point.y += self.calc_dropping_mino_height_from_bottom();
+        clone.dropping_point.y += self.calc_dropping_mino_height_from_ground() as isize;
 
         clone.calc_dropping_mino_points()
     }
@@ -205,13 +194,17 @@ impl Board {
             .collect::<Vec<_>>()
     }
 
-    pub fn calc_dropping_mino_height_from_bottom(&self) -> usize {
+    pub fn calc_dropping_mino_height_from_ground(&self) -> usize {
         let mut clone = self.to_owned();
-
         let mut height = 0;
-        while clone.establishes_field() {
+        loop {
             clone.dropping_point.y += 1;
-            height += 1;
+
+            if clone.establishes_field() {
+                height += 1;
+            } else {
+                break;
+            }
         }
 
         height
@@ -356,6 +349,13 @@ mod tests {
         ];
 
         assert!(board.field().similar(expected));
+    }
+
+    #[test]
+    fn f() {
+        let board = Board::new(Tetrimino::T);
+
+        assert_eq!(board.calc_dropping_mino_height_from_ground(), 18);
     }
 
     #[test]

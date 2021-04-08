@@ -246,6 +246,7 @@ impl Into<Point> for (f32, f32) {
 
 #[cfg(test)]
 mod tests {
+    use crate::macros::rect_vec;
     use super::*;
 
     #[test]
