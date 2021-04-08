@@ -304,6 +304,7 @@ fn update_to_drop(
     }
 
     if pressed_down(ctx) && state.continuous_input.input(KeyInput::Down) {
+
         return Ok(DroppedOrNothing::dropped(state.game.soft_drop()));
     }
 
