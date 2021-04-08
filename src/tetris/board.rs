@@ -19,6 +19,9 @@ pub struct Board {
     pub dropping: Tetrimino,
     dropping_point: Point,
     dropping_rotation: MinoRotation,
+
+    ready_to_back_to_back: bool,
+    combo: usize,
 }
 
 impl Board {
@@ -32,6 +35,8 @@ impl Board {
             dropping,
             dropping_point: SPAWN_POINT,
             dropping_rotation: MinoRotation::default(),
+            ready_to_back_to_back: false,
+            combo: 1,
         }
     }
 
@@ -81,7 +86,7 @@ impl Board {
         clone.establishes_field()
     }
 
-    pub fn try_spin(&mut self, direction: SpinDirection) -> bool {
+    pub fn try_spin(&mut self, direction: SpinDirection) -> Option<Spin> {
         fn spin_with_offset(board: &mut Board, direction: &SpinDirection, offset: &WallKickOffset) {
             board.dropping_rotation = board.dropping_rotation.spin(direction);
             board.dropping_point.x += offset.x;
@@ -102,10 +107,39 @@ impl Board {
 
         if let Some(offset) = offset {
             spin_with_offset(self, &direction, &offset);
-            true
+
+            if self.did_t_spin() {
+                println!("tspin!");
+                Some(Spin::TSpin)
+            } else {
+                Some(Spin::Normal)
+            }
         } else {
-            false
+            None
         }
+    }
+
+    fn did_t_spin(&self) -> bool {
+        let field = self.field();
+        let center = self.dropping.center();
+        let unfilled_corners_count = [1, -1].iter()
+            .flat_map(|&y| usize::try_from(self.dropping_point.y - center.y + y))
+            .flat_map(|y| {
+                [1, -1].iter()
+                    .flat_map(|&x| usize::try_from(self.dropping_point.x - center.x + x))
+                    .flat_map(|x| {
+                        field
+                            .get(y)
+                            .and_then(|line| line.get(x))
+                            .filter(|&entity| entity.is_air())
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .count();
+
+        self.dropping == Tetrimino::T
+            && self.calc_dropping_mino_height_from_ground() == 0
+            && unfilled_corners_count <= 1
     }
 
     pub fn soft_drop(&mut self) -> bool {
@@ -264,6 +298,30 @@ impl MinoEntity {
     }
 }
 
+struct F {
+    removing: RemovingLines,
+    with_back_to_back: bool,
+    combo: usize,
+}
+
+enum RemovingLines {
+    Single,
+    Double,
+    Triple,
+    Tetris,
+    TSpinMini,
+    TSpinSingle,
+    TSpinDouble,
+    TSpinTriple,
+    PerfectClear,
+}
+
+impl RemovingLines {}
+
+pub enum Spin {
+    Normal,
+    TSpin,
+}
 
 #[cfg(test)]
 //noinspection ALL

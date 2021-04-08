@@ -231,8 +231,8 @@ pub fn update(
     Ok(Next::do_continue(state.into()))
 }
 
-fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, result: PutOrJustDropped) -> GameResult {
-    if let Some(removed_lines) = result {
+fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or_dropped: PutOrJustDropped) -> GameResult {
+    if let Some(removed_lines) = put_or_dropped {
         asset.audio.play_se(ctx, Se::MinoHardDrop)?;
 
         if !removed_lines.is_empty() {

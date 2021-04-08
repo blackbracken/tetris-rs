@@ -3,14 +3,14 @@ use std::time::Duration;
 
 use rand::prelude::SliceRandom;
 
-use crate::tetris::board::{Board, MinoEntity, RemovedLines};
+use crate::tetris::board::{Board, MinoEntity, RemovedLines, Spin};
 use crate::tetris::tetrimino::Tetrimino;
 
 const NATURAL_DROP_INTERVAL: Duration = Duration::from_secs(1);
+const COMBO_INITIAL: usize = 1;
 
 pub type PutOrJustDropped = Option<RemovedLines>;
 
-// TODO: rename
 pub enum DroppedOrNothing {
     Dropped(PutOrJustDropped),
     Nothing,
@@ -30,6 +30,9 @@ pub struct Game {
 
     elapsed: Duration,
     last_dropped: Duration,
+
+    ready_back_to_back: bool,
+    combo: usize,
 }
 
 impl Game {
@@ -44,6 +47,8 @@ impl Game {
             did_already_hold: false,
             elapsed: Duration::ZERO,
             last_dropped: Duration::ZERO,
+            ready_back_to_back: false,
+            combo: COMBO_INITIAL,
         }
     }
 
@@ -71,13 +76,29 @@ impl Game {
     }
 
     pub fn spin_left(&mut self) -> bool {
-        self.last_dropped = self.elapsed;
-        self.board.try_spin(SpinDirection::Left)
+        self.spin(SpinDirection::Left)
     }
 
     pub fn spin_right(&mut self) -> bool {
+        self.spin(SpinDirection::Right)
+    }
+
+    fn spin(&mut self, direction: SpinDirection) -> bool {
         self.last_dropped = self.elapsed;
-        self.board.try_spin(SpinDirection::Right)
+
+        let spin = self.board.try_spin(direction);
+        match spin {
+            Some(Spin::TSpin) => {
+                self.ready_back_to_back = true;
+                println!("ready to BtB");
+            }
+            Some(_) => {
+                self.ready_back_to_back = false;
+            }
+            None => (),
+        }
+
+        spin.is_some()
     }
 
     pub fn soft_drop(&mut self) -> PutOrJustDropped {
@@ -136,6 +157,12 @@ impl Game {
         let mino = self.bag.pop();
 
         self.last_dropped = self.elapsed;
+
+        if 0 < self.board.calc_removed_lines().len() {
+            self.combo += 1;
+        } else {
+            self.combo = COMBO_INITIAL;
+        }
 
         self.board.spawn(mino)
     }
@@ -247,6 +274,7 @@ impl Into<Point> for (f32, f32) {
 #[cfg(test)]
 mod tests {
     use crate::macros::rect_vec;
+
     use super::*;
 
     #[test]
