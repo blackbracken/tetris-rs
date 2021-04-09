@@ -84,18 +84,7 @@ impl Game {
         self.last_dropped = self.elapsed;
         self.rotated_just_before = true;
 
-        let spin = self.board.try_spin(direction);
-        match spin {
-            Some(Spin::TSpin) => {
-                self.ready_back_to_back = true;
-            }
-            Some(_) => {
-                self.ready_back_to_back = false;
-            }
-            None => (),
-        }
-
-        spin.is_some()
+        self.board.try_spin(direction).is_some()
     }
 
     pub fn drop_one(&mut self) -> PutOrJustDropped {
@@ -106,12 +95,7 @@ impl Game {
             return None;
         }
 
-        let put_result = self.calc_put_result_if_did();
-        if let Some(reward) = put_result.reward {
-            self.score += reward.score();
-        }
-
-        Some(put_result.removed_lines)
+        Some(self.prepare_putting().removed_lines)
     }
 
     pub fn soft_drop(&mut self) -> PutOrJustDropped {
@@ -122,12 +106,18 @@ impl Game {
     pub fn hard_drop(&mut self) -> RemovedLines {
         self.score += 2 * self.board.hard_drop();
 
+        self.prepare_putting().removed_lines
+    }
+
+    #[warn(unused_must_use)]
+    fn prepare_putting(&mut self) -> PutResult {
         let put_result = self.calc_put_result_if_did();
-        if let Some(reward) = put_result.reward {
+        if let Some(ref reward) = put_result.reward {
             self.score += reward.score();
+            self.ready_back_to_back = reward.action.is_subjected_to_back_to_back()
         }
 
-        put_result.removed_lines
+        put_result
     }
 
     fn calc_put_result_if_did(&self) -> PutResult {
