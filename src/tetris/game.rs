@@ -9,7 +9,7 @@ use crate::tetris::tetrimino::Tetrimino;
 const NATURAL_DROP_INTERVAL: Duration = Duration::from_secs(1);
 const COMBO_INITIAL: usize = 1;
 
-pub type PutOrJustDropped = Option<PutResult>;
+pub type PutOrJustDropped = Option<RemovedLines>;
 
 #[derive(Debug)]
 pub struct PutResult {
@@ -132,7 +132,12 @@ impl Game {
             return None;
         }
 
-        Some(self.calc_put_result_if_did())
+        let put_result = self.calc_put_result_if_did();
+        if let Some(reward) = put_result.reward {
+            self.score += reward.score();
+        }
+
+        Some(put_result.removed_lines)
     }
 
     pub fn soft_drop(&mut self) -> PutOrJustDropped {
@@ -140,10 +145,15 @@ impl Game {
         self.drop_one()
     }
 
-    pub fn hard_drop(&mut self) -> PutResult {
+    pub fn hard_drop(&mut self) -> RemovedLines {
         self.score += 2 * self.board.hard_drop();
 
-        self.calc_put_result_if_did()
+        let put_result = self.calc_put_result_if_did();
+        if let Some(reward) = put_result.reward {
+            self.score += reward.score();
+        }
+
+        put_result.removed_lines
     }
 
     fn calc_put_result_if_did(&self) -> PutResult {
@@ -203,6 +213,7 @@ impl Game {
     }
 
     pub fn remove_lines(&mut self) {
+        let put_result = self.calc_put_result_if_did();
         self.board.remove_lines();
     }
 

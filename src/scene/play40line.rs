@@ -242,12 +242,12 @@ pub fn update(
 }
 
 fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or_dropped: PutOrJustDropped) -> GameResult {
-    if let Some(put_result) = put_or_dropped {
+    if let Some(removed_lines) = put_or_dropped {
         asset.audio.play_se(ctx, Se::MinoHardDrop)?;
 
-        if !put_result.removed_lines.is_empty() {
+        if !removed_lines.is_empty() {
             asset.audio.play_se(ctx, Se::RemoveLine)?;
-            state.animation_removing = Some(RemovingLineAnimation::new(put_result.removed_lines));
+            state.animation_removing = Some(RemovingLineAnimation::new(removed_lines));
         }
 
         if !state.game.put_and_spawn() {
@@ -316,7 +316,7 @@ fn update_to_drop(
     }
 
     if pressed_down(ctx) && state.continuous_input.input(KeyInput::Down) {
-        if 0 < state.game.board.dropping_mino_height_from_ground() {
+        if !state.game.board.dropping_mino_is_on_ground() {
             return Ok(
                 DroppedOrNothing::dropped(state.game.soft_drop())
             );

@@ -120,7 +120,6 @@ impl Board {
 
     pub fn satisfies_cond_for_t_spin(&self) -> bool {
         let field = self.field();
-        let center = self.dropping.center();
         let unfilled_corners_count = [1, -1].iter()
             .flat_map(|&y| usize::try_from(self.dropping_point.y + y))
             .flat_map(|y| {
@@ -135,7 +134,7 @@ impl Board {
                     .collect::<Vec<_>>()
             })
             .count();
-        self.dropping_mino_height_from_ground() == 0 && unfilled_corners_count <= 1
+        self.dropping_mino_is_on_ground() && unfilled_corners_count <= 1
     }
 
     pub fn drop_one(&mut self) -> bool {
@@ -171,7 +170,6 @@ impl Board {
         clone.dropping_mino_points()
     }
 
-    // TODO: returns reward
     pub fn remove_lines(&mut self) -> usize {
         let removed_lines = self.filled_lines();
 
@@ -224,7 +222,11 @@ impl Board {
             .collect::<Vec<_>>()
     }
 
-    pub fn dropping_mino_height_from_ground(&self) -> usize {
+    pub fn dropping_mino_is_on_ground(&self) -> bool {
+        self.dropping_mino_height_from_ground() == 0
+    }
+
+    fn dropping_mino_height_from_ground(&self) -> usize {
         let mut clone = self.to_owned();
         let mut height = 0;
         loop {
