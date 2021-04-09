@@ -14,16 +14,18 @@ use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_r
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
 use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, RemovedLines};
-use crate::tetris::game::{DroppedOrNothing, DropResult, Game, Point, PutOrJustDropped};
+use crate::tetris::game::{DroppedOrNothing, DropResult, Game, Point, PutOrJustDropped, PutResult};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
 const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;
 
-const FONT_SIZE: f32 = 24.;
+const PANEL_FONT_SIZE: f32 = 24.;
 
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
 const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
+
+const FIELD_HEIGHT: f32 = (FIELD_UNIT_HEIGHT as f32) * BLOCK_LENGTH;
 
 const SIDE_PANEL_WIDTH: f32 = 4. * HALF_BLOCK_LENGTH;
 const MINO_SPACE_IN_SIDE_PANEL_HEIGHT: f32 = HALF_BLOCK_LENGTH * 6.;
@@ -35,6 +37,14 @@ const HOLD_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + SIDE_PANEL_PADDING;
 const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
+
+const TEXTS_MAX_AMOUNT: usize = 6;
+const TEXTS_FONT_SIZE: f32 = 42.;
+const TEXTS_Y_MARGIN: f32 = FIELD_HEIGHT / 12.;
+const TEXTS_PADDING: f32 = 2. * TEXTS_FONT_SIZE;
+
+const TEXTS_ORIGIN_X: f32 = NEXT_ORIGIN_X + 2. * SIDE_PANEL_WIDTH;
+const TEXTS_ORIGIN_Y: f32 = FIELD_ORIGIN_Y + TEXTS_Y_MARGIN;
 
 const VISIBLE_NEXT_MINO_AMOUNT: usize = 5;
 
@@ -232,12 +242,12 @@ pub fn update(
 }
 
 fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or_dropped: PutOrJustDropped) -> GameResult {
-    if let Some(removed_lines) = put_or_dropped {
+    if let Some(put_result) = put_or_dropped {
         asset.audio.play_se(ctx, Se::MinoHardDrop)?;
 
-        if !removed_lines.is_empty() {
+        if !put_result.removed_lines.is_empty() {
             asset.audio.play_se(ctx, Se::RemoveLine)?;
-            state.animation_removing = Some(RemovingLineAnimation::new(removed_lines));
+            state.animation_removing = Some(RemovingLineAnimation::new(put_result.removed_lines));
         }
 
         if !state.game.put_and_spawn() {
@@ -300,12 +310,16 @@ fn update_to_drop(
     state: &mut Play40LineState,
 ) -> GameResult<DroppedOrNothing> {
     if pressed_up(ctx) && state.continuous_input.input(KeyInput::Up) {
-        return Ok(DroppedOrNothing::dropped(Some(state.game.hard_drop())));
+        return Ok(
+            DroppedOrNothing::dropped(Some(state.game.hard_drop()))
+        );
     }
 
     if pressed_down(ctx) && state.continuous_input.input(KeyInput::Down) {
-        if 0 < state.game.board.calc_dropping_mino_height_from_ground() {
-            return Ok(DroppedOrNothing::dropped(state.game.soft_drop()));
+        if 0 < state.game.board.dropping_mino_height_from_ground() {
+            return Ok(
+                DroppedOrNothing::dropped(state.game.soft_drop())
+            );
         }
     }
 
@@ -330,6 +344,8 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     draw_hold_panel(ctx, asset)?;
     draw_next_panel(ctx, asset)?;
 
+    draw_total_score(ctx, asset, state.game.score);
+
     match state.countdown {
         Some(0) | None => {
             if let Some(held) = state.game.hold_mino {
@@ -339,7 +355,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
             if let Some(ref anim) = state.animation_removing {
                 draw_minos_on_confirmed_field(ctx, asset, state, false, &anim.lines)?;
-                anim.draw(ctx, asset)?;
+                anim.draw(ctx)?;
             } else {
                 draw_minos_on_confirmed_field(ctx, asset, state, true, &Vec::new())?;
                 draw_dropping_mino_prediction(ctx, state)?;
@@ -546,13 +562,13 @@ fn draw_hold_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new("HOLD")
             .font(asset.font.vt323)
-            .scale(PxScale::from(FONT_SIZE))
+            .scale(PxScale::from(PANEL_FONT_SIZE))
     );
     graphics::draw(
         ctx,
         &text,
         graphics::DrawParam::default()
-            .dest([HOLD_ORIGIN_X, HOLD_ORIGIN_Y - FONT_SIZE]),
+            .dest([HOLD_ORIGIN_X, HOLD_ORIGIN_Y - PANEL_FONT_SIZE]),
     )?;
 
     let line = graphics::Mesh::new_line(
@@ -604,13 +620,13 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new("NEXT")
             .font(asset.font.vt323)
-            .scale(PxScale::from(FONT_SIZE))
+            .scale(PxScale::from(PANEL_FONT_SIZE))
     );
     graphics::draw(
         ctx,
         &text,
         graphics::DrawParam::default()
-            .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y - FONT_SIZE]),
+            .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y - PANEL_FONT_SIZE]),
     )?;
 
     let line = graphics::Mesh::new_line(
@@ -667,6 +683,24 @@ fn draw_next_minos(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) ->
     Ok(())
 }
 
+fn draw_total_score(ctx: &mut Context, asset: &Asset, score: usize) -> GameResult {
+    let text = format!("SCORE: {0: >8}", score);
+    let text = graphics::Text::new(
+        graphics::TextFragment::new(text)
+            .font(asset.font.vt323)
+            .scale(PxScale::from(TEXTS_FONT_SIZE))
+    );
+
+    graphics::draw(
+        ctx,
+        &text,
+        DrawParam::default()
+            .dest([TEXTS_ORIGIN_X, TEXTS_ORIGIN_Y + TEXTS_PADDING]),
+    )?;
+
+    Ok(())
+}
+
 fn draw_mini_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino, point: Point) -> GameResult {
     let shapes = mino.shapes();
     let shape = shapes.get(&MinoRotation::Clockwise).unwrap();
@@ -708,7 +742,7 @@ impl RemovingLineAnimation {
         }
     }
 
-    fn draw(&self, ctx: &mut Context, asset: &mut Asset) -> GameResult {
+    fn draw(&self, ctx: &mut Context) -> GameResult {
         let elapsed = self.elapsed;
 
         if elapsed < REMOVING_LINE_ANIM_PHASE_1 {

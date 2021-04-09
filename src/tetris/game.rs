@@ -9,7 +9,22 @@ use crate::tetris::tetrimino::Tetrimino;
 const NATURAL_DROP_INTERVAL: Duration = Duration::from_secs(1);
 const COMBO_INITIAL: usize = 1;
 
-pub type PutOrJustDropped = Option<RemovedLines>;
+pub type PutOrJustDropped = Option<PutResult>;
+
+#[derive(Debug)]
+pub struct PutResult {
+    pub removed_lines: RemovedLines,
+    pub reward: Option<ScoringReward>,
+}
+
+impl PutResult {
+    fn new(removed_lines: RemovedLines, reward: Option<ScoringReward>) -> PutResult {
+        PutResult {
+            removed_lines,
+            reward,
+        }
+    }
+}
 
 pub enum DroppedOrNothing {
     Dropped(PutOrJustDropped),
@@ -31,7 +46,9 @@ pub struct Game {
     elapsed: Duration,
     last_dropped: Duration,
 
+    pub score: usize,
     ready_back_to_back: bool,
+    rotated_just_before: bool,
     combo: usize,
 }
 
@@ -47,7 +64,9 @@ impl Game {
             did_already_hold: false,
             elapsed: Duration::ZERO,
             last_dropped: Duration::ZERO,
+            score: 0,
             ready_back_to_back: false,
+            rotated_just_before: false,
             combo: COMBO_INITIAL,
         }
     }
@@ -57,7 +76,7 @@ impl Game {
 
         if self.last_dropped + NATURAL_DROP_INTERVAL < self.elapsed {
             self.last_dropped = self.elapsed;
-            let result = self.soft_drop();
+            let result = self.drop_one();
 
             return DroppedOrNothing::dropped(result);
         }
@@ -67,11 +86,15 @@ impl Game {
 
     pub fn move_left(&mut self) -> bool {
         self.last_dropped = self.elapsed;
+        self.rotated_just_before = false;
+
         self.board.try_move_x(-1)
     }
 
     pub fn move_right(&mut self) -> bool {
         self.last_dropped = self.elapsed;
+        self.rotated_just_before = false;
+
         self.board.try_move_x(1)
     }
 
@@ -85,12 +108,12 @@ impl Game {
 
     fn spin(&mut self, direction: SpinDirection) -> bool {
         self.last_dropped = self.elapsed;
+        self.rotated_just_before = true;
 
         let spin = self.board.try_spin(direction);
         match spin {
             Some(Spin::TSpin) => {
                 self.ready_back_to_back = true;
-                println!("ready to BtB");
             }
             Some(_) => {
                 self.ready_back_to_back = false;
@@ -101,26 +124,59 @@ impl Game {
         spin.is_some()
     }
 
-    pub fn soft_drop(&mut self) -> PutOrJustDropped {
+    pub fn drop_one(&mut self) -> PutOrJustDropped {
         self.last_dropped = self.elapsed;
 
-        if self.board.soft_drop() {
-            // TODO: calculate score
-            None
-        } else {
-            let mut determined = self.board.to_owned();
-            determined.determine_dropping_mino();
-            Some(determined.calc_removed_lines())
+        if self.board.drop_one() {
+            self.rotated_just_before = false;
+            return None;
         }
+
+        Some(self.calc_put_result_if_did())
     }
 
-    pub fn hard_drop(&mut self) -> RemovedLines {
-        // TODO: calculate score
-        let _ = self.board.hard_drop();
+    pub fn soft_drop(&mut self) -> PutOrJustDropped {
+        self.score += 1;
+        self.drop_one()
+    }
 
-        let mut determined = self.board.to_owned();
-        determined.determine_dropping_mino();
-        determined.calc_removed_lines()
+    pub fn hard_drop(&mut self) -> PutResult {
+        self.score += 2 * self.board.hard_drop();
+
+        self.calc_put_result_if_did()
+    }
+
+    fn calc_put_result_if_did(&self) -> PutResult {
+        let lines = self.board.filled_lines();
+        if lines.is_empty() {
+            return PutResult::new(lines, None);
+        }
+
+        let did_t_spin = self.board.dropping == Tetrimino::T
+            && self.rotated_just_before
+            && self.board.satisfies_cond_for_t_spin();
+        let action = if did_t_spin {
+            match lines.len() {
+                1 => ScoringAction::TSpinSingle,
+                2 => ScoringAction::TSpinDouble,
+                3 => ScoringAction::TSpinTriple,
+                _ => unreachable!(),
+            }
+        } else {
+            match lines.len() {
+                1 => ScoringAction::Single,
+                2 => ScoringAction::Double,
+                3 => ScoringAction::Triple,
+                4 => ScoringAction::Tetris,
+                _ => unreachable!(),
+            }
+        };
+
+        let reward = ScoringReward::new(action, self.ready_back_to_back, self.combo);
+
+        let r = PutResult::new(lines, Some(reward));
+        println!("result: {:?}", r);
+        r
     }
 
     pub fn try_swap_hold(&mut self) {
@@ -158,7 +214,7 @@ impl Game {
 
         self.last_dropped = self.elapsed;
 
-        if 0 < self.board.calc_removed_lines().len() {
+        if 0 < self.board.filled_lines().len() {
             self.combo += 1;
         } else {
             self.combo = COMBO_INITIAL;
@@ -251,6 +307,70 @@ pub enum DropResult {
 pub enum SpinDirection {
     Left,
     Right,
+}
+
+#[derive(Debug)]
+pub struct ScoringReward {
+    action: ScoringAction,
+    with_back_to_back: bool,
+    combo: usize,
+}
+
+impl ScoringReward {
+    fn new(action: ScoringAction, with_back_to_back: bool, combo: usize) -> ScoringReward {
+        ScoringReward {
+            action,
+            with_back_to_back,
+            combo,
+        }
+    }
+
+    pub fn score(&self) -> usize {
+        use ScoringAction::*;
+        let action_score = match self.action {
+            Single => 100,
+            Double => 300,
+            Triple => 500,
+            Tetris => 800,
+            TSpinSingle => 800,
+            TSpinDouble => 1200,
+            TSpinTriple => 1600,
+            PerfectClear => 5000,
+        };
+
+        let back_to_back_bonus = if self.action.is_subjected_to_back_to_back() {
+            action_score * 2 / 3
+        } else {
+            0
+        };
+
+        let combo_score = 50 * (self.combo.saturating_sub(1));
+
+        action_score + back_to_back_bonus + combo_score
+    }
+}
+
+#[derive(Debug)]
+enum ScoringAction {
+    Single,
+    Double,
+    Triple,
+    Tetris,
+    TSpinSingle,
+    TSpinDouble,
+    TSpinTriple,
+    PerfectClear,
+}
+
+impl ScoringAction {
+    fn is_subjected_to_back_to_back(&self) -> bool {
+        use ScoringAction::*;
+
+        match self {
+            Tetris | TSpinSingle | TSpinDouble | TSpinTriple => true,
+            _ => false
+        }
+    }
 }
 
 #[derive(Copy, Clone)]

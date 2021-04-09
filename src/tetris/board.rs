@@ -108,8 +108,7 @@ impl Board {
         if let Some(offset) = offset {
             spin_with_offset(self, &direction, &offset);
 
-            if self.did_t_spin() {
-                println!("tspin!");
+            if self.satisfies_cond_for_t_spin() {
                 Some(Spin::TSpin)
             } else {
                 Some(Spin::Normal)
@@ -119,14 +118,14 @@ impl Board {
         }
     }
 
-    fn did_t_spin(&self) -> bool {
+    pub fn satisfies_cond_for_t_spin(&self) -> bool {
         let field = self.field();
         let center = self.dropping.center();
         let unfilled_corners_count = [1, -1].iter()
-            .flat_map(|&y| usize::try_from(self.dropping_point.y - center.y + y))
+            .flat_map(|&y| usize::try_from(self.dropping_point.y + y))
             .flat_map(|y| {
                 [1, -1].iter()
-                    .flat_map(|&x| usize::try_from(self.dropping_point.x - center.x + x))
+                    .flat_map(|&x| usize::try_from(self.dropping_point.x + x))
                     .flat_map(|x| {
                         field
                             .get(y)
@@ -136,26 +135,23 @@ impl Board {
                     .collect::<Vec<_>>()
             })
             .count();
-
-        self.dropping == Tetrimino::T
-            && self.calc_dropping_mino_height_from_ground() == 0
-            && unfilled_corners_count <= 1
+        self.dropping_mino_height_from_ground() == 0 && unfilled_corners_count <= 1
     }
 
-    pub fn soft_drop(&mut self) -> bool {
+    pub fn drop_one(&mut self) -> bool {
         self.dropping_point.y += 1;
 
-        let can_drop = self.establishes_field();
-        if !can_drop {
+        let could_drop = self.establishes_field();
+        if !could_drop {
             self.dropping_point.y -= 1;
         }
 
-        can_drop
+        could_drop
     }
 
     pub fn hard_drop(&mut self) -> usize {
         let mut n = 0;
-        while self.soft_drop() {
+        while self.drop_one() {
             n += 1;
         }
 
@@ -163,21 +159,21 @@ impl Board {
     }
 
     pub fn determine_dropping_mino(&mut self) {
-        for p in self.calc_dropping_mino_points() {
+        for p in self.dropping_mino_points() {
             self.confirmed_field[p.y as usize][p.x as usize] = self.dropping.block().into();
         }
     }
 
     pub fn calc_dropping_mino_prediction(&self) -> Vec<Point> {
         let mut clone = self.to_owned();
-        clone.dropping_point.y += self.calc_dropping_mino_height_from_ground() as isize;
+        clone.dropping_point.y += self.dropping_mino_height_from_ground() as isize;
 
-        clone.calc_dropping_mino_points()
+        clone.dropping_mino_points()
     }
 
     // TODO: returns reward
     pub fn remove_lines(&mut self) -> usize {
-        let removed_lines = self.calc_removed_lines();
+        let removed_lines = self.filled_lines();
 
         let mut field: VecDeque<Vec<MinoEntity>> = self.confirmed_field.iter()
             .enumerate()
@@ -198,14 +194,14 @@ impl Board {
         removed_lines.len()
     }
 
-    pub fn calc_removed_lines(&self) -> RemovedLines {
-        self.confirmed_field.iter().enumerate()
+    pub fn filled_lines(&self) -> RemovedLines {
+        self.field().iter().enumerate()
             .filter(|(_, line)| line.iter().all(|entity| !entity.is_air()))
             .map(|(y, _)| y)
             .collect::<Vec<_>>()
     }
 
-    pub fn calc_dropping_mino_points(&self) -> Vec<Point> {
+    pub fn dropping_mino_points(&self) -> Vec<Point> {
         let shapes = self.dropping.shapes();
         let shape = shapes.get(&self.dropping_rotation).unwrap();
 
@@ -228,7 +224,7 @@ impl Board {
             .collect::<Vec<_>>()
     }
 
-    pub fn calc_dropping_mino_height_from_ground(&self) -> usize {
+    pub fn dropping_mino_height_from_ground(&self) -> usize {
         let mut clone = self.to_owned();
         let mut height = 0;
         loop {
@@ -245,7 +241,7 @@ impl Board {
     }
 
     fn establishes_field(&self) -> bool {
-        self.calc_dropping_mino_points().iter()
+        self.dropping_mino_points().iter()
             .all(|&point| {
                 if let Ok(x) = usize::try_from(point.x) {
                     if let Ok(y) = usize::try_from(point.y) {
@@ -297,26 +293,6 @@ impl MinoEntity {
         self == &MinoEntity::AIR
     }
 }
-
-struct F {
-    removing: RemovingLines,
-    with_back_to_back: bool,
-    combo: usize,
-}
-
-enum RemovingLines {
-    Single,
-    Double,
-    Triple,
-    Tetris,
-    TSpinMini,
-    TSpinSingle,
-    TSpinDouble,
-    TSpinTriple,
-    PerfectClear,
-}
-
-impl RemovingLines {}
 
 pub enum Spin {
     Normal,
@@ -413,7 +389,7 @@ mod tests {
     fn f() {
         let board = Board::new(Tetrimino::T);
 
-        assert_eq!(board.calc_dropping_mino_height_from_ground(), 18);
+        assert_eq!(board.dropping_mino_height_from_ground(), 18);
     }
 
     #[test]
@@ -554,7 +530,7 @@ mod tests {
     fn soft_drop_t() {
         let mut board = Board::new(Tetrimino::T);
 
-        assert_eq!(board.soft_drop(), DroppingMinoStatus::InAir);
+        assert_eq!(board.drop_one(), DroppingMinoStatus::InAir);
 
         let expected = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
