@@ -11,32 +11,6 @@ const COMBO_INITIAL: usize = 1;
 
 pub type PutOrJustDropped = Option<RemovedLines>;
 
-#[derive(Debug)]
-pub struct PutResult {
-    pub removed_lines: RemovedLines,
-    pub reward: Option<ScoringReward>,
-}
-
-impl PutResult {
-    fn new(removed_lines: RemovedLines, reward: Option<ScoringReward>) -> PutResult {
-        PutResult {
-            removed_lines,
-            reward,
-        }
-    }
-}
-
-pub enum DroppedOrNothing {
-    Dropped(PutOrJustDropped),
-    Nothing,
-}
-
-impl DroppedOrNothing {
-    pub fn dropped(result: PutOrJustDropped) -> DroppedOrNothing {
-        DroppedOrNothing::Dropped(result)
-    }
-}
-
 pub struct Game {
     pub board: Board,
     pub bag: MinoBag,
@@ -213,7 +187,6 @@ impl Game {
     }
 
     pub fn remove_lines(&mut self) {
-        let put_result = self.calc_put_result_if_did();
         self.board.remove_lines();
     }
 
@@ -232,6 +205,17 @@ impl Game {
         }
 
         self.board.spawn(mino)
+    }
+}
+
+pub enum DroppedOrNothing {
+    Dropped(PutOrJustDropped),
+    Nothing,
+}
+
+impl DroppedOrNothing {
+    pub fn dropped(result: PutOrJustDropped) -> DroppedOrNothing {
+        DroppedOrNothing::Dropped(result)
     }
 }
 
@@ -309,15 +293,24 @@ impl Into<MinoEntity> for MinoBlock {
     }
 }
 
-pub enum DropResult {
-    SoftDropped,
-    Put,
-    Failed,
-}
-
 pub enum SpinDirection {
     Left,
     Right,
+}
+
+#[derive(Debug)]
+pub struct PutResult {
+    pub removed_lines: RemovedLines,
+    pub reward: Option<ScoringReward>,
+}
+
+impl PutResult {
+    fn new(removed_lines: RemovedLines, reward: Option<ScoringReward>) -> PutResult {
+        PutResult {
+            removed_lines,
+            reward,
+        }
+    }
 }
 
 #[derive(Debug)]

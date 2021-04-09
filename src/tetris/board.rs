@@ -19,9 +19,6 @@ pub struct Board {
     pub dropping: Tetrimino,
     dropping_point: Point,
     dropping_rotation: MinoRotation,
-
-    ready_to_back_to_back: bool,
-    combo: usize,
 }
 
 impl Board {
@@ -35,8 +32,6 @@ impl Board {
             dropping,
             dropping_point: SPAWN_POINT,
             dropping_rotation: MinoRotation::default(),
-            ready_to_back_to_back: false,
-            combo: 1,
         }
     }
 

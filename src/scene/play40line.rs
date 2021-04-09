@@ -1,20 +1,19 @@
 use std::cmp::max;
-use std::collections::{HashMap, HashSet};
-use std::ops::AddAssign;
+use std::collections::HashMap;
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
 use ggez::timer;
 
-use crate::{FPS, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
 use crate::asset::Color as AssetColor;
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
 use crate::router::Next;
 use crate::router::Ticket::ShowTitle;
-use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT, RemovedLines};
-use crate::tetris::game::{DroppedOrNothing, DropResult, Game, Point, PutOrJustDropped, PutResult};
+use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
+use crate::tetris::game::{DroppedOrNothing, Game, Point, PutOrJustDropped};
 use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
 
 const BLOCK_LENGTH: f32 = 32.;
@@ -38,7 +37,6 @@ const HOLD_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + SIDE_PANEL_PADDING;
 const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
-const TEXTS_MAX_AMOUNT: usize = 6;
 const TEXTS_FONT_SIZE: f32 = 42.;
 const TEXTS_Y_MARGIN: f32 = FIELD_HEIGHT / 12.;
 const TEXTS_PADDING: f32 = 2. * TEXTS_FONT_SIZE;
@@ -51,7 +49,6 @@ const VISIBLE_NEXT_MINO_AMOUNT: usize = 5;
 pub struct Play40LineState {
     game: Game,
     ingame_elapsed: Duration,
-    last_dropped: Duration,
     animation_removing: Option<RemovingLineAnimation>,
     countdown: Option<u64>,
     start_countdown_at: Duration,
@@ -64,7 +61,6 @@ impl Play40LineState {
             Play40LineState {
                 game: Game::new(),
                 ingame_elapsed: Duration::ZERO,
-                last_dropped: Duration::ZERO,
                 animation_removing: None,
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
@@ -257,8 +253,6 @@ fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or
         asset.audio.play_se(ctx, Se::MinoSoftDrop)?;
     }
 
-    state.last_dropped = state.ingame_elapsed;
-
     Ok(())
 }
 
@@ -344,7 +338,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     draw_hold_panel(ctx, asset)?;
     draw_next_panel(ctx, asset)?;
 
-    draw_total_score(ctx, asset, state.game.score);
+    draw_total_score(ctx, asset, state.game.score)?;
 
     match state.countdown {
         Some(0) | None => {
