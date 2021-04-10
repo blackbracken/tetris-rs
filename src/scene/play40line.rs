@@ -39,7 +39,7 @@ const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 const TEXTS_FONT_SIZE: f32 = 42.;
 const TEXTS_Y_MARGIN: f32 = FIELD_HEIGHT / 12.;
-const TEXTS_PADDING: f32 = 2. * TEXTS_FONT_SIZE;
+const TEXTS_PADDING: f32 = 1.5 * TEXTS_FONT_SIZE;
 
 const TEXTS_ORIGIN_X: f32 = NEXT_ORIGIN_X + 2. * SIDE_PANEL_WIDTH;
 const TEXTS_ORIGIN_Y: f32 = FIELD_ORIGIN_Y + TEXTS_Y_MARGIN;
@@ -340,6 +340,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
 
     draw_total_score(ctx, asset, state.game.score)?;
     draw_removed_line_count(ctx, asset, state.game.removed_line_count)?;
+    draw_timer(ctx, asset, &state.game.elapsed)?;
 
     match state.countdown {
         Some(0) | None => {
@@ -679,7 +680,7 @@ fn draw_next_minos(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) ->
 }
 
 fn draw_total_score(ctx: &mut Context, asset: &Asset, score: usize) -> GameResult {
-    let text = format!("SCORE: {0: >9}", score);
+    let text = format!("{0: <5}: {1: >9}", "SCORE", score);
     let text = graphics::Text::new(
         graphics::TextFragment::new(text)
             .font(asset.font.vt323)
@@ -690,14 +691,14 @@ fn draw_total_score(ctx: &mut Context, asset: &Asset, score: usize) -> GameResul
         ctx,
         &text,
         DrawParam::default()
-            .dest([TEXTS_ORIGIN_X, TEXTS_ORIGIN_Y + TEXTS_PADDING]),
+            .dest([TEXTS_ORIGIN_X, texts_y(0)]),
     )?;
 
     Ok(())
 }
 
 fn draw_removed_line_count(ctx: &mut Context, asset: &Asset, lines: usize) -> GameResult {
-    let text = format!("LINES: {0: >9}", lines);
+    let text = format!("{0: <5}: {1: >9}", "LINES", lines);
     let text = graphics::Text::new(
         graphics::TextFragment::new(text)
             .font(asset.font.vt323)
@@ -707,7 +708,28 @@ fn draw_removed_line_count(ctx: &mut Context, asset: &Asset, lines: usize) -> Ga
         ctx,
         &text,
         DrawParam::default()
-            .dest([TEXTS_ORIGIN_X, TEXTS_ORIGIN_Y + TEXTS_PADDING + 2. * TEXTS_FONT_SIZE]),
+            .dest([TEXTS_ORIGIN_X, texts_y(1)]),
+    )?;
+
+    Ok(())
+}
+
+fn draw_timer(ctx: &mut Context, asset: &Asset, elapsed: &Duration) -> GameResult {
+    let min = elapsed.as_secs() / 60;
+    let sec = elapsed.as_secs() % 60;
+    let milli_sec = elapsed.as_millis() % 100;
+
+    let text = format!("{0: <5}: {1: >03}:{2: >02}:{3: >02}", "TIMER", min, sec, milli_sec);
+    let text = graphics::Text::new(
+        graphics::TextFragment::new(text)
+            .font(asset.font.vt323)
+            .scale(PxScale::from(TEXTS_FONT_SIZE))
+    );
+    graphics::draw(
+        ctx,
+        &text,
+        DrawParam::default()
+            .dest([TEXTS_ORIGIN_X, texts_y(2)]),
     )?;
 
     Ok(())
@@ -736,6 +758,11 @@ fn draw_mini_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino, point:
     }
 
     Ok(())
+}
+
+// nth is 0-indexed
+fn texts_y(nth: usize) -> f32 {
+    TEXTS_ORIGIN_Y + (nth as f32) * (TEXTS_FONT_SIZE + TEXTS_PADDING)
 }
 
 struct RemovingLineAnimation {

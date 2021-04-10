@@ -17,7 +17,7 @@ pub struct Game {
     pub hold_mino: Option<Tetrimino>,
     pub did_already_hold: bool,
 
-    elapsed: Duration,
+    pub elapsed: Duration,
     last_dropped: Duration,
 
     pub score: usize,
