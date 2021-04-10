@@ -24,6 +24,7 @@ pub struct Game {
     ready_back_to_back: bool,
     rotated_just_before: bool,
     combo: usize,
+    pub removed_line_count: usize,
 }
 
 impl Game {
@@ -42,6 +43,7 @@ impl Game {
             ready_back_to_back: false,
             rotated_just_before: false,
             combo: COMBO_INITIAL,
+            removed_line_count: 0,
         }
     }
 
@@ -112,6 +114,8 @@ impl Game {
     #[warn(unused_must_use)]
     fn prepare_putting(&mut self) -> PutResult {
         let put_result = self.calc_put_result_if_did();
+
+        self.removed_line_count += put_result.removed_lines.len();
         if let Some(ref reward) = put_result.reward {
             self.score += reward.score();
             self.ready_back_to_back = reward.action.is_subjected_to_back_to_back()
