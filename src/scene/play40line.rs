@@ -339,6 +339,7 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     draw_next_panel(ctx, asset)?;
 
     draw_total_score(ctx, asset, state.game.score)?;
+    draw_removed_line_count(ctx, asset, state.game.removed_line_count)?;
 
     match state.countdown {
         Some(0) | None => {
@@ -678,7 +679,7 @@ fn draw_next_minos(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) ->
 }
 
 fn draw_total_score(ctx: &mut Context, asset: &Asset, score: usize) -> GameResult {
-    let text = format!("SCORE: {0: >8}", score);
+    let text = format!("SCORE: {0: >9}", score);
     let text = graphics::Text::new(
         graphics::TextFragment::new(text)
             .font(asset.font.vt323)
@@ -690,6 +691,23 @@ fn draw_total_score(ctx: &mut Context, asset: &Asset, score: usize) -> GameResul
         &text,
         DrawParam::default()
             .dest([TEXTS_ORIGIN_X, TEXTS_ORIGIN_Y + TEXTS_PADDING]),
+    )?;
+
+    Ok(())
+}
+
+fn draw_removed_line_count(ctx: &mut Context, asset: &Asset, lines: usize) -> GameResult {
+    let text = format!("LINES: {0: >9}", lines);
+    let text = graphics::Text::new(
+        graphics::TextFragment::new(text)
+            .font(asset.font.vt323)
+            .scale(PxScale::from(TEXTS_FONT_SIZE))
+    );
+    graphics::draw(
+        ctx,
+        &text,
+        DrawParam::default()
+            .dest([TEXTS_ORIGIN_X, TEXTS_ORIGIN_Y + TEXTS_PADDING + 2. * TEXTS_FONT_SIZE]),
     )?;
 
     Ok(())
