@@ -31,6 +31,7 @@ impl Asset {
 pub struct Image {
     pub cursor: graphics::Image,
     pub title_particle: graphics::Image,
+    pub dropping_windbreak_particle: graphics::Image,
     uncolored_mino_block: graphics::Image,
     mino_block_images: HashMap<MinoBlock, graphics::Image>,
 }
@@ -42,6 +43,7 @@ impl Image {
                 cursor: graphics::Image::new(ctx, "/image/cursor.png")?,
                 title_particle: graphics::Image::new(ctx, "/image/particles/title.png")?,
                 uncolored_mino_block: graphics::Image::new(ctx, "/image/mino_block.png")?,
+                dropping_windbreak_particle: graphics::Image::new(ctx, "/image/particles/dropping_windbreak.png")?,
                 mino_block_images: HashMap::new(),
             }
         )

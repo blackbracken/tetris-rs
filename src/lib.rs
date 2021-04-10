@@ -1,3 +1,4 @@
+#![feature(slice_group_by)]
 #![feature(duration_zero)]
 #![feature(duration_saturating_ops)]
 #![feature(duration_consts_2)]

@@ -1,10 +1,13 @@
 use std::cmp::max;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
+use ggez::input::gamepad::gilrs::ev::filter::FilterFn;
 use ggez::timer;
+use itertools::Itertools;
+use rand::random;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::asset::{Asset, Bgm, Se};
@@ -49,10 +52,12 @@ const VISIBLE_NEXT_MINO_AMOUNT: usize = 5;
 pub struct Play40LineState {
     game: Game,
     ingame_elapsed: Duration,
-    animation_removing: Option<RemovingLineAnimation>,
     countdown: Option<u64>,
     start_countdown_at: Duration,
     continuous_input: ContinuousInput,
+
+    animation_removing: Option<RemovingLineAnimation>,
+    dropping_windbreak_particles: Vec<DroppingWindbreakParticle>,
 }
 
 impl Play40LineState {
@@ -65,6 +70,7 @@ impl Play40LineState {
                 countdown: Some(3),
                 start_countdown_at: timer::time_since_start(ctx),
                 continuous_input: ContinuousInput::new(),
+                dropping_windbreak_particles: Vec::new(),
             }
         )
     }
@@ -167,7 +173,6 @@ impl ContinuousInput {
     }
 }
 
-
 pub fn init(_ctx: &mut Context, asset: &mut Asset) {
     asset.audio.stop_bgm();
 }
@@ -209,13 +214,18 @@ pub fn update(
     }
 
     if let Some(ref mut anim) = state.animation_removing {
-        anim.elapsed += delta;
+        anim.elapse(delta);
 
         if anim.is_finished() {
             state.animation_removing = None;
             state.game.remove_lines();
         }
     }
+
+    for particle in &mut state.dropping_windbreak_particles {
+        particle.elapse(delta);
+    }
+    state.dropping_windbreak_particles.retain(|p| !p.is_finished());
 
     if !in_animating {
         if pressed_pause(ctx) {
@@ -239,6 +249,26 @@ pub fn update(
 
 fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or_dropped: PutOrJustDropped) -> GameResult {
     if let Some(removed_lines) = put_or_dropped {
+        let points = state.game.board.dropping_mino_points();
+        let bottom_y = points.iter()
+            .map(|p| p.y)
+            .sorted_by(|l, r| l.cmp(r))
+            .nth(0)
+            .unwrap();
+        points.iter()
+            .map(|p| p.x)
+            .collect::<HashSet<_>>()
+            .iter()
+            .map(|x| {
+                let x = FIELD_ORIGIN_X + (*x as f32) * BLOCK_LENGTH;
+                let y = FIELD_ORIGIN_Y + (bottom_y as f32) * BLOCK_LENGTH;
+
+                (x, y)
+            })
+            .for_each(|(x, y)| {
+                state.dropping_windbreak_particles.push(DroppingWindbreakParticle::new((x, y)));
+            });
+
         asset.audio.play_se(ctx, Se::MinoHardDrop)?;
 
         if !removed_lines.is_empty() {
@@ -341,6 +371,10 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
     draw_total_score(ctx, asset, state.game.score)?;
     draw_removed_line_count(ctx, asset, state.game.removed_line_count)?;
     draw_timer(ctx, asset, &state.game.elapsed)?;
+
+    for p in &state.dropping_windbreak_particles {
+        p.draw(ctx, asset)?;
+    }
 
     match state.countdown {
         Some(0) | None => {
@@ -781,6 +815,10 @@ impl RemovingLineAnimation {
         }
     }
 
+    fn elapse(&mut self, delta: Duration) {
+        self.elapsed += delta;
+    }
+
     fn draw(&self, ctx: &mut Context) -> GameResult {
         let elapsed = self.elapsed;
 
@@ -834,5 +872,52 @@ impl RemovingLineAnimation {
 
     fn is_finished(&self) -> bool {
         self.elapsed > REMOVING_LINE_ANIM_PHASE_2
+    }
+}
+
+struct DroppingWindbreakParticle {
+    // TODO: depend on defined struct or type
+    start_point: (f32, f32),
+    elapsed: Duration,
+}
+
+const DROPPING_WINDBREAK_ANIM_END: Duration = Duration::from_secs_f32(0.24);
+
+impl DroppingWindbreakParticle {
+    fn new(start_point: (f32, f32)) -> DroppingWindbreakParticle {
+        DroppingWindbreakParticle {
+            start_point,
+            elapsed: Duration::ZERO,
+        }
+    }
+
+    fn elapse(&mut self, delta: Duration) {
+        self.elapsed += delta;
+    }
+
+    fn draw(&self, ctx: &mut Context, asset: &Asset) -> GameResult {
+        let elapsed = self.elapsed;
+
+        let percentage = self.elapsed.as_secs_f32() / DROPPING_WINDBREAK_ANIM_END.as_secs_f32();
+        let x = self.start_point.0;
+        let y = self.start_point.1 - 6. * BLOCK_LENGTH * percentage;
+
+
+        if elapsed < DROPPING_WINDBREAK_ANIM_END {
+            graphics::draw(
+                ctx,
+                &asset.image.dropping_windbreak_particle,
+                DrawParam::default()
+                    .offset([0., 1.])
+                    .dest([x, y])
+                    .color(graphics::Color::from([1., 1., 1., 0.8 - percentage])),
+            )?;
+        }
+
+        Ok(())
+    }
+
+    fn is_finished(&self) -> bool {
+        self.elapsed > DROPPING_WINDBREAK_ANIM_END
     }
 }
