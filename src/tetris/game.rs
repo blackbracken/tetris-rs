@@ -130,10 +130,15 @@ impl Game {
             return PutResult::new(lines, None);
         }
 
+        let did_perfect_clear = self.board.confirmed_field.iter()
+            .all(|line| line.iter().all(|e| e.is_air()));
         let did_t_spin = self.board.dropping == Tetrimino::T
             && self.rotated_just_before
             && self.board.satisfies_cond_for_t_spin();
-        let action = if did_t_spin {
+
+        let action = if did_perfect_clear {
+            ScoringAction::PerfectClear
+        } else if did_t_spin {
             match lines.len() {
                 1 => ScoringAction::TSpinSingle,
                 2 => ScoringAction::TSpinDouble,
