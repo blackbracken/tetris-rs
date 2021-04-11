@@ -45,7 +45,7 @@ impl TitleState {
                     item,
                     graphics::Text::new(
                         graphics::TextFragment::new(str)
-                            .font(asset.font.default)
+                            .font(asset.font.play)
                             .scale(PxScale::from(32.))
                     )
                 )
