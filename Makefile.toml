@@ -1,0 +1,25 @@
+[tasks.run]
+command = "cargo"
+args = ["run", "--package", "tetris-rs", "--bin", "tetris-rs"]
+dependencies = ["copy_resources", "build"]
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+dependencies = ["format"]
+
+[tasks.format]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.docs]
+command = "cargo"
+args = ["docs", "--no-deps", "--document-private-items", "--workspace", "--open"]
+
+[tasks.copy_resources]
+windows_alias = "windows_copy_resources"
+
+[tasks.windows_copy_resources]
+command = "xcopy"
+args = ["resources", "target\\debug\\resources", "/S", "/I", "/Y"]
