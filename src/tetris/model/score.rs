@@ -8,7 +8,7 @@ pub struct ScoringReward {
 }
 
 impl ScoringReward {
-    pub(crate) fn new(action: ScoringAction, with_back_to_back: bool, combo: usize) -> ScoringReward {
+    pub fn new(action: ScoringAction, with_back_to_back: bool, combo: usize) -> ScoringReward {
         ScoringReward {
             action,
             with_back_to_back,
@@ -53,9 +53,7 @@ pub enum ScoringAction {
 }
 
 impl ScoringAction {
-    pub(crate) fn is_subjected_to_back_to_back(&self) -> bool {
-        use ScoringAction::*;
-
+    pub fn is_subjected_to_back_to_back(&self) -> bool {
         match self {
             Tetris | TSpinSingle | TSpinDouble | TSpinTriple => true,
             _ => false
