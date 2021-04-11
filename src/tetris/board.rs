@@ -1,8 +1,10 @@
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 
-use crate::tetris::game::{MinoBlock, Point, SpinDirection};
-use crate::tetris::tetrimino::{MinoRotation, Tetrimino, WallKickOffset};
+use crate::tetris::game::{Point};
+use crate::tetris::model::mino_entity::MinoEntity;
+use crate::tetris::model::spin::{Spin, SpinDirection};
+use crate::tetris::model::tetrimino::{MinoRotation, Tetrimino, WallKickOffset};
 
 pub const FIELD_UNIT_WIDTH: usize = 10;
 pub const FIELD_UNIT_HEIGHT: usize = 21;
@@ -255,45 +257,6 @@ impl Board {
                 false
             })
     }
-}
-
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
-pub enum MinoEntity {
-    AQUA,
-    YELLOW,
-    PURPLE,
-    BLUE,
-    ORANGE,
-    GREEN,
-    RED,
-
-    AIR,
-}
-
-impl MinoEntity {
-    pub fn block(&self) -> Option<MinoBlock> {
-        use MinoBlock::*;
-
-        match self {
-            MinoEntity::AQUA => Some(AQUA),
-            MinoEntity::YELLOW => Some(YELLOW),
-            MinoEntity::PURPLE => Some(PURPLE),
-            MinoEntity::BLUE => Some(BLUE),
-            MinoEntity::ORANGE => Some(ORANGE),
-            MinoEntity::GREEN => Some(GREEN),
-            MinoEntity::RED => Some(RED),
-            MinoEntity::AIR => None,
-        }
-    }
-
-    pub fn is_air(&self) -> bool {
-        self == &MinoEntity::AIR
-    }
-}
-
-pub enum Spin {
-    Normal,
-    TSpin,
 }
 
 #[cfg(test)]

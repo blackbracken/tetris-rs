@@ -5,6 +5,9 @@
 #![feature(pub_macro_rules)]
 #![feature(map_into_keys_values)]
 
+#[macro_use]
+extern crate derive_new;
+
 use std::mem;
 use std::time::Duration;
 
@@ -12,15 +15,35 @@ use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::event::{EventHandler, KeyCode, KeyMods};
 use ggez::timer;
 
+use scenes::router::{Next, SceneState, Ticket};
+
 use crate::asset::Asset;
-use crate::router::{Next, SceneState, Ticket};
 
 mod macros;
-mod scene;
-mod router;
-mod asset;
-mod tetris;
 mod input;
+
+pub(crate) mod scenes {
+    pub mod router;
+
+    pub mod title;
+    pub mod play40line;
+}
+
+
+pub(crate) mod tetris {
+    pub mod game;
+    pub mod mino_bag;
+    pub mod board;
+
+    pub mod model {
+        pub mod mino_entity;
+        pub mod tetrimino;
+        pub mod spin;
+        pub mod score;
+    }
+}
+
+pub(crate) mod asset;
 
 pub const FPS: u32 = 60;
 pub const WINDOW_WIDTH: f32 = 960.;
@@ -65,10 +88,10 @@ impl EventHandler for MainState {
 
             let next: Next = match state {
                 SceneState::ForTitle { state } => {
-                    scene::title::update(ctx, state, &self.asset)?
+                    scenes::title::update(ctx, state, &self.asset)?
                 }
                 SceneState::ForPlay40Line { state } => {
-                    scene::play40line::update(ctx, state, &mut self.asset, diff)?
+                    scenes::play40line::update(ctx, state, &mut self.asset, diff)?
                 }
             };
 
@@ -91,8 +114,8 @@ impl EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         if let Some(state) = &self.scene_state {
             match state {
-                SceneState::ForTitle { state } => { scene::title::draw(ctx, state, &self.asset)?; }
-                SceneState::ForPlay40Line { state } => { scene::play40line::draw(ctx, state, &mut self.asset)?; }
+                SceneState::ForTitle { state } => { scenes::title::draw(ctx, state, &self.asset)?; }
+                SceneState::ForPlay40Line { state } => { scenes::play40line::draw(ctx, state, &mut self.asset)?; }
             }
         }
 
@@ -106,6 +129,6 @@ impl EventHandler for MainState {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
-        // disable a function to quit on pushing the escape key.
+        // disable a function to quit on pushing the escape key
     }
 }

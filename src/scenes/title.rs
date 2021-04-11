@@ -5,9 +5,10 @@ use ggez::graphics::{Color, PxScale};
 use rand::random;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::asset::{Asset, Bgm, Se};
+use crate::asset::Asset;
+use crate::asset::audio::{Bgm, Se};
 use crate::input::{pressed_down, pressed_enter, pressed_up};
-use crate::router::{Next, Ticket};
+use crate::scenes::router::{Next, Ticket};
 
 #[derive(Clone)]
 pub struct TitleState {

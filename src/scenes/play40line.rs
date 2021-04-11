@@ -4,20 +4,19 @@ use std::time::Duration;
 
 use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
-use ggez::input::gamepad::gilrs::ev::filter::FilterFn;
 use ggez::timer;
 use itertools::Itertools;
-use rand::random;
 
 use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::asset::{Asset, Bgm, Se};
-use crate::asset::Color as AssetColor;
+use crate::asset::Asset;
+use crate::asset::color::Color as AssetColor;
 use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
-use crate::router::Next;
-use crate::router::Ticket::ShowTitle;
+use crate::scenes::router::Next;
+use crate::scenes::router::Ticket::ShowTitle;
 use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
 use crate::tetris::game::{DroppedOrNothing, Game, Point, PutOrJustDropped};
-use crate::tetris::tetrimino::{MinoRotation, Tetrimino};
+use crate::tetris::model::tetrimino::{MinoRotation, Tetrimino};
+use crate::asset::audio::{Bgm, Se};
 
 const BLOCK_LENGTH: f32 = 32.;
 const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;
@@ -335,14 +334,14 @@ fn update_to_drop(
 ) -> GameResult<DroppedOrNothing> {
     if pressed_up(ctx) && state.continuous_input.input(KeyInput::Up) {
         return Ok(
-            DroppedOrNothing::dropped(Some(state.game.hard_drop()))
+            DroppedOrNothing::Dropped(Some(state.game.hard_drop()))
         );
     }
 
     if pressed_down(ctx) && state.continuous_input.input(KeyInput::Down) {
         if !state.game.board.dropping_mino_is_on_ground() {
             return Ok(
-                DroppedOrNothing::dropped(state.game.soft_drop())
+                DroppedOrNothing::Dropped(state.game.soft_drop())
             );
         }
     }

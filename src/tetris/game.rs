@@ -1,10 +1,10 @@
-use std::collections::VecDeque;
 use std::time::Duration;
 
-use rand::prelude::SliceRandom;
-
-use crate::tetris::board::{Board, MinoEntity, RemovedLines, Spin};
-use crate::tetris::tetrimino::Tetrimino;
+use crate::tetris::board::{Board, RemovedLines};
+use crate::tetris::mino_bag::MinoBag;
+use crate::tetris::model::score::{ScoringAction, ScoringReward};
+use crate::tetris::model::spin::SpinDirection;
+use crate::tetris::model::tetrimino::Tetrimino;
 
 const NATURAL_DROP_INTERVAL: Duration = Duration::from_secs(1);
 const COMBO_INITIAL: usize = 1;
@@ -54,7 +54,7 @@ impl Game {
             self.last_dropped = self.elapsed;
             let result = self.drop_one();
 
-            return DroppedOrNothing::dropped(result);
+            return DroppedOrNothing::Dropped(result);
         }
 
         DroppedOrNothing::Nothing
@@ -175,7 +175,7 @@ impl Game {
                     self.board.spawn(spawned);
                 }
                 None => {
-                    let spawned = self.bag.queue.pop_front().unwrap();
+                    let spawned = self.bag.pop();
                     let held = self.board.dropping;
 
                     self.hold_mino = Some(held);
@@ -207,94 +207,10 @@ impl Game {
     }
 }
 
+#[derive(new)]
 pub enum DroppedOrNothing {
     Dropped(PutOrJustDropped),
     Nothing,
-}
-
-impl DroppedOrNothing {
-    pub fn dropped(result: PutOrJustDropped) -> DroppedOrNothing {
-        DroppedOrNothing::Dropped(result)
-    }
-}
-
-pub struct MinoBag {
-    queue: VecDeque<Tetrimino>
-}
-
-impl MinoBag {
-    fn new() -> MinoBag {
-        let mut queue = MinoBag::gen_shuffled_all_minos();
-        let mut added = MinoBag::gen_shuffled_all_minos();
-        queue.append(&mut added);
-
-        MinoBag {
-            queue: queue.into(),
-        }
-    }
-
-    fn pop(&mut self) -> Tetrimino {
-        let p = self.queue.pop_front().unwrap();
-
-        if self.queue.len() < Tetrimino::all().len() {
-            let added = MinoBag::gen_shuffled_all_minos();
-            self.queue.append(&mut added.into());
-        }
-
-        p
-    }
-
-    pub fn peek(&self, amount: usize) -> Vec<Tetrimino> {
-        if amount > Tetrimino::all().len() {
-            panic!("the amount of minos must be equal to or lower than the amount of tetrimino types");
-        }
-
-        (0..amount)
-            .map(|idx| self.queue.get(idx).unwrap().to_owned())
-            .collect::<Vec<_>>()
-    }
-
-
-    fn gen_shuffled_all_minos() -> Vec<Tetrimino> {
-        let mut rng = rand::thread_rng();
-
-        let mut s = Tetrimino::all();
-        s.shuffle(&mut rng);
-
-        s
-    }
-}
-
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
-pub enum MinoBlock {
-    AQUA,
-    YELLOW,
-    PURPLE,
-    BLUE,
-    ORANGE,
-    GREEN,
-    RED,
-}
-
-impl Into<MinoEntity> for MinoBlock {
-    fn into(self) -> MinoEntity {
-        use MinoEntity::*;
-
-        match self {
-            MinoBlock::AQUA => AQUA,
-            MinoBlock::YELLOW => YELLOW,
-            MinoBlock::PURPLE => PURPLE,
-            MinoBlock::BLUE => BLUE,
-            MinoBlock::ORANGE => ORANGE,
-            MinoBlock::GREEN => GREEN,
-            MinoBlock::RED => RED,
-        }
-    }
-}
-
-pub enum SpinDirection {
-    Left,
-    Right,
 }
 
 #[derive(Debug)]
@@ -308,70 +224,6 @@ impl PutResult {
         PutResult {
             removed_lines,
             reward,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct ScoringReward {
-    action: ScoringAction,
-    with_back_to_back: bool,
-    combo: usize,
-}
-
-impl ScoringReward {
-    fn new(action: ScoringAction, with_back_to_back: bool, combo: usize) -> ScoringReward {
-        ScoringReward {
-            action,
-            with_back_to_back,
-            combo,
-        }
-    }
-
-    pub fn score(&self) -> usize {
-        use ScoringAction::*;
-        let action_score = match self.action {
-            Single => 100,
-            Double => 300,
-            Triple => 500,
-            Tetris => 800,
-            TSpinSingle => 800,
-            TSpinDouble => 1200,
-            TSpinTriple => 1600,
-            PerfectClear => 5000,
-        };
-
-        let back_to_back_bonus = if self.action.is_subjected_to_back_to_back() {
-            action_score * 2 / 3
-        } else {
-            0
-        };
-
-        let combo_score = 50 * (self.combo.saturating_sub(1));
-
-        action_score + back_to_back_bonus + combo_score
-    }
-}
-
-#[derive(Debug)]
-enum ScoringAction {
-    Single,
-    Double,
-    Triple,
-    Tetris,
-    TSpinSingle,
-    TSpinDouble,
-    TSpinTriple,
-    PerfectClear,
-}
-
-impl ScoringAction {
-    fn is_subjected_to_back_to_back(&self) -> bool {
-        use ScoringAction::*;
-
-        match self {
-            Tetris | TSpinSingle | TSpinDouble | TSpinTriple => true,
-            _ => false
         }
     }
 }
@@ -418,17 +270,6 @@ mod tests {
                 vec!(true, true, true, true),
             )
         );
-    }
-
-    #[test]
-    fn gen_all_minos() {
-        let mut minos = MinoBag::gen_shuffled_all_minos();
-
-        assert_eq!(minos.len(), Tetrimino::all().len());
-
-        minos.sort();
-        minos.dedup();
-        assert_eq!(minos.len(), Tetrimino::all().len());
     }
 
     #[test]

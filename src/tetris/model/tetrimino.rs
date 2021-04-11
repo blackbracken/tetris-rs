@@ -1,14 +1,16 @@
-use core::ops;
 use std::collections::HashMap;
 
 use MinoRotation::*;
 use Tetrimino::*;
 
 use crate::macros::rect_vec;
-use crate::tetris::game::{MinoBlock, Point, SpinDirection};
+use crate::tetris::game::Point;
+use crate::tetris::model::spin::SpinDirection;
 
+/// テトリミノの形
 type MinoShape = Vec<Vec<bool>>;
 
+/// テトリスにおいて落下してくる一塊のブロック群を表現する
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Tetrimino {
     T,
@@ -286,6 +288,19 @@ impl Tetrimino {
     }
 }
 
+/// テトリミノのもつブロックの種類を表現する
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+pub enum MinoBlock {
+    AQUA,
+    YELLOW,
+    PURPLE,
+    BLUE,
+    ORANGE,
+    GREEN,
+    RED,
+}
+
+/// テトリミノ回転時のオフセットを表現する
 #[derive(Copy, Clone)]
 pub struct WallKickOffset {
     pub x: isize,
@@ -298,13 +313,19 @@ impl WallKickOffset {
     }
 }
 
-impl Into<WallKickOffset> for (isize, isize) {
+impl std::convert::Into<WallKickOffset> for [isize; 2] {
+    fn into(self) -> WallKickOffset {
+        WallKickOffset::new(*self.get(0).unwrap(), *self.get(1).unwrap())
+    }
+}
+
+impl std::convert::Into<WallKickOffset> for (isize, isize) {
     fn into(self) -> WallKickOffset {
         WallKickOffset::new(self.0, self.1)
     }
 }
 
-impl ops::Add<&WallKickOffset> for WallKickOffset {
+impl std::ops::Add<&WallKickOffset> for WallKickOffset {
     type Output = WallKickOffset;
 
     fn add(self, rhs: &WallKickOffset) -> Self::Output {
@@ -312,7 +333,8 @@ impl ops::Add<&WallKickOffset> for WallKickOffset {
     }
 }
 
-// clockwise angles starts at 12 o'clock position
+/// テトリミノの回転した角度を表現する.
+/// 初期位置で12時の方向を示し, 時計回りに回転する.
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MinoRotation {
     Clockwise = 0,
