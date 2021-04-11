@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use MinoRotation::*;
 use Tetrimino::*;
 
-use crate::macros::rect_vec;
+use crate::rect_vec;
 use crate::tetris::game::Point;
 use crate::tetris::model::spin::SpinDirection;
 
@@ -190,7 +190,11 @@ impl Tetrimino {
     }
 
     // The field on tetris-rs is positive as Y increases downward, so Y needs to be multiplied by -1.
-    pub fn wall_kick_offsets(&self, from: &MinoRotation, direction: &SpinDirection) -> [WallKickOffset; 5] {
+    pub fn wall_kick_offsets(
+        &self,
+        from: &MinoRotation,
+        direction: &SpinDirection,
+    ) -> [WallKickOffset; 5] {
         let to = from.spin(direction);
 
         match self {
@@ -204,19 +208,22 @@ impl Tetrimino {
                     Clockwise | Clockwise180 => match direction {
                         SpinDirection::Right => (-1, 0),
                         SpinDirection::Left => (1, 0),
-                    }
-                }.into();
+                    },
+                }
+                .into();
 
                 let _2: WallKickOffset = match to {
                     Clockwise90 | Clockwise270 => (0, -1),
                     Clockwise | Clockwise180 => (0, 1),
-                }.into();
+                }
+                .into();
                 let _2 = _2 + &_1;
 
                 let _3: WallKickOffset = match to {
                     Clockwise90 | Clockwise270 => (0, 2),
                     Clockwise | Clockwise180 => (0, -2),
-                }.into();
+                }
+                .into();
 
                 let _4: WallKickOffset = match to {
                     Clockwise90 => (-1, 0),
@@ -225,7 +232,8 @@ impl Tetrimino {
                         SpinDirection::Right => (-1, 0),
                         SpinDirection::Left => (1, 0),
                     },
-                }.into();
+                }
+                .into();
                 let _4 = _4 + &_3;
 
                 [_0, _1, _2, _3, _4]
@@ -234,38 +242,36 @@ impl Tetrimino {
             O => [(0, 0).into(); 5],
 
             // ref. https://tetris.fandom.com/wiki/SRS/
-            I => {
-                match to {
-                    Clockwise => [
-                        (0, 0).into(),
-                        (-2, 0).into(),
-                        (1, 0).into(),
-                        (-2, 1).into(),
-                        (1, -2).into(),
-                    ],
-                    Clockwise90 => [
-                        (0, 0).into(),
-                        (-1, 0).into(),
-                        (2, 0).into(),
-                        (-1, -2).into(),
-                        (2, 1).into(),
-                    ],
-                    Clockwise180 => [
-                        (0, 0).into(),
-                        (2, 0).into(),
-                        (-1, 0).into(),
-                        (2, -1).into(),
-                        (-1, -2).into(),
-                    ],
-                    Clockwise270 => [
-                        (0, 0).into(),
-                        (1, 0).into(),
-                        (-2, 0).into(),
-                        (1, 2).into(),
-                        (-2, -1).into(),
-                    ],
-                }
-            }
+            I => match to {
+                Clockwise => [
+                    (0, 0).into(),
+                    (-2, 0).into(),
+                    (1, 0).into(),
+                    (-2, 1).into(),
+                    (1, -2).into(),
+                ],
+                Clockwise90 => [
+                    (0, 0).into(),
+                    (-1, 0).into(),
+                    (2, 0).into(),
+                    (-1, -2).into(),
+                    (2, 1).into(),
+                ],
+                Clockwise180 => [
+                    (0, 0).into(),
+                    (2, 0).into(),
+                    (-1, 0).into(),
+                    (2, -1).into(),
+                    (-1, -2).into(),
+                ],
+                Clockwise270 => [
+                    (0, 0).into(),
+                    (1, 0).into(),
+                    (-2, 0).into(),
+                    (1, 2).into(),
+                    (-2, -1).into(),
+                ],
+            },
         }
     }
 
@@ -284,7 +290,7 @@ impl Tetrimino {
     }
 
     pub fn all() -> Vec<Tetrimino> {
-        vec!(T, S, Z, L, J, O, I)
+        vec![T, S, Z, L, J, O, I]
     }
 }
 

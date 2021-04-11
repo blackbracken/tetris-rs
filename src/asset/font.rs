@@ -1,4 +1,4 @@
-use ggez::{Context, GameResult, graphics};
+use ggez::{graphics, Context, GameResult};
 
 pub struct Font {
     pub play: graphics::Font,
@@ -7,11 +7,9 @@ pub struct Font {
 
 impl Font {
     pub(super) fn new(ctx: &mut Context) -> GameResult<Font> {
-        Ok(
-            Font {
-                play: graphics::Font::new(ctx, "/font/Play-Regular.ttf")?,
-                vt323: graphics::Font::new(ctx, "/font/VT323-Regular.ttf")?,
-            }
-        )
+        Ok(Font {
+            play: graphics::Font::new(ctx, "/font/Play-Regular.ttf")?,
+            vt323: graphics::Font::new(ctx, "/font/VT323-Regular.ttf")?,
+        })
     }
 }

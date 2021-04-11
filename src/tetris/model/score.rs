@@ -56,7 +56,7 @@ impl ScoringAction {
     pub fn is_subjected_to_back_to_back(&self) -> bool {
         match self {
             Tetris | TSpinSingle | TSpinDouble | TSpinTriple => true,
-            _ => false
+            _ => false,
         }
     }
 }

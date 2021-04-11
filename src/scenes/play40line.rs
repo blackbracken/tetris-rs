@@ -2,21 +2,24 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
-use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
 use ggez::timer;
+use ggez::{graphics, Context, GameResult};
 use itertools::Itertools;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::asset::Asset;
+use crate::asset::audio::{Bgm, Se};
 use crate::asset::color::Color as AssetColor;
-use crate::input::{pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause, pressed_spin_left, pressed_spin_right, pressed_up};
+use crate::asset::Asset;
+use crate::input::{
+    pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause,
+    pressed_spin_left, pressed_spin_right, pressed_up,
+};
 use crate::scenes::router::Next;
 use crate::scenes::router::Ticket::ShowTitle;
 use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
 use crate::tetris::game::{DroppedOrNothing, Game, Point, PutOrJustDropped};
 use crate::tetris::model::tetrimino::{MinoRotation, Tetrimino};
-use crate::asset::audio::{Bgm, Se};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const BLOCK_LENGTH: f32 = 32.;
 const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;
@@ -24,7 +27,8 @@ const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;
 const PANEL_FONT_SIZE: f32 = 24.;
 
 const FIELD_ORIGIN_X: f32 = WINDOW_WIDTH / 8.;
-const FIELD_ORIGIN_Y: f32 = WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
+const FIELD_ORIGIN_Y: f32 =
+    WINDOW_HEIGHT / 2. - BLOCK_LENGTH * (FIELD_VISIBLE_UNIT_HEIGHT as f32 / 2.);
 
 const FIELD_HEIGHT: f32 = (FIELD_UNIT_HEIGHT as f32) * BLOCK_LENGTH;
 
@@ -36,7 +40,8 @@ const SIDE_PANEL_PADDING: f32 = BLOCK_LENGTH;
 const HOLD_ORIGIN_X: f32 = FIELD_ORIGIN_X - SIDE_PANEL_PADDING - SIDE_PANEL_WIDTH;
 const HOLD_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
-const NEXT_ORIGIN_X: f32 = FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + SIDE_PANEL_PADDING;
+const NEXT_ORIGIN_X: f32 =
+    FIELD_ORIGIN_X + (FIELD_UNIT_WIDTH as f32) * BLOCK_LENGTH + SIDE_PANEL_PADDING;
 const NEXT_ORIGIN_Y: f32 = FIELD_ORIGIN_Y;
 
 const TEXTS_FONT_SIZE: f32 = 42.;
@@ -61,17 +66,15 @@ pub struct Play40LineState {
 
 impl Play40LineState {
     pub fn new(ctx: &mut Context) -> GameResult<Play40LineState> {
-        Ok(
-            Play40LineState {
-                game: Game::new(),
-                ingame_elapsed: Duration::ZERO,
-                animation_removing: None,
-                countdown: Some(3),
-                start_countdown_at: timer::time_since_start(ctx),
-                continuous_input: ContinuousInput::new(),
-                dropping_windbreak_particles: Vec::new(),
-            }
-        )
+        Ok(Play40LineState {
+            game: Game::new(),
+            ingame_elapsed: Duration::ZERO,
+            animation_removing: None,
+            countdown: Some(3),
+            start_countdown_at: timer::time_since_start(ctx),
+            continuous_input: ContinuousInput::new(),
+            dropping_windbreak_particles: Vec::new(),
+        })
     }
 }
 
@@ -106,19 +109,23 @@ impl ContinuousInput {
         self.elapsed += delta;
         self.continuity_counter += 1;
 
-        let keys = self.elapsed_from_continuous_first_input
+        let keys = self
+            .elapsed_from_continuous_first_input
             .iter()
             .filter(|(k, _)| !self.inputted_just_before(k))
             .map(|(k, _)| k.to_owned())
             .collect::<Vec<_>>();
-        self.elapsed_from_continuous_first_input.retain(|key, _| keys.contains(key));
+        self.elapsed_from_continuous_first_input
+            .retain(|key, _| keys.contains(key));
 
-        let keys = self.elapsed_from_continuous_last_input
+        let keys = self
+            .elapsed_from_continuous_last_input
             .iter()
             .filter(|(k, _)| !self.inputted_just_before(k))
             .map(|(k, _)| k.to_owned())
             .collect::<Vec<_>>();
-        self.elapsed_from_continuous_last_input.retain(|key, _| keys.contains(key));
+        self.elapsed_from_continuous_last_input
+            .retain(|key, _| keys.contains(key));
     }
 
     pub fn input(&mut self, key: KeyInput) -> bool {
@@ -126,8 +133,11 @@ impl ContinuousInput {
 
         self.last_input_at.insert(key, self.continuity_counter);
         if valid {
-            self.elapsed_from_continuous_first_input.entry(key).or_insert(self.elapsed);
-            self.elapsed_from_continuous_last_input.insert(key, self.elapsed);
+            self.elapsed_from_continuous_first_input
+                .entry(key)
+                .or_insert(self.elapsed);
+            self.elapsed_from_continuous_last_input
+                .insert(key, self.elapsed);
         }
 
         valid
@@ -135,39 +145,41 @@ impl ContinuousInput {
 
     fn is_input_valid(&self, key: &KeyInput) -> bool {
         let inputted_just_before = self.inputted_just_before(key);
-        let first = self.elapsed_from_continuous_first_input.get(key)
+        let first = self
+            .elapsed_from_continuous_first_input
+            .get(key)
             .unwrap_or(&Duration::ZERO)
             .to_owned();
-        let last = self.elapsed_from_continuous_last_input.get(key)
+        let last = self
+            .elapsed_from_continuous_last_input
+            .get(key)
             .unwrap_or(&Duration::ZERO)
             .to_owned();
 
         match key {
             KeyInput::Up => {
                 inputted_just_before
-                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.25) < self.elapsed)
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed
+                        && last + Duration::from_secs_f32(0.25) < self.elapsed)
             }
             KeyInput::Down => {
                 inputted_just_before
-                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.03) < self.elapsed)
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed
+                        && last + Duration::from_secs_f32(0.03) < self.elapsed)
             }
             KeyInput::MoveLeft => {
                 inputted_just_before
-                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.03) < self.elapsed)
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed
+                        && last + Duration::from_secs_f32(0.03) < self.elapsed)
             }
             KeyInput::MoveRight => {
                 inputted_just_before
-                    || (first + Duration::from_secs_f32(0.4) < self.elapsed && last + Duration::from_secs_f32(0.03) < self.elapsed)
+                    || (first + Duration::from_secs_f32(0.4) < self.elapsed
+                        && last + Duration::from_secs_f32(0.03) < self.elapsed)
             }
-            KeyInput::SpinLeft => {
-                inputted_just_before
-            }
-            KeyInput::SpinRight => {
-                inputted_just_before
-            }
-            KeyInput::Hold => {
-                inputted_just_before
-            }
+            KeyInput::SpinLeft => inputted_just_before,
+            KeyInput::SpinRight => inputted_just_before,
+            KeyInput::Hold => inputted_just_before,
         }
     }
 }
@@ -224,7 +236,9 @@ pub fn update(
     for particle in &mut state.dropping_windbreak_particles {
         particle.elapse(delta);
     }
-    state.dropping_windbreak_particles.retain(|p| !p.is_finished());
+    state
+        .dropping_windbreak_particles
+        .retain(|p| !p.is_finished());
 
     if !in_animating {
         if pressed_pause(ctx) {
@@ -246,15 +260,22 @@ pub fn update(
     Ok(Next::do_continue(state.into()))
 }
 
-fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or_dropped: PutOrJustDropped) -> GameResult {
+fn on_drop(
+    ctx: &mut Context,
+    state: &mut Play40LineState,
+    asset: &Asset,
+    put_or_dropped: PutOrJustDropped,
+) -> GameResult {
     if let Some(removed_lines) = put_or_dropped {
         let points = state.game.board.dropping_mino_points();
-        let bottom_y = points.iter()
+        let bottom_y = points
+            .iter()
             .map(|p| p.y)
             .sorted_by(|l, r| l.cmp(r))
             .nth(0)
             .unwrap();
-        points.iter()
+        points
+            .iter()
             .map(|p| p.x)
             .collect::<HashSet<_>>()
             .iter()
@@ -265,7 +286,9 @@ fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or
                 (x, y)
             })
             .for_each(|(x, y)| {
-                state.dropping_windbreak_particles.push(DroppingWindbreakParticle::new((x, y)));
+                state
+                    .dropping_windbreak_particles
+                    .push(DroppingWindbreakParticle::new((x, y)));
             });
 
         asset.audio.play_se(ctx, Se::MinoHardDrop)?;
@@ -285,10 +308,7 @@ fn on_drop(ctx: &mut Context, state: &mut Play40LineState, asset: &Asset, put_or
     Ok(())
 }
 
-fn update_to_hold(
-    ctx: &Context,
-    state: &mut Play40LineState,
-) -> GameResult {
+fn update_to_hold(ctx: &Context, state: &mut Play40LineState) -> GameResult {
     if pressed_hold(ctx) && state.continuous_input.input(KeyInput::Hold) {
         state.game.try_swap_hold()
     }
@@ -296,11 +316,7 @@ fn update_to_hold(
     Ok(())
 }
 
-fn update_to_move(
-    ctx: &mut Context,
-    state: &mut Play40LineState,
-    asset: &mut Asset,
-) -> GameResult {
+fn update_to_move(ctx: &mut Context, state: &mut Play40LineState, asset: &mut Asset) -> GameResult {
     if pressed_move_left(ctx) && state.continuous_input.input(KeyInput::MoveLeft) {
         if state.game.move_left() {
             asset.audio.play_se(ctx, Se::MinoMove)?;
@@ -328,21 +344,14 @@ fn update_to_move(
     Ok(())
 }
 
-fn update_to_drop(
-    ctx: &mut Context,
-    state: &mut Play40LineState,
-) -> GameResult<DroppedOrNothing> {
+fn update_to_drop(ctx: &mut Context, state: &mut Play40LineState) -> GameResult<DroppedOrNothing> {
     if pressed_up(ctx) && state.continuous_input.input(KeyInput::Up) {
-        return Ok(
-            DroppedOrNothing::Dropped(Some(state.game.hard_drop()))
-        );
+        return Ok(DroppedOrNothing::Dropped(Some(state.game.hard_drop())));
     }
 
     if pressed_down(ctx) && state.continuous_input.input(KeyInput::Down) {
         if !state.game.board.dropping_mino_is_on_ground() {
-            return Ok(
-                DroppedOrNothing::Dropped(state.game.soft_drop())
-            );
+            return Ok(DroppedOrNothing::Dropped(state.game.soft_drop()));
         }
     }
 
@@ -380,7 +389,11 @@ pub fn draw(ctx: &mut Context, state: &Play40LineState, asset: &mut Asset) -> Ga
             if let Some(held) = state.game.hold_mino {
                 draw_hold_mino(ctx, asset, &held)?;
             }
-            draw_next_minos(ctx, asset, state.game.bag.peek(VISIBLE_NEXT_MINO_AMOUNT).as_slice())?;
+            draw_next_minos(
+                ctx,
+                asset,
+                state.game.bag.peek(VISIBLE_NEXT_MINO_AMOUNT).as_slice(),
+            )?;
 
             if let Some(ref anim) = state.animation_removing {
                 draw_minos_on_confirmed_field(ctx, asset, state, false, &anim.lines)?;
@@ -422,7 +435,7 @@ fn draw_field(ctx: &mut Context, asset: &Asset) -> GameResult {
             ctx,
             &[
                 [x, FIELD_ORIGIN_Y - BLOCK_LENGTH],
-                [x, FIELD_ORIGIN_Y - BLOCK_LENGTH + FIELD_HEIGHT]
+                [x, FIELD_ORIGIN_Y - BLOCK_LENGTH + FIELD_HEIGHT],
             ],
             1.,
             asset.color.grid_line,
@@ -430,13 +443,12 @@ fn draw_field(ctx: &mut Context, asset: &Asset) -> GameResult {
         graphics::draw(ctx, &line, graphics::DrawParam::default())?;
     }
 
-    for y in (-1..=(FIELD_VISIBLE_UNIT_HEIGHT as isize)).map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH) {
+    for y in (-1..=(FIELD_VISIBLE_UNIT_HEIGHT as isize))
+        .map(|y| FIELD_ORIGIN_Y + (y as f32) * BLOCK_LENGTH)
+    {
         let line = graphics::Mesh::new_line(
             ctx,
-            &[
-                [FIELD_ORIGIN_X, y],
-                [FIELD_ORIGIN_X + FIELD_WIDTH, y]
-            ],
+            &[[FIELD_ORIGIN_X, y], [FIELD_ORIGIN_X + FIELD_WIDTH, y]],
             1.,
             asset.color.grid_line,
         )?;
@@ -472,17 +484,16 @@ fn draw_count_down(ctx: &mut Context, asset: &Asset, sec: u64) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new(sec.to_string())
             .font(asset.font.vt323)
-            .scale(PxScale::from(200.))
+            .scale(PxScale::from(200.)),
     );
 
     graphics::draw(
         ctx,
         &text,
-        graphics::DrawParam::default()
-            .dest([
-                WINDOW_WIDTH / 2. - text.width(ctx) / 2.,
-                WINDOW_HEIGHT / 2. - text.height(ctx) / 2.,
-            ]),
+        graphics::DrawParam::default().dest([
+            WINDOW_WIDTH / 2. - text.width(ctx) / 2.,
+            WINDOW_HEIGHT / 2. - text.height(ctx) / 2.,
+        ]),
     )?;
 
     Ok(())
@@ -503,7 +514,10 @@ fn draw_minos_on_confirmed_field(
     };
 
     // 0-20th lines
-    for y in (0..(FIELD_VISIBLE_UNIT_HEIGHT)).into_iter().filter(|&n| !hidden_lines.contains(&(n + 1))) {
+    for y in (0..(FIELD_VISIBLE_UNIT_HEIGHT))
+        .into_iter()
+        .filter(|&n| !hidden_lines.contains(&(n + 1)))
+    {
         for x in 0..FIELD_UNIT_WIDTH {
             let entity = field
                 .get(y + (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT))
@@ -515,11 +529,7 @@ fn draw_minos_on_confirmed_field(
                 let x = (FIELD_ORIGIN_X as f32) + (x as f32) * BLOCK_LENGTH;
                 let y = (FIELD_ORIGIN_Y as f32) + (y as f32) * BLOCK_LENGTH;
 
-                graphics::draw(
-                    ctx,
-                    img,
-                    graphics::DrawParam::default().dest([x, y]),
-                )?;
+                graphics::draw(ctx, img, graphics::DrawParam::default().dest([x, y]))?;
             }
         }
     }
@@ -561,8 +571,13 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
             .unwrap();
 
         if entity.is_air() {
-            let x = (FIELD_ORIGIN_X as f32) + (prediction.x as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
-            let y = (FIELD_ORIGIN_Y as f32) + ((prediction.y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as isize) as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
+            let x =
+                (FIELD_ORIGIN_X as f32) + (prediction.x as f32) * BLOCK_LENGTH + PREDICTION_PADDING;
+            let y = (FIELD_ORIGIN_Y as f32)
+                + ((prediction.y - (FIELD_UNIT_HEIGHT - FIELD_VISIBLE_UNIT_HEIGHT) as isize)
+                    as f32)
+                    * BLOCK_LENGTH
+                + PREDICTION_PADDING;
 
             let square = graphics::Mesh::new_rectangle(
                 ctx,
@@ -576,11 +591,7 @@ fn draw_dropping_mino_prediction(ctx: &mut Context, state: &Play40LineState) -> 
                 color,
             )?;
 
-            graphics::draw(
-                ctx,
-                &square,
-                DrawParam::default(),
-            )?;
+            graphics::draw(ctx, &square, DrawParam::default())?;
         }
     }
 
@@ -591,20 +602,19 @@ fn draw_hold_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new("HOLD")
             .font(asset.font.vt323)
-            .scale(PxScale::from(PANEL_FONT_SIZE))
+            .scale(PxScale::from(PANEL_FONT_SIZE)),
     );
     graphics::draw(
         ctx,
         &text,
-        graphics::DrawParam::default()
-            .dest([HOLD_ORIGIN_X, HOLD_ORIGIN_Y - PANEL_FONT_SIZE]),
+        graphics::DrawParam::default().dest([HOLD_ORIGIN_X, HOLD_ORIGIN_Y - PANEL_FONT_SIZE]),
     )?;
 
     let line = graphics::Mesh::new_line(
         ctx,
         &[
             [HOLD_ORIGIN_X, HOLD_ORIGIN_Y],
-            [HOLD_ORIGIN_X + SIDE_PANEL_WIDTH, HOLD_ORIGIN_Y]
+            [HOLD_ORIGIN_X + SIDE_PANEL_WIDTH, HOLD_ORIGIN_Y],
         ],
         2.,
         asset.color.separator,
@@ -614,8 +624,14 @@ fn draw_hold_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     let line = graphics::Mesh::new_line(
         ctx,
         &[
-            [HOLD_ORIGIN_X, HOLD_ORIGIN_Y + MINO_SPACE_IN_SIDE_PANEL_HEIGHT],
-            [HOLD_ORIGIN_X + SIDE_PANEL_WIDTH, HOLD_ORIGIN_Y + MINO_SPACE_IN_SIDE_PANEL_HEIGHT]
+            [
+                HOLD_ORIGIN_X,
+                HOLD_ORIGIN_Y + MINO_SPACE_IN_SIDE_PANEL_HEIGHT,
+            ],
+            [
+                HOLD_ORIGIN_X + SIDE_PANEL_WIDTH,
+                HOLD_ORIGIN_Y + MINO_SPACE_IN_SIDE_PANEL_HEIGHT,
+            ],
         ],
         1.,
         asset.color.separator,
@@ -626,21 +642,19 @@ fn draw_hold_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
 }
 
 fn draw_hold_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino) -> GameResult {
-    let x = HOLD_ORIGIN_X + match mino {
-        Tetrimino::O => HALF_BLOCK_LENGTH,
-        _ => 0.,
-    };
-    let y = HOLD_ORIGIN_Y + 2. * HALF_BLOCK_LENGTH + match mino {
-        Tetrimino::I => -HALF_BLOCK_LENGTH,
-        _ => 0.,
-    };
+    let x = HOLD_ORIGIN_X
+        + match mino {
+            Tetrimino::O => HALF_BLOCK_LENGTH,
+            _ => 0.,
+        };
+    let y = HOLD_ORIGIN_Y
+        + 2. * HALF_BLOCK_LENGTH
+        + match mino {
+            Tetrimino::I => -HALF_BLOCK_LENGTH,
+            _ => 0.,
+        };
 
-    draw_mini_mino(
-        ctx,
-        asset,
-        mino,
-        (x, y).into(),
-    )?;
+    draw_mini_mino(ctx, asset, mino, (x, y).into())?;
 
     Ok(())
 }
@@ -649,20 +663,19 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
     let text = graphics::Text::new(
         graphics::TextFragment::new("NEXT")
             .font(asset.font.vt323)
-            .scale(PxScale::from(PANEL_FONT_SIZE))
+            .scale(PxScale::from(PANEL_FONT_SIZE)),
     );
     graphics::draw(
         ctx,
         &text,
-        graphics::DrawParam::default()
-            .dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y - PANEL_FONT_SIZE]),
+        graphics::DrawParam::default().dest([NEXT_ORIGIN_X, NEXT_ORIGIN_Y - PANEL_FONT_SIZE]),
     )?;
 
     let line = graphics::Mesh::new_line(
         ctx,
         &[
             [NEXT_ORIGIN_X, NEXT_ORIGIN_Y],
-            [NEXT_ORIGIN_X + SIDE_PANEL_WIDTH, NEXT_ORIGIN_Y]
+            [NEXT_ORIGIN_X + SIDE_PANEL_WIDTH, NEXT_ORIGIN_Y],
         ],
         2.,
         asset.color.separator,
@@ -673,10 +686,7 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
         let y = NEXT_ORIGIN_Y + (idx as f32) * MINO_SPACE_IN_SIDE_PANEL_HEIGHT;
         let sep = graphics::Mesh::new_line(
             ctx,
-            &[
-                [NEXT_ORIGIN_X, y],
-                [NEXT_ORIGIN_X + SIDE_PANEL_WIDTH, y]
-            ],
+            &[[NEXT_ORIGIN_X, y], [NEXT_ORIGIN_X + SIDE_PANEL_WIDTH, y]],
             1.,
             asset.color.separator,
         )?;
@@ -689,24 +699,20 @@ fn draw_next_panel(ctx: &mut Context, asset: &Asset) -> GameResult {
 
 fn draw_next_minos(ctx: &mut Context, asset: &mut Asset, minos: &[Tetrimino]) -> GameResult {
     for (idx, mino) in minos.iter().enumerate() {
-        let x = NEXT_ORIGIN_X + match mino {
-            Tetrimino::O => HALF_BLOCK_LENGTH,
-            _ => 0.,
-        };
+        let x = NEXT_ORIGIN_X
+            + match mino {
+                Tetrimino::O => HALF_BLOCK_LENGTH,
+                _ => 0.,
+            };
         let y = NEXT_ORIGIN_Y
             + (idx as f32) * MINO_SPACE_IN_SIDE_PANEL_HEIGHT
             + 2. * HALF_BLOCK_LENGTH
             + match mino {
-            Tetrimino::I => -HALF_BLOCK_LENGTH,
-            _ => 0.,
-        };
+                Tetrimino::I => -HALF_BLOCK_LENGTH,
+                _ => 0.,
+            };
 
-        draw_mini_mino(
-            ctx,
-            asset,
-            mino,
-            (x, y).into(),
-        )?;
+        draw_mini_mino(ctx, asset, mino, (x, y).into())?;
     }
 
     Ok(())
@@ -717,14 +723,13 @@ fn draw_total_score(ctx: &mut Context, asset: &Asset, score: usize) -> GameResul
     let text = graphics::Text::new(
         graphics::TextFragment::new(text)
             .font(asset.font.vt323)
-            .scale(PxScale::from(TEXTS_FONT_SIZE))
+            .scale(PxScale::from(TEXTS_FONT_SIZE)),
     );
 
     graphics::draw(
         ctx,
         &text,
-        DrawParam::default()
-            .dest([TEXTS_ORIGIN_X, texts_y(0)]),
+        DrawParam::default().dest([TEXTS_ORIGIN_X, texts_y(0)]),
     )?;
 
     Ok(())
@@ -735,13 +740,12 @@ fn draw_removed_line_count(ctx: &mut Context, asset: &Asset, lines: usize) -> Ga
     let text = graphics::Text::new(
         graphics::TextFragment::new(text)
             .font(asset.font.vt323)
-            .scale(PxScale::from(TEXTS_FONT_SIZE))
+            .scale(PxScale::from(TEXTS_FONT_SIZE)),
     );
     graphics::draw(
         ctx,
         &text,
-        DrawParam::default()
-            .dest([TEXTS_ORIGIN_X, texts_y(1)]),
+        DrawParam::default().dest([TEXTS_ORIGIN_X, texts_y(1)]),
     )?;
 
     Ok(())
@@ -752,23 +756,30 @@ fn draw_timer(ctx: &mut Context, asset: &Asset, elapsed: &Duration) -> GameResul
     let sec = elapsed.as_secs() % 60;
     let milli_sec = elapsed.as_millis() % 100;
 
-    let text = format!("{0: <5}: {1: >03}:{2: >02}:{3: >02}", "TIMER", min, sec, milli_sec);
+    let text = format!(
+        "{0: <5}: {1: >03}:{2: >02}:{3: >02}",
+        "TIMER", min, sec, milli_sec
+    );
     let text = graphics::Text::new(
         graphics::TextFragment::new(text)
             .font(asset.font.vt323)
-            .scale(PxScale::from(TEXTS_FONT_SIZE))
+            .scale(PxScale::from(TEXTS_FONT_SIZE)),
     );
     graphics::draw(
         ctx,
         &text,
-        DrawParam::default()
-            .dest([TEXTS_ORIGIN_X, texts_y(2)]),
+        DrawParam::default().dest([TEXTS_ORIGIN_X, texts_y(2)]),
     )?;
 
     Ok(())
 }
 
-fn draw_mini_mino(ctx: &mut Context, asset: &mut Asset, mino: &Tetrimino, point: Point) -> GameResult {
+fn draw_mini_mino(
+    ctx: &mut Context,
+    asset: &mut Asset,
+    mino: &Tetrimino,
+    point: Point,
+) -> GameResult {
     let shapes = mino.shapes();
     let shape = shapes.get(&MinoRotation::Clockwise).unwrap();
 
@@ -822,7 +833,9 @@ impl RemovingLineAnimation {
         let elapsed = self.elapsed;
 
         if elapsed < REMOVING_LINE_ANIM_PHASE_1 {
-            let alpha = 1. - (REMOVING_LINE_ANIM_PHASE_1 - elapsed).as_secs_f32() / REMOVING_LINE_ANIM_PHASE_1.as_secs_f32();
+            let alpha = 1.
+                - (REMOVING_LINE_ANIM_PHASE_1 - elapsed).as_secs_f32()
+                    / REMOVING_LINE_ANIM_PHASE_1.as_secs_f32();
             let color = graphics::Color::new(1., 1., 1., alpha);
 
             for line in &self.lines {
@@ -846,7 +859,8 @@ impl RemovingLineAnimation {
             let color = graphics::Color::new(1., 1., 1., percentage);
 
             for &line in &self.lines {
-                let y = FIELD_ORIGIN_Y + (line as f32 - 1.) * BLOCK_LENGTH
+                let y = FIELD_ORIGIN_Y
+                    + (line as f32 - 1.) * BLOCK_LENGTH
                     + (BLOCK_LENGTH * percentage) / 2.;
                 let height = BLOCK_LENGTH - BLOCK_LENGTH * percentage;
 
@@ -900,7 +914,6 @@ impl DroppingWindbreakParticle {
         let percentage = self.elapsed.as_secs_f32() / DROPPING_WINDBREAK_ANIM_END.as_secs_f32();
         let x = self.start_point.0;
         let y = self.start_point.1 - 6. * BLOCK_LENGTH * percentage;
-
 
         if elapsed < DROPPING_WINDBREAK_ANIM_END {
             graphics::draw(

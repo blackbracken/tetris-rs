@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use ggez::{Context, GameResult, graphics};
 use ggez::graphics::{Color, PxScale};
+use ggez::{graphics, Context, GameResult};
 use rand::random;
 
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::asset::Asset;
 use crate::asset::audio::{Bgm, Se};
+use crate::asset::Asset;
 use crate::input::{pressed_down, pressed_enter, pressed_up};
 use crate::scenes::router::{Next, Ticket};
+use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 #[derive(Clone)]
 pub struct TitleState {
@@ -46,29 +46,29 @@ impl TitleState {
                     graphics::Text::new(
                         graphics::TextFragment::new(str)
                             .font(asset.font.play)
-                            .scale(PxScale::from(32.))
-                    )
+                            .scale(PxScale::from(32.)),
+                    ),
                 )
             })
             .collect();
 
         let particles = (0..32)
-            .map(|_| TitleParticle::new(
-                (WINDOW_WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
-                WINDOW_HEIGHT * (random::<f32>() % 1.),
-            ))
+            .map(|_| {
+                TitleParticle::new(
+                    (WINDOW_WIDTH + 20.) * (random::<f32>() % 1.) - 10.,
+                    WINDOW_HEIGHT * (random::<f32>() % 1.),
+                )
+            })
             .collect::<Vec<_>>();
 
-        Ok(
-            TitleState {
-                cursor: TitleItem::Play40Line,
-                pressed_up_before: false,
-                pressed_down_before: false,
-                texts_ascii,
-                items_text_hash,
-                particles,
-            }
-        )
+        Ok(TitleState {
+            cursor: TitleItem::Play40Line,
+            pressed_up_before: false,
+            pressed_down_before: false,
+            texts_ascii,
+            items_text_hash,
+            particles,
+        })
     }
 }
 
@@ -114,12 +114,10 @@ pub fn update(ctx: &mut Context, mut state: TitleState, asset: &Asset) -> GameRe
     if pressed_enter(ctx) {
         asset.audio.play_se(ctx, Se::MenuClick)?;
 
-        Ok(
-            match state.cursor {
-                TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
-                TitleItem::Exit => Next::Exit,
-            }
-        )
+        Ok(match state.cursor {
+            TitleItem::Play40Line => Next::transit(Ticket::Play40Line),
+            TitleItem::Exit => Next::Exit,
+        })
     } else {
         Ok(Next::do_continue(state.into()))
     }
@@ -159,7 +157,8 @@ pub fn draw(ctx: &mut Context, state: &TitleState, asset: &Asset) -> GameResult 
             if item == &state.cursor {
                 let cursor_scale = 0.5f32;
                 let cursor_x = x - 30.;
-                let cursor_y = y + text.height(ctx) / 2. - f32::from(asset.image.cursor.height()) * cursor_scale / 2.;
+                let cursor_y = y + text.height(ctx) / 2.
+                    - f32::from(asset.image.cursor.height()) * cursor_scale / 2.;
 
                 graphics::draw(
                     ctx,
@@ -172,9 +171,10 @@ pub fn draw(ctx: &mut Context, state: &TitleState, asset: &Asset) -> GameResult 
         }
     }
 
-    let dbg_text = graphics::Text::new(graphics::TextFragment::new(
-        format!("the cursor is at {:?}", state.cursor)
-    ));
+    let dbg_text = graphics::Text::new(graphics::TextFragment::new(format!(
+        "the cursor is at {:?}",
+        state.cursor
+    )));
     graphics::draw(ctx, &dbg_text, graphics::DrawParam::default())?;
 
     graphics::present(ctx)?;

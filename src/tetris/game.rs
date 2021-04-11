@@ -130,7 +130,10 @@ impl Game {
             return PutResult::new(lines, None);
         }
 
-        let did_perfect_clear = self.board.confirmed_field.iter()
+        let did_perfect_clear = self
+            .board
+            .confirmed_field
+            .iter()
             .all(|line| line.iter().all(|e| e.is_air()));
         let did_t_spin = self.board.dropping == Tetrimino::T
             && self.rotated_just_before
@@ -236,13 +239,19 @@ pub struct Point {
 
 impl Into<Point> for (isize, isize) {
     fn into(self) -> Point {
-        Point { x: self.0, y: self.1 }
+        Point {
+            x: self.0,
+            y: self.1,
+        }
     }
 }
 
 impl Into<Point> for (f32, f32) {
     fn into(self) -> Point {
-        Point { x: self.0 as isize, y: self.1 as isize }
+        Point {
+            x: self.0 as isize,
+            y: self.1 as isize,
+        }
     }
 }
 
@@ -254,12 +263,8 @@ mod tests {
 
     #[test]
     fn rect_vec_returns_2d_vec() {
-        let rect_vec: Vec<Vec<bool>> = rect_vec!(
-        [0, 0, 0, 0],
-        [1, 0, 1, 0],
-        [0, 1, 0, 1],
-        [1, 1, 1, 1],
-    );
+        let rect_vec: Vec<Vec<bool>> =
+            rect_vec!([0, 0, 0, 0], [1, 0, 1, 0], [0, 1, 0, 1], [1, 1, 1, 1],);
 
         assert_eq!(
             rect_vec,

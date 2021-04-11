@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 
-use crate::tetris::game::{Point};
+use crate::tetris::game::Point;
 use crate::tetris::model::mino_entity::MinoEntity;
 use crate::tetris::model::spin::{Spin, SpinDirection};
 use crate::tetris::model::tetrimino::{MinoRotation, Tetrimino, WallKickOffset};
@@ -25,7 +25,10 @@ pub struct Board {
 
 impl Board {
     pub fn new(dropping: Tetrimino) -> Board {
-        Board::new_with_field(dropping, [[MinoEntity::AIR; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT])
+        Board::new_with_field(
+            dropping,
+            [[MinoEntity::AIR; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT],
+        )
     }
 
     fn new_with_field(dropping: Tetrimino, field: Field) -> Board {
@@ -90,9 +93,12 @@ impl Board {
             board.dropping_point.y += offset.y;
         }
 
-        let offset = (0..5).into_iter()
+        let offset = (0..5)
+            .into_iter()
             .flat_map(|idx| {
-                let offsets = self.dropping.wall_kick_offsets(&self.dropping_rotation, &direction);
+                let offsets = self
+                    .dropping
+                    .wall_kick_offsets(&self.dropping_rotation, &direction);
                 offsets.get(idx).map(|o| o.to_owned())
             })
             .find(|offset| {
@@ -117,10 +123,12 @@ impl Board {
 
     pub fn satisfies_cond_for_t_spin(&self) -> bool {
         let field = self.field();
-        let unfilled_corners_count = [1, -1].iter()
+        let unfilled_corners_count = [1, -1]
+            .iter()
             .flat_map(|&y| usize::try_from(self.dropping_point.y + y))
             .flat_map(|y| {
-                [1, -1].iter()
+                [1, -1]
+                    .iter()
                     .flat_map(|&x| usize::try_from(self.dropping_point.x + x))
                     .flat_map(|x| {
                         field
@@ -170,7 +178,9 @@ impl Board {
     pub fn remove_lines(&mut self) -> usize {
         let removed_lines = self.filled_lines();
 
-        let mut field: VecDeque<Vec<MinoEntity>> = self.confirmed_field.iter()
+        let mut field: VecDeque<Vec<MinoEntity>> = self
+            .confirmed_field
+            .iter()
             .enumerate()
             .filter(|(idx, _)| !removed_lines.contains(idx))
             .map(|(_, line)| Box::new(line).to_vec())
@@ -190,7 +200,9 @@ impl Board {
     }
 
     pub fn filled_lines(&self) -> RemovedLines {
-        self.field().iter().enumerate()
+        self.field()
+            .iter()
+            .enumerate()
             .filter(|(_, line)| line.iter().all(|entity| !entity.is_air()))
             .map(|(y, _)| y)
             .collect::<Vec<_>>()
@@ -203,7 +215,8 @@ impl Board {
         let center = &self.dropping.center();
         let dropping_at = &self.dropping_point;
 
-        shape.iter()
+        shape
+            .iter()
             .enumerate()
             .flat_map(|(y, line)| {
                 line.iter()
@@ -240,22 +253,19 @@ impl Board {
     }
 
     fn establishes_field(&self) -> bool {
-        self.dropping_mino_points().iter()
-            .all(|&point| {
-                if let Ok(x) = usize::try_from(point.x) {
-                    if let Ok(y) = usize::try_from(point.y) {
-                        let entity = self.confirmed_field
-                            .get(y)
-                            .and_then(|line| line.get(x));
+        self.dropping_mino_points().iter().all(|&point| {
+            if let Ok(x) = usize::try_from(point.x) {
+                if let Ok(y) = usize::try_from(point.y) {
+                    let entity = self.confirmed_field.get(y).and_then(|line| line.get(x));
 
-                        if let Some(entity) = entity {
-                            return entity.block().is_none();
-                        }
+                    if let Some(entity) = entity {
+                        return entity.block().is_none();
                     }
                 }
+            }
 
-                false
-            })
+            false
+        })
     }
 }
 

@@ -11,35 +11,34 @@ extern crate derive_new;
 use std::mem;
 use std::time::Duration;
 
-use ggez::{Context, ContextBuilder, event, GameResult};
 use ggez::event::{EventHandler, KeyCode, KeyMods};
 use ggez::timer;
+use ggez::{event, Context, ContextBuilder, GameResult};
 
 use scenes::router::{Next, SceneState, Ticket};
 
 use crate::asset::Asset;
 
-mod macros;
 mod input;
+mod macros;
 
 pub(crate) mod scenes {
     pub mod router;
 
-    pub mod title;
     pub mod play40line;
+    pub mod title;
 }
 
-
 pub(crate) mod tetris {
+    pub mod board;
     pub mod game;
     pub mod mino_bag;
-    pub mod board;
 
     pub mod model {
         pub mod mino_entity;
-        pub mod tetrimino;
-        pub mod spin;
         pub mod score;
+        pub mod spin;
+        pub mod tetrimino;
     }
 }
 
@@ -66,13 +65,11 @@ impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
         let mut asset = Asset::load(ctx)?;
 
-        Ok(
-            MainState {
-                scene_state: Some(Ticket::ShowTitle.go(ctx, &mut asset)?),
-                asset,
-                last_measured: timer::time_since_start(ctx),
-            }
-        )
+        Ok(MainState {
+            scene_state: Some(Ticket::ShowTitle.go(ctx, &mut asset)?),
+            asset,
+            last_measured: timer::time_since_start(ctx),
+        })
     }
 }
 
@@ -87,9 +84,7 @@ impl EventHandler for MainState {
             self.last_measured = now;
 
             let next: Next = match state {
-                SceneState::ForTitle { state } => {
-                    scenes::title::update(ctx, state, &self.asset)?
-                }
+                SceneState::ForTitle { state } => scenes::title::update(ctx, state, &self.asset)?,
                 SceneState::ForPlay40Line { state } => {
                     scenes::play40line::update(ctx, state, &mut self.asset, diff)?
                 }
@@ -114,8 +109,12 @@ impl EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         if let Some(state) = &self.scene_state {
             match state {
-                SceneState::ForTitle { state } => { scenes::title::draw(ctx, state, &self.asset)?; }
-                SceneState::ForPlay40Line { state } => { scenes::play40line::draw(ctx, state, &mut self.asset)?; }
+                SceneState::ForTitle { state } => {
+                    scenes::title::draw(ctx, state, &self.asset)?;
+                }
+                SceneState::ForPlay40Line { state } => {
+                    scenes::play40line::draw(ctx, state, &mut self.asset)?;
+                }
             }
         }
 

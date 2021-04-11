@@ -8,7 +8,7 @@ use crate::tetris::model::tetrimino::Tetrimino;
 ///
 /// ゲームに出現させるテトリミノを, 七種一巡の法則に従って供給する.
 pub struct MinoBag {
-    queue: VecDeque<Tetrimino>
+    queue: VecDeque<Tetrimino>,
 }
 
 impl MinoBag {
@@ -36,14 +36,15 @@ impl MinoBag {
     /// ピークする個数はテトリミノ一巡分を超過してはならない.
     pub fn peek(&self, amount: usize) -> Vec<Tetrimino> {
         if amount > Tetrimino::all().len() {
-            panic!("the amount of minos must be equal to or lower than the amount of tetrimino types");
+            panic!(
+                "the amount of minos must be equal to or lower than the amount of tetrimino types"
+            );
         }
 
         (0..amount)
             .map(|idx| self.queue.get(idx).unwrap().to_owned())
             .collect::<Vec<_>>()
     }
-
 
     fn gen_shuffled_all_minos() -> Vec<Tetrimino> {
         let mut rng = rand::thread_rng();

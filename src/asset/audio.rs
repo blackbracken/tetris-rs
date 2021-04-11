@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use ggez::{audio, Context, GameResult};
 use ggez::audio::SoundSource;
+use ggez::{audio, Context, GameResult};
 
 pub struct Audio {
     bgm_data_map: HashMap<Bgm, audio::SoundData>,
@@ -18,7 +18,7 @@ impl Audio {
         fn bgm_path(bgm: Bgm) -> &'static str {
             match bgm {
                 Bgm::Title => "/sound/bgm/bgm_classic_etc_scarboroughfair.wav",
-                Bgm::InGame => "/sound/bgm/bgm_classic_etc_korobushka.wav"
+                Bgm::InGame => "/sound/bgm/bgm_classic_etc_korobushka.wav",
             }
         }
         let bgm_data_map = maplit::hashmap! {
@@ -50,36 +50,34 @@ impl Audio {
             Se::RemoveLine => audio::SoundData::new(ctx, se_path(Se::RemoveLine))?,
         };
 
-        Ok(
-            Audio {
-                bgm_data_map,
-                se_data_map,
-                playing_src: None,
-            }
-        )
+        Ok(Audio {
+            bgm_data_map,
+            se_data_map,
+            playing_src: None,
+        })
     }
 
     pub fn play_bgm(&mut self, ctx: &mut Context, bgm: Bgm) -> GameResult {
         self.stop_bgm();
 
-        let src = self.bgm_data_map.get(&bgm)
+        let src = self
+            .bgm_data_map
+            .get(&bgm)
             .and_then(|data| audio::Source::from_data(ctx, data.to_owned()).ok())
             .map(|mut src| {
                 src.set_repeat(true);
                 src.set_query_interval(Duration::ZERO);
                 src
             })
-            .map(|mut src| {
-                match bgm {
-                    Bgm::Title => {
-                        src.set_volume(0.2);
-                        src.set_fade_in(Duration::from_secs(2));
-                        src
-                    }
-                    Bgm::InGame => {
-                        src.set_volume(0.25);
-                        src
-                    }
+            .map(|mut src| match bgm {
+                Bgm::Title => {
+                    src.set_volume(0.2);
+                    src.set_fade_in(Duration::from_secs(2));
+                    src
+                }
+                Bgm::InGame => {
+                    src.set_volume(0.25);
+                    src
                 }
             });
 
@@ -96,7 +94,9 @@ impl Audio {
     }
 
     pub fn play_se(&self, ctx: &mut Context, se: Se) -> GameResult {
-        let src = self.se_data_map.get(&se)
+        let src = self
+            .se_data_map
+            .get(&se)
             .and_then(|data| audio::Source::from_data(ctx, data.to_owned()).ok())
             .map(|mut src| {
                 match se {
@@ -137,7 +137,6 @@ impl Audio {
         Ok(())
     }
 }
-
 
 #[derive(Eq, PartialEq, Hash)]
 pub enum Bgm {
