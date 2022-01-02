@@ -1,4 +1,5 @@
 #![feature(duration_consts_float)]
+#![feature(never_type)]
 
 #[macro_use]
 extern crate derive_new;
@@ -22,6 +23,12 @@ pub(crate) mod scenes {
 
     pub mod play40line;
     pub mod title;
+
+    // in development modules
+    pub mod fortyline {
+        pub mod fortyline_scene;
+    }
+    pub mod scene_state;
 }
 
 pub(crate) mod tetris {
