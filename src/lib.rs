@@ -1,9 +1,4 @@
-#![feature(slice_group_by)]
-#![feature(duration_zero)]
-#![feature(duration_saturating_ops)]
-#![feature(duration_consts_2)]
-#![feature(pub_macro_rules)]
-#![feature(map_into_keys_values)]
+#![feature(duration_consts_float)]
 
 #[macro_use]
 extern crate derive_new;
