@@ -18,17 +18,13 @@ use crate::asset::Asset;
 mod input;
 mod macros;
 
+pub mod scene;
+
 pub(crate) mod scenes {
     pub mod router;
 
     pub mod play40line;
     pub mod title;
-
-    // in development modules
-    pub mod fortyline {
-        pub mod fortyline_scene;
-    }
-    pub mod scene_state;
 }
 
 pub(crate) mod tetris {
