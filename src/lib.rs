@@ -4,6 +4,9 @@
 #[macro_use]
 extern crate derive_new;
 
+#[macro_use]
+extern crate num_derive;
+
 use std::mem;
 use std::time::Duration;
 
