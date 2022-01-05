@@ -1,10 +1,3 @@
-use crate::domain::repo::control_code_repository::ControlCodeRepository;
-use ggez::{
-    event::{Button, KeyCode},
-    input::{gamepad::gamepads, keyboard},
-    Context,
-};
-
 pub enum ControlCode {
     // In-game
     MoveLeft,
