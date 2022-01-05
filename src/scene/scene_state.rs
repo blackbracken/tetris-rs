@@ -3,7 +3,6 @@ use crate::SceneState::ForTitle;
 
 pub enum SceneState {
     ForTitle { state: TitleState },
-    ForFortyLine { state: FortyLineState },
 }
 
 impl Into<SceneState> for TitleState {

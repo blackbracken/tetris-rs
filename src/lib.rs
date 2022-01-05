@@ -87,7 +87,6 @@ impl EventHandler for MainState {
 
             let next: Next = match state {
                 SceneState::ForTitle { state } => scene::title::title_scene::update(ctx, state)?,
-                _ => todo!(),
             };
 
             match next {
@@ -112,7 +111,6 @@ impl EventHandler for MainState {
                 SceneState::ForTitle { state } => {
                     scene::title::title_scene::draw(ctx, state, &mut self.asset)?;
                 }
-                _ => todo!(),
             }
         }
 
