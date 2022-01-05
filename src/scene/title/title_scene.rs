@@ -1,6 +1,12 @@
 use ggez::{Context, GameResult};
 
-use crate::{asset::audio::Bgm, Asset};
+use crate::{
+    Asset,
+    asset::{
+        audio::Bgm,
+    },
+};
+
 
 pub struct TitleState {
     render_state: TitleRenderState,
