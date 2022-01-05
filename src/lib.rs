@@ -18,6 +18,8 @@ use scenes::router::{Next, SceneState, Ticket};
 
 use crate::asset::Asset;
 
+mod domain;
+mod infra;
 mod input;
 mod macros;
 

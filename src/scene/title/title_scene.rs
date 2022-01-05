@@ -1,11 +1,6 @@
 use ggez::{Context, GameResult};
 
-use crate::{
-    Asset,
-    asset::{
-        audio::Bgm,
-    },
-};
+use crate::{asset::audio::Bgm, Asset};
 
 pub struct TitleState {
     render_state: TitleRenderState,
@@ -19,9 +14,6 @@ fn init(ctx: &mut Context, asset: &mut Asset, _: &TitleState) -> GameResult {
     Ok(())
 }
 
-fn update(_: &mut Context, _: &mut TitleState) {
-
-
-}
+fn update(_: &mut Context, _: &mut TitleState) {}
 
 fn render(_: &mut Context, _: &TitleState) {}

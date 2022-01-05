@@ -22,8 +22,8 @@ impl SelectedItem {
 
 #[cfg(test)]
 mod test {
-    use test_case::test_case;
     use super::*;
+    use test_case::test_case;
 
     #[test_case(SelectedItem::PlayFortyLine, Some(SelectedItem::Exit))]
     #[test_case(SelectedItem::Exit, None)]

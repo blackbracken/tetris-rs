@@ -1,3 +1,4 @@
+pub mod input;
 pub mod scene_state;
 
 pub mod fortyline {
@@ -5,6 +6,6 @@ pub mod fortyline {
 }
 
 pub mod title {
-    pub mod title_scene;
     pub mod selected_item;
+    pub mod title_scene;
 }
