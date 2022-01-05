@@ -15,9 +15,7 @@ pub enum Ticket {
 impl Ticket {
     pub fn go(&self, ctx: &mut Context, asset: &mut Asset) -> GameResult<SceneState> {
         match &self {
-            Ticket::ShowTitle => {
-                title_scene::init(ctx, asset).map(|state| ForTitle { state })
-            }
+            Ticket::ShowTitle => title_scene::init(ctx, asset).map(|state| ForTitle { state }),
         }
     }
 }

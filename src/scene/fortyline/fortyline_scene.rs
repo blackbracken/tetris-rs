@@ -1,10 +1,10 @@
 use ggez::Context;
 
 pub struct FortyLineState {
-    render_state: FortyLineRenderState,
+    draw_state: FortyLineDrawState,
 }
 
-struct FortyLineRenderState {}
+struct FortyLineDrawState {}
 
 fn init(_: &mut Context, _: &FortyLineState) {}
 

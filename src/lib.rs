@@ -3,7 +3,6 @@
 
 #[macro_use]
 extern crate derive_new;
-
 #[macro_use]
 extern crate num_derive;
 
@@ -14,9 +13,11 @@ use ggez::event::{EventHandler, KeyCode, KeyMods};
 use ggez::timer;
 use ggez::{event, Context, ContextBuilder, GameResult};
 
-use scenes::router::{Next, SceneState, Ticket};
+use scene::ticket;
 
 use crate::asset::Asset;
+use crate::scene::scene_state::SceneState;
+use crate::ticket::{Next, Ticket};
 
 mod domain;
 mod infra;
@@ -79,18 +80,14 @@ impl MainState {
 impl EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
-            let state = mem::replace(&mut self.scene_state, None)
-                .expect("scene_state has not been updated");
+            let state = mem::take(&mut self.scene_state).unwrap();
 
             let now = timer::time_since_start(ctx);
-            let diff = now - self.last_measured;
-            self.last_measured = now;
+            let diff = now - mem::replace(&mut self.last_measured, now);
 
             let next: Next = match state {
-                SceneState::ForTitle { state } => scenes::title::update(ctx, state, &self.asset)?,
-                SceneState::ForPlay40Line { state } => {
-                    scenes::play40line::update(ctx, state, &mut self.asset, diff)?
-                }
+                SceneState::ForTitle { state } => scene::title::title_scene::update(ctx, state)?,
+                _ => todo!(),
             };
 
             match next {
@@ -113,11 +110,9 @@ impl EventHandler for MainState {
         if let Some(state) = &self.scene_state {
             match state {
                 SceneState::ForTitle { state } => {
-                    scenes::title::draw(ctx, state, &self.asset)?;
+                    scene::title::title_scene::draw(ctx, state, &mut self.asset)?;
                 }
-                SceneState::ForPlay40Line { state } => {
-                    scenes::play40line::draw(ctx, state, &mut self.asset)?;
-                }
+                _ => todo!(),
             }
         }
 

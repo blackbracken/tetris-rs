@@ -1,20 +1,24 @@
 use ggez::{Context, GameResult};
 
-use crate::{asset::audio::Bgm, Asset};
+use crate::{asset::audio::Bgm, Asset, Next, SceneState};
 
 #[derive(new)]
 pub struct TitleState {
-    render_state: TitleRenderState,
+    draw_state: TitleDrawState,
 }
 
-pub struct TitleRenderState;
+pub struct TitleDrawState;
 
 pub fn init(ctx: &mut Context, asset: &mut Asset) -> GameResult<TitleState> {
     asset.audio.play_bgm(ctx, Bgm::Title)?;
 
-    Ok(TitleState::new(TitleRenderState {}))
+    Ok(TitleState::new(TitleDrawState {}))
 }
 
-pub fn update(_: &mut Context, _: &mut TitleState) {}
+pub fn update(_: &mut Context, state: TitleState) -> GameResult<Next> {
+    Ok(Next::do_continue(state.into()))
+}
 
-pub fn render(_: &mut Context, _: &TitleState) {}
+pub fn draw(_: &mut Context, _: &TitleState, asset: &mut Asset) -> GameResult {
+    Ok(())
+}
