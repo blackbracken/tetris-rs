@@ -1,5 +1,5 @@
-pub mod input;
 pub mod scene_state;
+pub mod ticket;
 
 pub mod fortyline {
     pub mod fortyline_scene;
