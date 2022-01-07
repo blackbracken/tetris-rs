@@ -1,5 +1,7 @@
 use num_traits::{FromPrimitive, ToPrimitive};
 
+use crate::scene::title::selected_item::SelectedItem::PlayFortyLine;
+
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq)]
 pub enum SelectedItem {
     PlayFortyLine,
@@ -7,6 +9,19 @@ pub enum SelectedItem {
 }
 
 impl SelectedItem {
+    pub fn all() -> Vec<SelectedItem> {
+        let mut items = vec!(PlayFortyLine);
+
+        loop {
+            match items.last().unwrap().next() {
+                None => return items,
+                Some(next) => {
+                    items.push(next)
+                }
+            };
+        }
+    }
+
     pub fn next(&self) -> Option<SelectedItem> {
         FromPrimitive::from_isize(self.index() + 1)
     }
@@ -22,8 +37,16 @@ impl SelectedItem {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::mem::variant_count;
+
     use test_case::test_case;
+
+    use super::*;
+
+    #[test]
+    fn test_variant_count() {
+        assert_eq!(SelectedItem::all().len(), variant_count::<SelectedItem>())
+    }
 
     #[test_case(SelectedItem::PlayFortyLine, Some(SelectedItem::Exit))]
     #[test_case(SelectedItem::Exit, None)]
