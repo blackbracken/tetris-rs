@@ -1,8 +1,6 @@
 use num_traits::{FromPrimitive, ToPrimitive};
 
-use crate::scene::title::selected_item::SelectedItem::PlayFortyLine;
-
-#[derive(FromPrimitive, ToPrimitive, Debug, PartialEq)]
+#[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Eq, Hash)]
 pub enum SelectedItem {
     PlayFortyLine,
     Exit,
@@ -10,15 +8,20 @@ pub enum SelectedItem {
 
 impl SelectedItem {
     pub fn all() -> Vec<SelectedItem> {
-        let mut items = vec!(PlayFortyLine);
+        let mut items = vec![SelectedItem::PlayFortyLine];
 
         loop {
             match items.last().unwrap().next() {
                 None => return items,
-                Some(next) => {
-                    items.push(next)
-                }
+                Some(next) => items.push(next),
             };
+        }
+    }
+
+    pub fn name(&self) -> &'static str {
+        match *self {
+            SelectedItem::PlayFortyLine => "Play 40Line",
+            SelectedItem::Exit => "Exit",
         }
     }
 
