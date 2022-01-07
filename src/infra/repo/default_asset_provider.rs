@@ -1,5 +1,5 @@
+use std::collections::HashMap;
 use std::ops::Not;
-use std::{collections::HashMap, rc::Rc};
 
 use ggez::{graphics::Image, Context, GameError, GameResult};
 
@@ -7,7 +7,7 @@ use crate::domain::repo::asset_provider::AssetProvider;
 
 enum Asset<T> {
     Unloaded,
-    Loaded { value: Rc<T> },
+    Loaded { value: Box<T> },
     Missing { error: GameError },
 }
 
@@ -20,7 +20,7 @@ impl AssetProvider for DefaultAssetProvider {
         if !self.image_map.contains_key(path) {
             let asset = match Image::new(ctx, path) {
                 Ok(image) => Asset::Loaded {
-                    value: Rc::new(image),
+                    value: Box::new(image),
                 },
                 Err(error) => Asset::Missing { error },
             };
