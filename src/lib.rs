@@ -1,6 +1,7 @@
 #![feature(duration_consts_float)]
 #![feature(never_type)]
 #![feature(variant_count)]
+#![feature(map_try_insert)]
 
 #[macro_use]
 extern crate derive_new;

@@ -1,6 +1,6 @@
 use enum_iterator::IntoEnumIterator;
 
-#[derive(IntoEnumIterator, PartialEq)]
+#[derive(IntoEnumIterator, Hash, PartialEq, Eq, Copy, Clone)]
 pub enum ControlCode {
     // In-game
     MoveLeft,
