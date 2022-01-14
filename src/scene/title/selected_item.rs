@@ -1,6 +1,7 @@
+use enum_iterator::IntoEnumIterator;
 use num_traits::{FromPrimitive, ToPrimitive};
 
-#[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Eq, Hash)]
+#[derive(FromPrimitive, ToPrimitive, IntoEnumIterator, Debug, PartialEq, Eq, Hash)]
 pub enum SelectedItem {
     PlayFortyLine,
     Exit,
@@ -8,14 +9,7 @@ pub enum SelectedItem {
 
 impl SelectedItem {
     pub fn all() -> Vec<SelectedItem> {
-        let mut items = vec![SelectedItem::PlayFortyLine];
-
-        loop {
-            match items.last().unwrap().next() {
-                None => return items,
-                Some(next) => items.push(next),
-            };
-        }
+        SelectedItem::into_enum_iter().collect()
     }
 
     pub fn name(&self) -> &'static str {
@@ -40,16 +34,9 @@ impl SelectedItem {
 
 #[cfg(test)]
 mod test {
-    use std::mem::variant_count;
-
     use test_case::test_case;
 
     use super::*;
-
-    #[test]
-    fn test_variant_count() {
-        assert_eq!(SelectedItem::all().len(), variant_count::<SelectedItem>())
-    }
 
     #[test_case(SelectedItem::PlayFortyLine, Some(SelectedItem::Exit))]
     #[test_case(SelectedItem::Exit, None)]
