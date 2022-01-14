@@ -48,3 +48,42 @@ impl InputCache {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        let cache = InputCache::new();
+        let values = cache.input_map.values();
+
+        assert_eq!(values.len(), ControlCode::all().len());
+
+        for input in values {
+            assert_eq!(*input, DeviceInput::None);
+        }
+    }
+
+    #[test]
+    fn test_handle_push() {
+        let cache = InputCache::new();
+        let inputs = vec![ControlCode::MoveLeft];
+
+        let cache = cache.handle_inputs(&inputs, &Duration::ZERO);
+
+        let res = cache.input_map.get(&ControlCode::MoveLeft).unwrap();
+        assert_eq!(res, &DeviceInput::Push);
+
+        let otherwise = ControlCode::all()
+            .into_iter()
+            .filter(|code| code != &ControlCode::MoveLeft)
+            .map(|code| cache.input_map.get(&code).unwrap())
+            .collect::<Vec<_>>();
+        for other in otherwise {
+            assert_eq!(other, &DeviceInput::None);
+        }
+    }
+
+    // TODO: input_mapに直接アクセスしないようにメソッド生やしてテスト増やす
+}

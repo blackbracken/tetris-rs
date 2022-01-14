@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use crate::domain::control_code::ControlCode;
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum DeviceInput {
     None,
     Push,
