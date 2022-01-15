@@ -54,8 +54,10 @@ impl DeviceInput {
         use DeviceInput::*;
 
         match self {
-            Hold { delta_from_began, .. } => DeviceInput::new_hold(delta_from_began, Duration::ZERO),
-            _ => self
+            Hold {
+                delta_from_began, ..
+            } => DeviceInput::new_hold(delta_from_began, Duration::ZERO),
+            _ => self,
         }
     }
 }
@@ -85,8 +87,7 @@ mod tests {
     #[test]
     fn test_hold_1500ms() {
         let milli_seconds = Duration::from_millis(1500);
-        let next_state = DeviceInput::new_hold_zero()
-            .next_state(true, &milli_seconds);
+        let next_state = DeviceInput::new_hold_zero().next_state(true, &milli_seconds);
         let ans = DeviceInput::Hold {
             delta_from_began: milli_seconds.clone(),
             delta_last_handled: milli_seconds.clone(),

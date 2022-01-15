@@ -46,7 +46,11 @@ impl InputCache {
         }
     }
 
-    pub fn handle_hold_if_unhandled_yet_after(&mut self, code: &ControlCode, duration: &Duration) -> bool {
+    pub fn handle_hold_if_unhandled_yet_after(
+        &mut self,
+        code: &ControlCode,
+        duration: &Duration,
+    ) -> bool {
         let should_handle = self.has_hold_unhandled_yet_after(code, duration);
         if should_handle {
             self.handle_if_hold(code);
@@ -55,7 +59,11 @@ impl InputCache {
         should_handle
     }
 
-    pub fn handle_hold_if_handled_before(&mut self, code: &ControlCode, duration: &Duration) -> bool {
+    pub fn handle_hold_if_handled_before(
+        &mut self,
+        code: &ControlCode,
+        duration: &Duration,
+    ) -> bool {
         let should_handle = self.has_hold_handled_before(code, duration);
         if should_handle {
             self.handle_if_hold(code);
@@ -66,24 +74,20 @@ impl InputCache {
 
     fn has_hold_unhandled_yet_after(&self, code: &ControlCode, duration: &Duration) -> bool {
         match self.input_map.get(code) {
-            Some(
-                DeviceInput::Hold {
-                    delta_from_began,
-                    delta_last_handled,
-                }
-            ) if delta_from_began == delta_last_handled && duration <= delta_from_began => true,
+            Some(DeviceInput::Hold {
+                     delta_from_began,
+                     delta_last_handled,
+                 }) if delta_from_began == delta_last_handled && duration <= delta_from_began => true,
             _ => false,
         }
     }
 
     fn has_hold_handled_before(&self, code: &ControlCode, duration: &Duration) -> bool {
         match self.input_map.get(code) {
-            Some(
-                DeviceInput::Hold {
-                    delta_from_began,
-                    delta_last_handled,
-                }
-            ) if delta_last_handled < delta_from_began && duration <= delta_last_handled => true,
+            Some(DeviceInput::Hold {
+                     delta_from_began,
+                     delta_last_handled,
+                 }) if delta_last_handled < delta_from_began && duration <= delta_last_handled => true,
             _ => false,
         }
     }

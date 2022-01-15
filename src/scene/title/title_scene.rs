@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
-use ggez::graphics::PxScale;
 use ggez::{
-    graphics,
-    graphics::{DrawParam, Text, TextFragment},
-    Context, GameResult,
+    Context,
+    GameResult,
+    graphics, graphics::{DrawParam, Text, TextFragment},
 };
+use ggez::graphics::PxScale;
 use indoc::indoc;
 
 use crate::{
-    asset::audio::Bgm, scene::title::selected_item::SelectedItem, Asset, InputCache, Next,
-    SceneState, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Asset, asset::audio::Bgm, ControlCode, InputCache, Next,
+    scene::title::selected_item::SelectedItem, SceneState, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 static TITLE_ASCII: &str = indoc!(
@@ -77,6 +77,19 @@ pub fn update(
     input_cache: &mut InputCache,
     state: TitleState,
 ) -> GameResult<Next> {
+    let mut state = state;
+
+    if input_cache.has_pushed(&ControlCode::MenuUp) {
+        if let Some(prev) = state.cursor.prev() {
+            state.cursor = prev;
+        }
+    }
+    if input_cache.has_pushed(&ControlCode::MenuDown) {
+        if let Some(next) = state.cursor.next() {
+            state.cursor = next;
+        }
+    }
+
     Ok(Next::do_continue(state.into()))
 }
 
