@@ -16,36 +16,22 @@ impl InputCache {
         InputCache { input_map }
     }
 
-    pub fn handle_inputs(mut self, inputs: &Vec<ControlCode>, delta: &Duration) -> Self {
+    pub fn receive_inputs(&mut self, inputs: &Vec<ControlCode>, delta: &Duration) {
         use DeviceInput::*;
 
         let new_input_map = ControlCode::all()
             .into_iter()
             .map(|code| {
-                if inputs.contains(&code) {
-                    let old_input = (&mut self.input_map)
-                        .entry(code.clone())
-                        .or_insert(DeviceInput::None);
+                let old_input = self
+                    .input_map
+                    .entry(code.clone())
+                    .or_insert(DeviceInput::None);
 
-                    let next_state = match old_input {
-                        None => Push,
-                        Push => Hold {
-                            delta: Duration::ZERO,
-                        },
-                        Hold { delta: hold_delta } => {
-                            DeviceInput::hold(hold_delta.saturating_add(*delta))
-                        }
-                    };
-
-                    (code, next_state)
-                } else {
-                    (code, None)
-                }
+                (code, old_input.next_state(inputs.contains(&code), delta))
             })
             .collect();
 
         self.input_map = new_input_map;
-        self
     }
 }
 
@@ -66,11 +52,11 @@ mod tests {
     }
 
     #[test]
-    fn test_handle_push() {
-        let cache = InputCache::new();
+    fn test_push() {
+        let mut cache = InputCache::new();
         let inputs = vec![ControlCode::MoveLeft];
 
-        let cache = cache.handle_inputs(&inputs, &Duration::ZERO);
+        cache.receive_inputs(&inputs, &Duration::ZERO);
 
         let res = cache.input_map.get(&ControlCode::MoveLeft).unwrap();
         assert_eq!(res, &DeviceInput::Push);
