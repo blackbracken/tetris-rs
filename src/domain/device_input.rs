@@ -1,7 +1,5 @@
 use std::time::Duration;
 
-use crate::domain::control_code::ControlCode;
-
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum DeviceInput {
     None,
@@ -13,10 +11,17 @@ pub enum DeviceInput {
 }
 
 impl DeviceInput {
-    fn new_hold() -> DeviceInput {
+    fn new_hold(delta_from_began: Duration, delta_last_handled: Duration) -> DeviceInput {
         DeviceInput::Hold {
-            delta_last_handled: Duration::ZERO,
+            delta_from_began,
+            delta_last_handled,
+        }
+    }
+
+    fn new_hold_zero() -> DeviceInput {
+        DeviceInput::Hold {
             delta_from_began: Duration::ZERO,
+            delta_last_handled: Duration::ZERO,
         }
     }
 
@@ -28,7 +33,7 @@ impl DeviceInput {
         } else {
             match self {
                 None => Push,
-                Push => DeviceInput::new_hold(),
+                Push => DeviceInput::new_hold(delta.clone(), delta.clone()),
                 Hold {
                     delta_from_began,
                     delta_last_handled,
@@ -44,6 +49,15 @@ impl DeviceInput {
             }
         }
     }
+
+    pub fn handled_if_hold(self) -> DeviceInput {
+        use DeviceInput::*;
+
+        match self {
+            Hold { delta_from_began, .. } => DeviceInput::new_hold(delta_from_began, Duration::ZERO),
+            _ => self
+        }
+    }
 }
 
 #[cfg(test)]
@@ -53,8 +67,8 @@ mod tests {
     use super::*;
 
     #[test_case(DeviceInput::None, DeviceInput::Push)]
-    #[test_case(DeviceInput::Push, DeviceInput::new_hold())]
-    #[test_case(DeviceInput::new_hold(), DeviceInput::new_hold())]
+    #[test_case(DeviceInput::Push, DeviceInput::new_hold_zero())]
+    #[test_case(DeviceInput::new_hold_zero(), DeviceInput::new_hold_zero())]
     fn test_next_state_if_pressed(src: DeviceInput, ans: DeviceInput) {
         let next_state = src.next_state(true, &Duration::ZERO);
         assert_eq!(next_state, ans);
@@ -62,7 +76,7 @@ mod tests {
 
     #[test_case(DeviceInput::None, DeviceInput::None)]
     #[test_case(DeviceInput::Push, DeviceInput::None)]
-    #[test_case(DeviceInput::new_hold(), DeviceInput::None)]
+    #[test_case(DeviceInput::new_hold_zero(), DeviceInput::None)]
     fn test_next_state_if_not_pressed(src: DeviceInput, ans: DeviceInput) {
         let next_state = src.next_state(false, &Duration::ZERO);
         assert_eq!(next_state, ans);
@@ -70,13 +84,28 @@ mod tests {
 
     #[test]
     fn test_hold_1500ms() {
-        let milli_seconds = Duration::new(1, 500_000_000);
-        let next_state = DeviceInput::new_hold().next_state(true, &milli_seconds);
+        let milli_seconds = Duration::from_millis(1500);
+        let next_state = DeviceInput::new_hold_zero()
+            .next_state(true, &milli_seconds);
         let ans = DeviceInput::Hold {
             delta_from_began: milli_seconds.clone(),
             delta_last_handled: milli_seconds.clone(),
         };
 
         assert_eq!(next_state, ans);
+    }
+
+    #[test]
+    fn test_handled_hold() {
+        let seconds = Duration::from_secs(1);
+        let handled = DeviceInput::new_hold_zero()
+            .next_state(true, &seconds)
+            .handled_if_hold();
+        let ans = DeviceInput::Hold {
+            delta_from_began: seconds.clone(),
+            delta_last_handled: Duration::ZERO,
+        };
+
+        assert_eq!(handled, ans);
     }
 }

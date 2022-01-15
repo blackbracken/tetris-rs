@@ -8,8 +8,10 @@ use ggez::{
 };
 use indoc::indoc;
 
-use crate::scene::title::selected_item::SelectedItem;
-use crate::{asset::audio::Bgm, Asset, Next, SceneState, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{
+    asset::audio::Bgm, scene::title::selected_item::SelectedItem, Asset, InputCache, Next,
+    SceneState, WINDOW_HEIGHT, WINDOW_WIDTH,
+};
 
 static TITLE_ASCII: &str = indoc!(
     r"
@@ -70,7 +72,11 @@ pub fn init(ctx: &mut Context, asset: &mut Asset) -> GameResult<TitleState> {
     })
 }
 
-pub fn update(_: &mut Context, state: TitleState) -> GameResult<Next> {
+pub fn update(
+    _: &mut Context,
+    input_cache: &mut InputCache,
+    state: TitleState,
+) -> GameResult<Next> {
     Ok(Next::do_continue(state.into()))
 }
 

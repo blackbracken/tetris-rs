@@ -123,7 +123,9 @@ impl<CCR: ControlCodeRepository> EventHandler for MainState<CCR> {
             self.input_cache.receive_inputs(&inputs, &delta);
 
             let next: Next = match scene_state {
-                SceneState::ForTitle { state } => scene::title::title_scene::update(ctx, state)?,
+                SceneState::ForTitle { state } => {
+                    scene::title::title_scene::update(ctx, &mut self.input_cache, state)?
+                }
             };
 
             match next {
