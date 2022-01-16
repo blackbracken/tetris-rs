@@ -34,4 +34,8 @@ impl Next {
     pub fn transit(ticket: Ticket) -> Next {
         Next::Transit { ticket }
     }
+
+    pub fn exit() -> Next {
+        Next::Exit
+    }
 }

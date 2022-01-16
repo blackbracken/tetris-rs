@@ -10,7 +10,7 @@ use indoc::indoc;
 
 use crate::{
     asset::audio::Bgm, scene::title::selected_item::SelectedItem, Asset, ControlCode, InputCache,
-    Next, SceneState, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Next, SceneState, Ticket, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 static TITLE_ASCII: &str = indoc!(
@@ -87,6 +87,12 @@ pub fn update(
     if input_cache.has_pushed(&ControlCode::MenuDown) {
         if let Some(next) = state.cursor.next() {
             state.cursor = next;
+        }
+    }
+    if input_cache.has_pushed(&ControlCode::MenuEnter) {
+        match state.cursor {
+            SelectedItem::PlayFortyLine => unimplemented!(),
+            SelectedItem::Exit => return Ok(Next::exit()),
         }
     }
 
