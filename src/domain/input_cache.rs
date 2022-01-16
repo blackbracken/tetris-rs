@@ -75,9 +75,9 @@ impl InputCache {
     fn has_hold_unhandled_yet_after(&self, code: &ControlCode, duration: &Duration) -> bool {
         match self.input_map.get(code) {
             Some(DeviceInput::Hold {
-                     delta_from_began,
-                     delta_last_handled,
-                 }) if delta_from_began == delta_last_handled && duration <= delta_from_began => true,
+                delta_from_began,
+                delta_last_handled,
+            }) if delta_from_began == delta_last_handled && duration <= delta_from_began => true,
             _ => false,
         }
     }
@@ -85,9 +85,9 @@ impl InputCache {
     fn has_hold_handled_before(&self, code: &ControlCode, duration: &Duration) -> bool {
         match self.input_map.get(code) {
             Some(DeviceInput::Hold {
-                     delta_from_began,
-                     delta_last_handled,
-                 }) if delta_last_handled < delta_from_began && duration <= delta_last_handled => true,
+                delta_from_began,
+                delta_last_handled,
+            }) if delta_last_handled < delta_from_began && duration <= delta_last_handled => true,
             _ => false,
         }
     }

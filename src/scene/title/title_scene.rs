@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
-use ggez::{
-    Context,
-    GameResult,
-    graphics, graphics::{DrawParam, Text, TextFragment},
-};
 use ggez::graphics::PxScale;
+use ggez::{
+    graphics,
+    graphics::{DrawParam, Text, TextFragment},
+    Context, GameResult,
+};
 use indoc::indoc;
 
 use crate::{
-    Asset, asset::audio::Bgm, ControlCode, InputCache, Next,
-    scene::title::selected_item::SelectedItem, SceneState, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asset::audio::Bgm, scene::title::selected_item::SelectedItem, Asset, ControlCode, InputCache,
+    Next, SceneState, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 static TITLE_ASCII: &str = indoc!(
