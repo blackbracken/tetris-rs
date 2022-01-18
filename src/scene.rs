@@ -1,3 +1,4 @@
+pub mod animated_image;
 pub mod scene_state;
 pub mod ticket;
 
