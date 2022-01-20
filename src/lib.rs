@@ -1,21 +1,38 @@
 #![feature(duration_consts_float)]
+#![feature(never_type)]
+#![feature(variant_count)]
+#![feature(map_try_insert)]
 
 #[macro_use]
 extern crate derive_new;
+#[macro_use]
+extern crate num_derive;
 
 use std::mem;
 use std::time::Duration;
 
 use ggez::event::{EventHandler, KeyCode, KeyMods};
+use ggez::input::gamepad::gamepads;
+use ggez::input::keyboard;
 use ggez::timer;
 use ggez::{event, Context, ContextBuilder, GameResult};
 
-use scenes::router::{Next, SceneState, Ticket};
+use scene::ticket;
 
 use crate::asset::Asset;
+use crate::domain::control_code::ControlCode;
+use crate::domain::input_cache::InputCache;
+use crate::domain::repo::control_code_repository::ControlCodeRepository;
+use crate::infra::repo::default_control_code_repository::DefaultControlCodeRepository;
+use crate::scene::scene_state::SceneState;
+use crate::ticket::{Next, Ticket};
 
+mod domain;
+mod infra;
 mod input;
 mod macros;
+
+pub mod scene;
 
 pub(crate) mod scenes {
     pub mod router;
@@ -45,43 +62,69 @@ pub const WINDOW_HEIGHT: f32 = 800.;
 
 pub fn start(cb: ContextBuilder) -> GameResult {
     let (mut ctx, event_loop) = cb.build()?;
-    let state = MainState::new(&mut ctx)?;
+    let state = MainState::new(&mut ctx, DefaultControlCodeRepository)?;
 
     event::run(ctx, event_loop, state);
 }
 
-struct MainState {
+struct MainState<CCR>
+where
+    CCR: ControlCodeRepository,
+{
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
     last_measured: Duration,
+    input_cache: InputCache,
+    control_code_repo: CCR,
 }
 
-impl MainState {
-    fn new(ctx: &mut Context) -> GameResult<MainState> {
+impl<CCR: ControlCodeRepository> MainState<CCR> {
+    fn new(ctx: &mut Context, control_code_repo: CCR) -> GameResult<MainState<CCR>> {
         let mut asset = Asset::load(ctx)?;
 
         Ok(MainState {
             scene_state: Some(Ticket::ShowTitle.go(ctx, &mut asset)?),
             asset,
             last_measured: timer::time_since_start(ctx),
+            input_cache: InputCache::new(),
+            control_code_repo,
         })
+    }
+
+    fn find_input(&self, ctx: &Context) -> Vec<ControlCode> {
+        let control_code_repo = &self.control_code_repo;
+
+        ControlCode::all()
+            .into_iter()
+            .filter(|code| {
+                let keys = control_code_repo.key_codes(&code);
+                let buttons = control_code_repo.buttons(&code);
+
+                let pressed_key = keys.iter().any(|&key| keyboard::is_key_pressed(ctx, key));
+                let pressed_button = buttons
+                    .iter()
+                    .any(|&btn| gamepads(ctx).any(|(_, pad)| pad.is_pressed(btn)));
+
+                pressed_key || pressed_button
+            })
+            .collect()
     }
 }
 
-impl EventHandler for MainState {
+impl<CCR: ControlCodeRepository> EventHandler for MainState<CCR> {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
-            let state = mem::replace(&mut self.scene_state, None)
-                .expect("scene_state has not been updated");
+            let scene_state = mem::take(&mut self.scene_state).unwrap();
 
             let now = timer::time_since_start(ctx);
-            let diff = now - self.last_measured;
-            self.last_measured = now;
+            let delta = now - mem::replace(&mut self.last_measured, now);
 
-            let next: Next = match state {
-                SceneState::ForTitle { state } => scenes::title::update(ctx, state, &self.asset)?,
-                SceneState::ForPlay40Line { state } => {
-                    scenes::play40line::update(ctx, state, &mut self.asset, diff)?
+            let inputs = self.find_input(ctx);
+            self.input_cache.receive_inputs(&inputs, &delta);
+
+            let next: Next = match scene_state {
+                SceneState::ForTitle { state } => {
+                    scene::title::title_scene::update(ctx, &mut self.input_cache, state)?
                 }
             };
 
@@ -105,10 +148,7 @@ impl EventHandler for MainState {
         if let Some(state) = &self.scene_state {
             match state {
                 SceneState::ForTitle { state } => {
-                    scenes::title::draw(ctx, state, &self.asset)?;
-                }
-                SceneState::ForPlay40Line { state } => {
-                    scenes::play40line::draw(ctx, state, &mut self.asset)?;
+                    scene::title::title_scene::draw(ctx, state, &mut self.asset)?;
                 }
             }
         }
