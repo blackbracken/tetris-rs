@@ -20,14 +20,14 @@ use ggez::{event, Context, ContextBuilder, GameResult};
 use scene::ticket;
 
 use crate::asset::Asset;
-use crate::domain::control_code::ControlCode;
-use crate::domain::input_cache::InputCache;
-use crate::domain::repo::control_code_repository::ControlCodeRepository;
+use crate::model::control_code::ControlCode;
+use crate::model::input_cache::InputCache;
+use crate::model::repo::control_code_repository::ControlCodeRepository;
 use crate::infra::repo::default_control_code_repository::DefaultControlCodeRepository;
 use crate::scene::scene_state::SceneState;
 use crate::ticket::{Next, Ticket};
 
-mod domain;
+mod model;
 mod infra;
 mod input;
 mod macros;

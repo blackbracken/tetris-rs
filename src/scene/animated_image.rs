@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use ggez::{graphics::Image, Context, GameResult};
 
-use crate::domain::xytuple::F32XYTuple;
+use crate::model::xytuple::F32XYTuple;
 
 pub struct AnimatedImage<'a, F, G>
 where
