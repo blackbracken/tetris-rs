@@ -3,6 +3,7 @@ use std::{
     convert::{TryFrom, TryInto},
     time::Duration,
 };
+use std::ops::Deref;
 
 enum Repeat {
     Count(Duration, u32),
@@ -99,8 +100,11 @@ impl Timer {
         if self.elapsed < self.bootwait {
             false
         } else {
-            let last_beeped = self.bootwait
-                + self.repeat.latency().saturating_mul(self.beeped_count);
+            let last_beeped = if self.beeped_count == 0 {
+                Duration::ZERO
+            } else {
+                self.bootwait + *self.repeat.latency() * (self.beeped_count - 1)
+            };
 
             self.repeat > self.beeped_count && self.elapsed - last_beeped >= *self.repeat.latency()
         }
@@ -189,7 +193,7 @@ mod timer_tests {
         assert!(beeped);
         assert!(!timer.is_beeping());
 
-        for _ in 1..=10 {
+        for _ in 1..=100 {
             timer.elapse(half);
             assert!(!timer.is_beeping());
 
