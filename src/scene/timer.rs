@@ -122,7 +122,24 @@ impl Timer {
 }
 
 #[cfg(test)]
-mod tests {
+mod repeat_tests {
+    use test_case::test_case;
+
+    use super::*;
+
+    #[test_case(Repeat::Count(Duration::ZERO, 1), 5, Ordering::Greater)]
+    #[test_case(Repeat::Count(Duration::ZERO, 5), 1, Ordering::Less)]
+    #[test_case(Repeat::Count(Duration::ZERO, 1), 1, Ordering::Equal)]
+    #[test_case(Repeat::Infinite(Duration::ZERO), 1, Ordering::Greater)]
+    #[test_case(Repeat::Infinite(Duration::ZERO), u32::MAX, Ordering::Greater)]
+    #[test_case(Repeat::Infinite(Duration::ZERO), 0, Ordering::Greater)]
+    fn compare_u32(left: Repeat, right: u32, ordering: Ordering) {
+        assert!(matches!(left.partial_cmp(&right), Some(ordering)));
+    }
+}
+
+#[cfg(test)]
+mod timer_tests {
     use super::*;
 
     #[test]
