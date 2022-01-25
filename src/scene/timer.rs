@@ -153,55 +153,41 @@ mod timer_tests {
 
         assert!(!timer.is_beeping());
 
-        timer.elapse(sec);
-        assert!(!timer.is_beeping());
+        elapse_and_check_beep(&mut timer, sec, false);
     }
 
     #[test]
     fn test_timer_beep_once() {
-        let sec = Duration::from_secs(1);
-        let half = sec / 2;
+        let sec = Duration::from_millis(1000);
+        let half = Duration::from_millis(500);
         let mut timer = Timer::single(sec);
 
         assert!(!timer.is_beeping());
 
-        timer.elapse(half);
-        assert!(!timer.is_beeping());
+        elapse_and_check_beep(&mut timer, half, false);
+        elapse_and_check_beep(&mut timer, half, true);
 
-        timer.elapse(half);
-        assert!(timer.is_beeping());
+        consume_and_check_beep(&mut timer, true);
 
-        let beeped = timer.consume_if_beep();
-        assert!(beeped);
-        assert!(!timer.is_beeping());
-
-        timer.elapse(half);
-        assert!(!timer.is_beeping());
+        elapse_and_check_beep(&mut timer, half, false);
     }
 
     #[test]
     fn test_timer_beep_infinitely() {
-        let sec = Duration::from_secs(1);
-        let half = sec / 2;
+        let sec = Duration::from_millis(1000);
+        let half = Duration::from_millis(500);
         let mut timer = Timer::infinite(sec, sec);
 
         assert!(!timer.is_beeping());
 
-        timer.elapse(sec);
-        assert!(timer.is_beeping());
-        let beeped = timer.consume_if_beep();
-        assert!(beeped);
-        assert!(!timer.is_beeping());
+        elapse_and_check_beep(&mut timer, sec, true);
+        consume_and_check_beep(&mut timer, true);
 
         for _ in 1..=100 {
-            timer.elapse(half);
-            assert!(!timer.is_beeping());
+            elapse_and_check_beep(&mut timer, half, false);
 
-            timer.elapse(half);
-            let beeped = timer.consume_if_beep();
-            assert!(beeped);
-
-            assert!(!timer.is_beeping());
+            elapse_and_check_beep(&mut timer, half, true);
+            consume_and_check_beep(&mut timer, true);
         }
     }
 
@@ -212,16 +198,23 @@ mod timer_tests {
 
         assert!(!timer.is_beeping());
 
-        timer.elapse(sec);
-        assert!(timer.is_beeping());
-
-        let beeped = timer.consume_if_beep();
-        assert!(beeped);
+        elapse_and_check_beep(&mut timer, sec, true);
+        consume_and_check_beep(&mut timer, true);
 
         for _ in 1..=10 {
-            let beeped = timer.consume_if_beep();
-            assert!(!beeped);
-            assert!(!timer.is_beeping());
+            consume_and_check_beep(&mut timer, false);
         }
+    }
+
+    fn elapse_and_check_beep(timer: &mut Timer, delta: Duration, should_beeped: bool) {
+        timer.elapse(delta);
+        assert_eq!(timer.is_beeping(), should_beeped)
+    }
+
+    fn consume_and_check_beep(timer: &mut Timer, should_beeped: bool) {
+        let beeped = timer.consume_if_beep();
+        assert_eq!(beeped, should_beeped);
+
+        assert!(!timer.is_beeping());
     }
 }
