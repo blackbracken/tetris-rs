@@ -10,7 +10,7 @@ enum Repeat {
 }
 
 impl Repeat {
-    pub fn duration(&self) -> &Duration {
+    pub fn latency(&self) -> &Duration {
         match self {
             Repeat::Count(d, _) => d,
             Repeat::Infinite(d) => d,
@@ -100,19 +100,19 @@ impl Timer {
             false
         } else {
             let last_beeped = self.bootwait
-                + self.repeat.duration().saturating_mul(self.beeped_count);
+                + self.repeat.latency().saturating_mul(self.beeped_count);
 
-            self.repeat > self.beeped_count && self.elapsed - last_beeped >= *self.repeat.duration()
+            self.repeat > self.beeped_count && self.elapsed - last_beeped >= *self.repeat.latency()
         }
     }
 
     fn consume(&mut self) {
         self.beeped_count = match () {
             _ if self.elapsed < self.bootwait => 0,
-            _ if self.bootwait + *self.repeat.duration() > self.elapsed => 1,
-            _ if *self.repeat.duration() == Duration::ZERO => self.beeped_count + 1,
+            _ if self.bootwait + *self.repeat.latency() > self.elapsed => 1,
+            _ if *self.repeat.latency() == Duration::ZERO => self.beeped_count + 1,
             _ => {
-                let r = (self.elapsed - self.bootwait).as_millis() / self.repeat.duration().as_millis();
+                let r = (self.elapsed - self.bootwait).as_millis() / self.repeat.latency().as_millis();
                 let r = u32::try_from(r).unwrap();
 
                 r + 1
