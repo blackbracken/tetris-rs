@@ -3,7 +3,6 @@ use std::{
     convert::{TryFrom, TryInto},
     time::Duration,
 };
-use std::ops::Deref;
 
 enum Repeat {
     Count(Duration, u32),
@@ -116,7 +115,8 @@ impl Timer {
             _ if self.bootwait + *self.repeat.latency() > self.elapsed => 1,
             _ if *self.repeat.latency() == Duration::ZERO => self.beeped_count + 1,
             _ => {
-                let r = (self.elapsed - self.bootwait).as_millis() / self.repeat.latency().as_millis();
+                let r =
+                    (self.elapsed - self.bootwait).as_millis() / self.repeat.latency().as_millis();
                 let r = u32::try_from(r).unwrap();
 
                 r + 1

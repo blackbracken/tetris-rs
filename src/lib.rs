@@ -20,17 +20,17 @@ use ggez::{event, Context, ContextBuilder, GameResult};
 use scene::ticket;
 
 use crate::asset::Asset;
+use crate::infra::repo::default_control_code_repository::DefaultControlCodeRepository;
 use crate::model::control_code::ControlCode;
 use crate::model::input_cache::InputCache;
 use crate::model::repo::control_code_repository::ControlCodeRepository;
-use crate::infra::repo::default_control_code_repository::DefaultControlCodeRepository;
 use crate::scene::scene_state::SceneState;
 use crate::ticket::{Next, Ticket};
 
-mod model;
 mod infra;
 mod input;
 mod macros;
+mod model;
 
 pub mod scene;
 
@@ -124,7 +124,7 @@ impl<CCR: ControlCodeRepository> EventHandler for MainState<CCR> {
 
             let next: Next = match scene_state {
                 SceneState::ForTitle { state } => {
-                    scene::title::title_scene::update(ctx, &mut self.input_cache, state)?
+                    scene::title::title_scene::update(ctx, &mut self.input_cache, state, &delta)?
                 }
             };
 
