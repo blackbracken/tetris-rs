@@ -19,7 +19,7 @@ jobs:
           components: rustfmt, clippy
       - uses: actions-rs/cargo@v1
         with:
-          command: +nightly fmt
+          command: fmt
           args: --all -- --check
       - uses: actions-rs/cargo@v1
         with:
