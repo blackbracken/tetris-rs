@@ -1,5 +1,4 @@
-use crate::scene::{title::title_scene::TitleState};
-use crate::SceneState::ForTitle;
+use crate::{scene::title::title_scene::TitleState, SceneState::ForTitle};
 
 pub enum SceneState {
     ForTitle { state: TitleState },

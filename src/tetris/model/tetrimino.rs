@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use MinoRotation::*;
 use Tetrimino::*;
 
-use crate::rect_vec;
-use crate::tetris::game::Point;
-use crate::tetris::model::spin::SpinDirection;
+use crate::{
+    rect_vec,
+    tetris::{game::Point, model::spin::SpinDirection},
+};
 
 /// テトリミノの形
 type MinoShape = Vec<Vec<bool>>;

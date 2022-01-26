@@ -1,9 +1,6 @@
 use ggez::{Context, GameResult};
 
-use crate::asset::audio::Audio;
-use crate::asset::color::Color;
-use crate::asset::font::Font;
-use crate::asset::image::Image;
+use crate::asset::{audio::Audio, color::Color, font::Font, image::Image};
 
 pub mod audio;
 pub mod color;

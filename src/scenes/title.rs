@@ -1,14 +1,23 @@
 use std::collections::HashMap;
 
-use ggez::graphics::{Color, PxScale};
-use ggez::{graphics, Context, GameResult};
+use ggez::{
+    graphics,
+    graphics::{Color, PxScale},
+    Context,
+    GameResult,
+};
 use rand::random;
 
-use crate::asset::audio::{Bgm, Se};
-use crate::asset::Asset;
-use crate::input::{pressed_down, pressed_enter, pressed_up};
-use crate::scenes::router::{Next, Ticket};
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{
+    asset::{
+        audio::{Bgm, Se},
+        Asset,
+    },
+    input::{pressed_down, pressed_enter, pressed_up},
+    scenes::router::{Next, Ticket},
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+};
 
 #[derive(Clone)]
 pub struct TitleState {

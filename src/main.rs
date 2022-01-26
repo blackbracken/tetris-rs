@@ -1,8 +1,8 @@
 use ggez::{
     conf::{FullscreenType, NumSamples, WindowMode, WindowSetup},
-    ContextBuilder, GameResult,
+    ContextBuilder,
+    GameResult,
 };
-
 use tetris_rs::{start, WINDOW_HEIGHT, WINDOW_WIDTH};
 
 fn main() -> GameResult {

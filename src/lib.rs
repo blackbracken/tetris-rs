@@ -8,24 +8,30 @@ extern crate derive_new;
 #[macro_use]
 extern crate num_derive;
 
-use std::mem;
-use std::time::Duration;
+use std::{mem, time::Duration};
 
-use ggez::event::{EventHandler, KeyCode, KeyMods};
-use ggez::input::gamepad::gamepads;
-use ggez::input::keyboard;
-use ggez::timer;
-use ggez::{event, Context, ContextBuilder, GameResult};
-
+use ggez::{
+    event,
+    event::{EventHandler, KeyCode, KeyMods},
+    input::{gamepad::gamepads, keyboard},
+    timer,
+    Context,
+    ContextBuilder,
+    GameResult,
+};
 use scene::ticket;
 
-use crate::asset::Asset;
-use crate::infra::repo::default_control_code_repository::DefaultControlCodeRepository;
-use crate::model::control_code::ControlCode;
-use crate::model::input_cache::InputCache;
-use crate::model::repo::control_code_repository::ControlCodeRepository;
-use crate::scene::scene_state::SceneState;
-use crate::ticket::{Next, Ticket};
+use crate::{
+    asset::Asset,
+    infra::repo::default_control_code_repository::DefaultControlCodeRepository,
+    model::{
+        control_code::ControlCode,
+        input_cache::InputCache,
+        repo::control_code_repository::ControlCodeRepository,
+    },
+    scene::scene_state::SceneState,
+    ticket::{Next, Ticket},
+};
 
 mod infra;
 mod input;

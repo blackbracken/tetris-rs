@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
-use ggez::audio::SoundSource;
-use ggez::{audio, Context, GameResult};
+use ggez::{audio, audio::SoundSource, Context, GameResult};
 
 pub struct Audio {
     bgm_data_map: HashMap<Bgm, audio::SoundData>,

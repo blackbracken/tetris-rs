@@ -1,8 +1,4 @@
-use std::{
-    cmp::Ordering,
-    convert::{TryFrom},
-    time::Duration,
-};
+use std::{cmp::Ordering, convert::TryFrom, time::Duration};
 
 enum Repeat {
     Count(Duration, u32),

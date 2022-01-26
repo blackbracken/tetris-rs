@@ -1,10 +1,13 @@
-use std::collections::VecDeque;
-use std::convert::TryFrom;
+use std::{collections::VecDeque, convert::TryFrom};
 
-use crate::tetris::game::Point;
-use crate::tetris::model::mino_entity::MinoEntity;
-use crate::tetris::model::spin::{Spin, SpinDirection};
-use crate::tetris::model::tetrimino::{MinoRotation, Tetrimino, WallKickOffset};
+use crate::tetris::{
+    game::Point,
+    model::{
+        mino_entity::MinoEntity,
+        spin::{Spin, SpinDirection},
+        tetrimino::{MinoRotation, Tetrimino, WallKickOffset},
+    },
+};
 
 pub const FIELD_UNIT_WIDTH: usize = 10;
 pub const FIELD_UNIT_HEIGHT: usize = 21;

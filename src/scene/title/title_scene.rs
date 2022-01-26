@@ -1,24 +1,28 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, mem::take, time::Duration};
 
-use std::mem::take;
-use std::time::Duration;
-
-use ggez::graphics::{Color, PxScale};
 use ggez::{
     graphics,
-    graphics::{DrawParam, Text, TextFragment},
-    Context, GameResult,
+    graphics::{Color, DrawParam, PxScale, Text, TextFragment},
+    Context,
+    GameResult,
 };
 use indoc::indoc;
-
 use rand::random;
 
-use crate::model::xytuple::F32XYTuple;
-use crate::scene::animation_property::{AnimationProperties, AnimationProperty};
-use crate::scene::timer::Timer;
 use crate::{
-    asset::audio::Bgm, scene::title::selected_item::SelectedItem, Asset, ControlCode, InputCache,
-    Next, WINDOW_HEIGHT, WINDOW_WIDTH,
+    asset::audio::Bgm,
+    model::xytuple::F32XYTuple,
+    scene::{
+        animation_property::{AnimationProperties, AnimationProperty},
+        timer::Timer,
+        title::selected_item::SelectedItem,
+    },
+    Asset,
+    ControlCode,
+    InputCache,
+    Next,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
 
 static TITLE_ASCII: &str = indoc!(

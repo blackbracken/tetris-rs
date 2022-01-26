@@ -1,10 +1,14 @@
 use std::time::Duration;
 
-use crate::tetris::board::{Board, RemovedLines};
-use crate::tetris::mino_bag::MinoBag;
-use crate::tetris::model::score::{ScoringAction, ScoringReward};
-use crate::tetris::model::spin::SpinDirection;
-use crate::tetris::model::tetrimino::Tetrimino;
+use crate::tetris::{
+    board::{Board, RemovedLines},
+    mino_bag::MinoBag,
+    model::{
+        score::{ScoringAction, ScoringReward},
+        spin::SpinDirection,
+        tetrimino::Tetrimino,
+    },
+};
 
 const NATURAL_DROP_INTERVAL: Duration = Duration::from_secs(1);
 const COMBO_INITIAL: usize = 1;

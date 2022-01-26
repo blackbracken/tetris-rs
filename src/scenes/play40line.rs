@@ -1,25 +1,43 @@
-use std::cmp::max;
-use std::collections::{HashMap, HashSet};
-use std::time::Duration;
+use std::{
+    cmp::max,
+    collections::{HashMap, HashSet},
+    time::Duration,
+};
 
-use ggez::graphics::{DrawMode, DrawParam, PxScale, Rect};
-use ggez::timer;
-use ggez::{graphics, Context, GameResult};
+use ggez::{
+    graphics,
+    graphics::{DrawMode, DrawParam, PxScale, Rect},
+    timer,
+    Context,
+    GameResult,
+};
 use itertools::Itertools;
 
-use crate::asset::audio::{Bgm, Se};
-use crate::asset::color::Color as AssetColor;
-use crate::asset::Asset;
-use crate::input::{
-    pressed_down, pressed_hold, pressed_move_left, pressed_move_right, pressed_pause,
-    pressed_spin_left, pressed_spin_right, pressed_up,
+use crate::{
+    asset::{
+        audio::{Bgm, Se},
+        color::Color as AssetColor,
+        Asset,
+    },
+    input::{
+        pressed_down,
+        pressed_hold,
+        pressed_move_left,
+        pressed_move_right,
+        pressed_pause,
+        pressed_spin_left,
+        pressed_spin_right,
+        pressed_up,
+    },
+    scenes::router::{Next, Ticket::ShowTitle},
+    tetris::{
+        board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT},
+        game::{DroppedOrNothing, Game, Point, PutOrJustDropped},
+        model::tetrimino::{MinoRotation, Tetrimino},
+    },
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 };
-use crate::scenes::router::Next;
-use crate::scenes::router::Ticket::ShowTitle;
-use crate::tetris::board::{FIELD_UNIT_HEIGHT, FIELD_UNIT_WIDTH, FIELD_VISIBLE_UNIT_HEIGHT};
-use crate::tetris::game::{DroppedOrNothing, Game, Point, PutOrJustDropped};
-use crate::tetris::model::tetrimino::{MinoRotation, Tetrimino};
-use crate::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 const BLOCK_LENGTH: f32 = 32.;
 const HALF_BLOCK_LENGTH: f32 = BLOCK_LENGTH / 2.;

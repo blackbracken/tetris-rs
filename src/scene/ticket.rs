@@ -1,12 +1,12 @@
-use crate::scene::scene_state::SceneState::ForTitle;
+use ggez::{Context, GameResult};
+
 use crate::{
     scene::{
-        scene_state::SceneState,
-        title::{title_scene},
+        scene_state::{SceneState, SceneState::ForTitle},
+        title::title_scene,
     },
     Asset,
 };
-use ggez::{Context, GameResult};
 
 pub enum Ticket {
     ShowTitle,

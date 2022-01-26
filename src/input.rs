@@ -1,8 +1,11 @@
-use ggez::event::KeyCode;
-use ggez::input::gamepad::gamepads;
-use ggez::input::gamepad::gilrs::Button;
-use ggez::input::keyboard;
-use ggez::Context;
+use ggez::{
+    event::KeyCode,
+    input::{
+        gamepad::{gamepads, gilrs::Button},
+        keyboard,
+    },
+    Context,
+};
 
 pub fn pressed_enter(ctx: &Context) -> bool {
     pressed_either(ctx, &[KeyCode::Return, KeyCode::Space], &[Button::East])

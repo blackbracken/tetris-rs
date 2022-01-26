@@ -1,0 +1,8 @@
+# stable
+use_field_init_shorthand = true
+
+# unstable
+unstable_features = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
+imports_layout = "HorizontalVertical"
