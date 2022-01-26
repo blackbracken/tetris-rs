@@ -1,4 +1,4 @@
-use crate::domain::{
+use crate::model::{
     control_code::ControlCode, repo::control_code_repository::ControlCodeRepository,
 };
 use ggez::event::{Button, KeyCode};

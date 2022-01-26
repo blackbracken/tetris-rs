@@ -1,13 +1,13 @@
 use std::time::Duration;
 
-use ggez::{graphics::Image, Context, GameResult};
+use ggez::{Context, GameResult, graphics::Image};
 
-use crate::domain::xytuple::F32XYTuple;
+use crate::model::xytuple::F32XYTuple;
 
 pub struct AnimatedImage<'a, F, G>
-where
-    F: Fn(&Self, &Duration) -> bool,
-    G: Fn(&Self, &Duration, &mut Context) -> GameResult,
+    where
+        F: Fn(&Self, &Duration) -> bool,
+        G: Fn(&Self, &Duration, &mut Context) -> GameResult,
 {
     pub origin: F32XYTuple,
     pub image: &'a Image,
@@ -16,12 +16,12 @@ where
 }
 
 impl<F, G> AnimatedImage<'_, F, G>
-where
-    F: Fn(&Self, &Duration) -> bool,
-    G: Fn(&Self, &Duration, &mut Context) -> GameResult,
+    where
+        F: Fn(&Self, &Duration) -> bool,
+        G: Fn(&Self, &Duration, &mut Context) -> GameResult,
 {
     pub fn is_expired(&self, delta: &Duration) -> bool {
-        !(self.is_expired)(self, delta)
+        (self.is_expired)(self, delta)
     }
 
     pub fn draw(&self, delta: &Duration, ctx: &mut Context) -> GameResult {

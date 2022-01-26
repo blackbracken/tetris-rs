@@ -1,4 +1,4 @@
-use crate::domain::control_code::ControlCode;
+use crate::model::control_code::ControlCode;
 use ggez::{
     event::{Button, KeyCode},
     input::{gamepad::gamepads, keyboard},
