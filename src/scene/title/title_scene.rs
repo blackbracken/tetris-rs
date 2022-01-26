@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+
 use std::mem::take;
 use std::time::Duration;
 
@@ -10,7 +10,7 @@ use ggez::{
     Context, GameResult,
 };
 use indoc::indoc;
-use num_traits::ToPrimitive;
+
 use rand::random;
 
 use crate::model::xytuple::F32XYTuple;
@@ -18,7 +18,7 @@ use crate::scene::animation_property::{AnimationProperties, AnimationProperty};
 use crate::scene::timer::Timer;
 use crate::{
     asset::audio::Bgm, scene::title::selected_item::SelectedItem, Asset, ControlCode, InputCache,
-    Next, SceneState, Ticket, WINDOW_HEIGHT, WINDOW_WIDTH,
+    Next, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 static TITLE_ASCII: &str = indoc!(
@@ -76,7 +76,7 @@ impl StarParticle {
         )
             .into();
 
-        let start_rot = (360f32.to_radians() * random::<f32>());
+        let start_rot = 360f32.to_radians() * random::<f32>();
         let y_spd = 36. * random::<f32>() + 4.;
         let rot_spd = 90f32.to_radians() * random::<f32>() + 30f32.to_radians();
 

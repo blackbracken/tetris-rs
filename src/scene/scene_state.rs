@@ -1,4 +1,4 @@
-use crate::scene::{fortyline::fortyline_scene::FortyLineState, title::title_scene::TitleState};
+use crate::scene::{title::title_scene::TitleState};
 use crate::SceneState::ForTitle;
 
 pub enum SceneState {

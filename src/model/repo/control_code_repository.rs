@@ -1,8 +1,6 @@
 use crate::model::control_code::ControlCode;
 use ggez::{
     event::{Button, KeyCode},
-    input::{gamepad::gamepads, keyboard},
-    Context,
 };
 
 pub trait ControlCodeRepository {

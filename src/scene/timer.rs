@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    convert::{TryFrom, TryInto},
+    convert::{TryFrom},
     time::Duration,
 };
 
@@ -137,8 +137,8 @@ mod repeat_tests {
     #[test_case(Repeat::Infinite(Duration::ZERO), 1, Ordering::Greater)]
     #[test_case(Repeat::Infinite(Duration::ZERO), u32::MAX, Ordering::Greater)]
     #[test_case(Repeat::Infinite(Duration::ZERO), 0, Ordering::Greater)]
-    fn compare_u32(left: Repeat, right: u32, ordering: Ordering) {
-        assert!(matches!(left.partial_cmp(&right), Some(ordering)));
+    fn compare_u32(left: Repeat, right: u32, _ordering: Ordering) {
+        assert!(matches!(left.partial_cmp(&right), Some(_ordering)));
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, hash::Hash, mem::take, time::Duration};
+use std::{mem::take, time::Duration};
 
 pub trait AnimationProperty {
     fn duration(&self) -> &Duration;
