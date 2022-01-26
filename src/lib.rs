@@ -24,7 +24,7 @@ use scene::ticket;
 use crate::{
     asset::Asset,
     infra::repo::default_control_code_repository::DefaultControlCodeRepository,
-    model::{
+    kernel::{
         control_code::ControlCode,
         input_cache::InputCache,
         repo::control_code_repository::ControlCodeRepository,
@@ -36,7 +36,7 @@ use crate::{
 mod infra;
 mod input;
 mod macros;
-mod model;
+mod kernel;
 
 pub mod scene;
 

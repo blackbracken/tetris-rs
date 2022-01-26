@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ggez::{graphics::Image, Context, GameError, GameResult};
 
-use crate::model::repo::asset_provider::AssetProvider;
+use crate::kernel::repo::asset_provider::AssetProvider;
 
 enum Asset<T> {
     Unloaded,
