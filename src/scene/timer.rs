@@ -173,6 +173,25 @@ mod timer_tests {
     }
 
     #[test]
+    fn test_timer_three_times() {
+        let sec = Duration::from_millis(1000);
+        let mut timer = Timer::repeat(sec, 3);
+
+        assert!(!timer.is_beeping());
+
+        elapse_and_check_beep(&mut timer, sec, true);
+        consume_and_check_beep(&mut timer, true);
+
+        elapse_and_check_beep(&mut timer, sec, true);
+        consume_and_check_beep(&mut timer, true);
+
+        elapse_and_check_beep(&mut timer, sec, true);
+        consume_and_check_beep(&mut timer, true);
+
+        elapse_and_check_beep(&mut timer, sec, false);
+    }
+
+    #[test]
     fn test_timer_beep_infinitely() {
         let sec = Duration::from_millis(1000);
         let half = Duration::from_millis(500);
