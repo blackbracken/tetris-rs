@@ -40,26 +40,6 @@ mod model;
 
 pub mod scene;
 
-pub(crate) mod scenes {
-    pub mod router;
-
-    pub mod play40line;
-    pub mod title;
-}
-
-pub(crate) mod tetris {
-    pub mod board;
-    pub mod game;
-    pub mod mino_bag;
-
-    pub mod model {
-        pub mod mino_entity;
-        pub mod score;
-        pub mod spin;
-        pub mod tetrimino;
-    }
-}
-
 pub(crate) mod asset;
 
 pub const FPS: u32 = 60;
