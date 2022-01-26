@@ -5,29 +5,36 @@ jobs:
     name: run test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Cache .cargo and target
+        uses: actions/cache@v2
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - run: sudo apt install libudev-dev libasound2-dev pkg-config
-      - uses: actions-rs/toolchain@v1
+      - name: Install libraries
+        run: sudo apt install libudev-dev libasound2-dev pkg-config
+      - name: Install cargo components
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           components: rustfmt, clippy
-      - uses: actions-rs/cargo@v1
+      - name: Check format
+        uses: actions-rs/cargo@v1
         with:
           command: fmt
           toolchain: nightly
           args: --all -- --check
-      - uses: actions-rs/cargo@v1
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
           command: clippy
-      - uses: actions-rs/cargo@v1
+      - name: Test all
+        uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
           command: test
