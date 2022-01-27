@@ -19,7 +19,6 @@ use ggez::{
     ContextBuilder,
     GameResult,
 };
-use scene::ticket;
 
 use crate::{
     asset::Asset,
@@ -29,12 +28,11 @@ use crate::{
         input_cache::InputCache,
         repo::control_code_repository::ControlCodeRepository,
     },
-    scene::scene_state::SceneState,
+    scene::{scene_state::SceneState, ticket},
     ticket::{Next, Ticket},
 };
 
 mod infra;
-mod input;
 mod kernel;
 
 pub mod scene;
