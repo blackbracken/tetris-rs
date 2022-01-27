@@ -107,7 +107,7 @@ impl AnimationProperty for StarParticle {
     }
 
     fn elapse(mut self, delta: &Duration) -> Self {
-        let duration = self.duration.saturating_add(delta.clone());
+        let duration = self.duration.saturating_add(*delta);
         self.duration = duration;
 
         self
@@ -121,7 +121,7 @@ impl AnimationProperty for StarParticle {
 impl TitleDrawState {
     fn new() -> TitleDrawState {
         let title_texts_ascii = TITLE_ASCII
-            .split("\n")
+            .split('\n')
             .into_iter()
             .map(|line| Text::new(TextFragment::from(line)))
             .collect();

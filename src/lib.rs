@@ -11,13 +11,13 @@ extern crate num_derive;
 use std::{mem, time::Duration};
 
 use ggez::{
-    event,
-    event::{EventHandler, KeyCode, KeyMods},
-    input::{gamepad::gamepads, keyboard},
-    timer,
     Context,
     ContextBuilder,
+    event,
+    event::{EventHandler, KeyCode, KeyMods},
     GameResult,
+    input::{gamepad::gamepads, keyboard},
+    timer,
 };
 
 use crate::{
@@ -51,8 +51,8 @@ pub fn start(cb: ContextBuilder) -> GameResult {
 }
 
 struct MainState<CCR>
-where
-    CCR: ControlCodeRepository,
+    where
+        CCR: ControlCodeRepository,
 {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
@@ -80,8 +80,8 @@ impl<CCR: ControlCodeRepository> MainState<CCR> {
         ControlCode::all()
             .into_iter()
             .filter(|code| {
-                let keys = control_code_repo.key_codes(&code);
-                let buttons = control_code_repo.buttons(&code);
+                let keys = control_code_repo.key_codes(code);
+                let buttons = control_code_repo.buttons(code);
 
                 let pressed_key = keys.iter().any(|&key| keyboard::is_key_pressed(ctx, key));
                 let pressed_button = buttons

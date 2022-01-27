@@ -16,13 +16,13 @@ impl InputCache {
         InputCache { input_map }
     }
 
-    pub fn receive_inputs(&mut self, inputs: &Vec<ControlCode>, delta: &Duration) {
+    pub fn receive_inputs(&mut self, inputs: &[ControlCode], delta: &Duration) {
         let new_input_map = ControlCode::all()
             .into_iter()
             .map(|code| {
                 let old_input = self
                     .input_map
-                    .entry(code.clone())
+                    .entry(*code)
                     .or_insert(DeviceInput::None);
 
                 (code, old_input.next_state(inputs.contains(&code), delta))
@@ -33,17 +33,11 @@ impl InputCache {
     }
 
     pub fn has_none(&self, code: &ControlCode) -> bool {
-        match self.input_map.get(code) {
-            Some(DeviceInput::None) => true,
-            _ => false,
-        }
+        matches!(self.input_map.get(code), Some(DeviceInput::None))
     }
 
     pub fn has_pushed(&self, code: &ControlCode) -> bool {
-        match self.input_map.get(code) {
-            Some(DeviceInput::Push) => true,
-            _ => false,
-        }
+        matches!(self.input_map.get(code), Some(DeviceInput::Push))
     }
 
     pub fn handle_hold_if_unhandled_yet_after(
@@ -73,31 +67,43 @@ impl InputCache {
     }
 
     fn has_hold_unhandled_yet_after(&self, code: &ControlCode, duration: &Duration) -> bool {
-        match self.input_map.get(code) {
-            Some(DeviceInput::Hold {
-                delta_from_began,
-                delta_last_handled,
-            }) if delta_from_began == delta_last_handled && duration <= delta_from_began => true,
-            _ => false,
-        }
+        matches!(
+            self.input_map.get(code),
+            Some(
+                DeviceInput::Hold {
+                     delta_from_began,
+                     delta_last_handled,
+                }
+            ) if delta_from_began == delta_last_handled && duration <= delta_from_began,
+        )
     }
 
     fn has_hold_handled_before(&self, code: &ControlCode, duration: &Duration) -> bool {
-        match self.input_map.get(code) {
-            Some(DeviceInput::Hold {
-                delta_from_began,
-                delta_last_handled,
-            }) if delta_last_handled < delta_from_began && duration <= delta_last_handled => true,
-            _ => false,
-        }
+        matches!(
+            self.input_map.get(code),
+            Some(
+                DeviceInput::Hold {
+                     delta_from_began,
+                     delta_last_handled,
+                }
+            ) if delta_last_handled < delta_from_began && duration <= delta_last_handled,
+        )
     }
 
     fn handle_if_hold(&mut self, code: &ControlCode) {
         let input_map = &mut self.input_map;
 
         if let Some(input @ DeviceInput::Hold { .. }) = input_map.get(code) {
-            input_map.insert(code.clone(), input.handled_if_hold());
+            let new_input = input.handled_if_hold();
+
+            input_map.insert(*code, new_input);
         }
+    }
+}
+
+impl Default for InputCache {
+    fn default() -> Self {
+        InputCache::new()
     }
 }
 

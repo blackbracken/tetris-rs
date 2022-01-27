@@ -33,7 +33,7 @@ impl DeviceInput {
         } else {
             match self {
                 None => Push,
-                Push => DeviceInput::new_hold(delta.clone(), delta.clone()),
+                Push => DeviceInput::new_hold(*delta, *delta),
                 Hold {
                     delta_from_began,
                     delta_last_handled,
