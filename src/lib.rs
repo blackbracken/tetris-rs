@@ -53,8 +53,8 @@ pub fn start(cb: ContextBuilder) -> GameResult {
 }
 
 struct MainState<CCR>
-    where
-        CCR: ControlCodeRepository,
+where
+    CCR: ControlCodeRepository,
 {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
