@@ -20,10 +20,7 @@ impl InputCache {
         let new_input_map = ControlCode::all()
             .into_iter()
             .map(|code| {
-                let old_input = self
-                    .input_map
-                    .entry(*code)
-                    .or_insert(DeviceInput::None);
+                let old_input = self.input_map.entry(code).or_insert(DeviceInput::None);
 
                 (code, old_input.next_state(inputs.contains(&code), delta))
             })

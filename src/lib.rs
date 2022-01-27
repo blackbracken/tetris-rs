@@ -11,13 +11,13 @@ extern crate num_derive;
 use std::{mem, time::Duration};
 
 use ggez::{
-    Context,
-    ContextBuilder,
     event,
     event::{EventHandler, KeyCode, KeyMods},
-    GameResult,
     input::{gamepad::gamepads, keyboard},
     timer,
+    Context,
+    ContextBuilder,
+    GameResult,
 };
 
 use crate::{
@@ -51,8 +51,8 @@ pub fn start(cb: ContextBuilder) -> GameResult {
 }
 
 struct MainState<CCR>
-    where
-        CCR: ControlCodeRepository,
+where
+    CCR: ControlCodeRepository,
 {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,

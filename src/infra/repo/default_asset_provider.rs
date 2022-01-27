@@ -15,7 +15,7 @@ pub struct DefaultAssetProvider {
 }
 
 impl AssetProvider for DefaultAssetProvider {
-    fn image(&mut self, ctx: &mut Context, path: &String) -> GameResult<&Image> {
+    fn image(&mut self, ctx: &mut Context, path: &str) -> GameResult<&Image> {
         if !self.image_map.contains_key(path) {
             let asset = match Image::new(ctx, path) {
                 Ok(image) => Asset::Loaded {
@@ -24,7 +24,7 @@ impl AssetProvider for DefaultAssetProvider {
                 Err(error) => Asset::Missing { error },
             };
 
-            self.image_map.insert(path.clone(), asset);
+            self.image_map.insert(path.to_owned(), asset);
         }
 
         match self.image_map.get(path) {
