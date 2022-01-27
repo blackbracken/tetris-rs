@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use crate::kernel::{control_code::ControlCode, device_input::DeviceInput};
+use crate::kernel::input::{control_code::ControlCode, device_input::DeviceInput};
 
 pub struct InputCache {
     input_map: HashMap<ControlCode, DeviceInput>,

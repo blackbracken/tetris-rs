@@ -24,8 +24,7 @@ use crate::{
     asset::Asset,
     infra::repo::default_control_code_repository::DefaultControlCodeRepository,
     kernel::{
-        control_code::ControlCode,
-        input_cache::InputCache,
+        input::{control_code::ControlCode, input_cache::InputCache},
         repo::control_code_repository::ControlCodeRepository,
     },
     scene::{scene_state::SceneState, ticket},

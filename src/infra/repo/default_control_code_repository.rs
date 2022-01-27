@@ -1,7 +1,7 @@
 use ggez::event::{Button, KeyCode};
 
 use crate::kernel::{
-    control_code::ControlCode,
+    input::control_code::ControlCode,
     repo::control_code_repository::ControlCodeRepository,
 };
 
