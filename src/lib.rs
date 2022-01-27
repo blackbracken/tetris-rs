@@ -32,12 +32,10 @@ use crate::{
     ticket::{Next, Ticket},
 };
 
+mod asset;
 mod infra;
 mod kernel;
-
-pub mod scene;
-
-pub(crate) mod asset;
+mod scene;
 
 pub const FPS: u32 = 60;
 pub const WINDOW_WIDTH: f32 = 960.;
