@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use ggez::{graphics, Context, GameResult};
 
 pub struct Image {

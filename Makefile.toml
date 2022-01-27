@@ -7,11 +7,16 @@ dependencies = ["copy_resources", "build"]
 command = "cargo"
 args = ["build"]
 
+[tasks.fix]
+install_crate = false
+command = "cargo"
+args = ["+nightly", "fix", "--lib", "--allow-dirty"]
+
 [tasks.before]
 dependencies = ["format", "clippy", "test"]
 
 [tasks.format]
-install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt-preview", binary = "rustfmt"  }
+install_crate = { crate_name = "rustfmt-nightly", rustup_component_name = "rustfmt-preview", binary = "rustfmt" }
 command = "cargo"
 args = ["+nightly", "fmt", "--all", "--", "--emit=files"]
 
