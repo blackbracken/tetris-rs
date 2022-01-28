@@ -4,11 +4,6 @@ use ggez::{graphics::Image, Context, GameError, GameResult};
 
 use crate::kernel::repo::asset_provider::{AssetProvider, ImagePath};
 
-const IMG_CURSOR: ImagePath = ImagePath("/image/cursor.png");
-const IMG_TITLE_PARTICLE: ImagePath = ImagePath("/image/particles/title.png");
-const IMG_DROPPING_WINDBREAK_PARTICLE: ImagePath =
-    ImagePath("/image/particles/dropping_windbreak.png");
-
 enum Asset<T> {
     Unloaded,
     Loaded { value: Box<T> },

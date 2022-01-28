@@ -11,13 +11,14 @@ use rand::random;
 
 use crate::{
     asset::audio::Bgm,
-    kernel::xytuple::F32XYTuple,
+    kernel::{repo::asset_provider::IMG_TITLE_PARTICLE, xytuple::F32XYTuple},
     scene::{
         animation_property::{AnimationProperties, AnimationProperty},
         timer::Timer,
         title::selected_item::SelectedItem,
     },
     Asset,
+    AssetProvider,
     ControlCode,
     InputCache,
     Next,
@@ -199,7 +200,10 @@ pub fn update(
     Ok(Next::do_continue(state.into()))
 }
 
-pub fn draw(ctx: &mut Context, state: &TitleState, asset: &mut Asset) -> GameResult {
+pub fn draw<AP>(ctx: &mut Context, state: &TitleState, asset: &mut Asset, ap: &mut AP) -> GameResult
+where
+    AP: AssetProvider,
+{
     let draw_state = &state.draw_state;
 
     graphics::clear(ctx, asset.color.background);
@@ -208,9 +212,10 @@ pub fn draw(ctx: &mut Context, state: &TitleState, asset: &mut Asset) -> GameRes
         let (x, y): (f32, f32) = star.pos().into();
         let rot = star.rot();
 
+        let img = ap.image(ctx, IMG_TITLE_PARTICLE)?;
         graphics::draw(
             ctx,
-            &asset.image.title_particle,
+            img,
             graphics::DrawParam::default()
                 .color(Color::new(1., 1., 1., 0.2))
                 .dest([x, y])

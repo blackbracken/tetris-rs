@@ -8,7 +8,7 @@ extern crate derive_new;
 #[macro_use]
 extern crate num_derive;
 
-use std::{mem, time::Duration};
+use std::{mem, ops::DerefMut, time::Duration};
 
 use ggez::{
     event,
@@ -64,7 +64,7 @@ where
     last_measured: Duration,
     input_cache: InputCache,
     control_code_repo: CCR,
-    asset_provider: AP,
+    asset_provider: Box<AP>,
 }
 
 impl<CCR, AP> MainState<CCR, AP>
@@ -85,7 +85,7 @@ where
             last_measured: timer::time_since_start(ctx),
             input_cache: InputCache::new(),
             control_code_repo,
-            asset_provider,
+            asset_provider: Box::new(asset_provider),
         })
     }
 
@@ -150,7 +150,12 @@ where
         if let Some(state) = &self.scene_state {
             match state {
                 SceneState::ForTitle { state } => {
-                    scene::title::title_scene::draw(ctx, state, &mut self.asset)?;
+                    scene::title::title_scene::draw(
+                        ctx,
+                        state,
+                        &mut self.asset,
+                        self.asset_provider.deref_mut(),
+                    )?;
                 }
             }
         }
