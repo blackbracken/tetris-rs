@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use ggez::{Context, GameError, GameResult, graphics::Image};
+use ggez::{graphics::Image, Context, GameError, GameResult};
 
 use crate::kernel::repo::asset_provider::{AssetProvider, ImagePath};
 
 const IMG_CURSOR: ImagePath = ImagePath("/image/cursor.png");
 const IMG_TITLE_PARTICLE: ImagePath = ImagePath("/image/particles/title.png");
-const IMG_DROPPING_WINDBREAK_PARTICLE: ImagePath = ImagePath("/image/particles/dropping_windbreak.png");
+const IMG_DROPPING_WINDBREAK_PARTICLE: ImagePath =
+    ImagePath("/image/particles/dropping_windbreak.png");
 
 enum Asset<T> {
     Unloaded,
@@ -43,6 +44,8 @@ impl AssetProvider for DefaultAssetProvider {
 
 impl DefaultAssetProvider {
     pub fn new() -> DefaultAssetProvider {
-        DefaultAssetProvider { image_map: Default::default() }
+        DefaultAssetProvider {
+            image_map: Default::default(),
+        }
     }
 }

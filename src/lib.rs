@@ -11,27 +11,28 @@ extern crate num_derive;
 use std::{mem, time::Duration};
 
 use ggez::{
-    Context,
-    ContextBuilder,
     event,
     event::{EventHandler, KeyCode, KeyMods},
-    GameResult,
     input::{gamepad::gamepads, keyboard},
     timer,
+    Context,
+    ContextBuilder,
+    GameResult,
 };
 
 use crate::{
     asset::Asset,
-    infra::repo::default_control_code_repository::DefaultControlCodeRepository,
+    infra::repo::{
+        default_asset_provider::DefaultAssetProvider,
+        default_control_code_repository::DefaultControlCodeRepository,
+    },
     kernel::{
         input::{control_code::ControlCode, input_cache::InputCache},
-        repo::control_code_repository::ControlCodeRepository,
+        repo::{asset_provider::AssetProvider, control_code_repository::ControlCodeRepository},
     },
     scene::{scene_state::SceneState, ticket},
     ticket::{Next, Ticket},
 };
-use crate::infra::repo::default_asset_provider::DefaultAssetProvider;
-use crate::kernel::repo::asset_provider::AssetProvider;
 
 mod asset;
 mod infra;
@@ -54,9 +55,9 @@ pub fn start(cb: ContextBuilder) -> GameResult {
 }
 
 struct MainState<CCR, AP>
-    where
-        CCR: ControlCodeRepository,
-        AP: AssetProvider,
+where
+    CCR: ControlCodeRepository,
+    AP: AssetProvider,
 {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
@@ -67,11 +68,15 @@ struct MainState<CCR, AP>
 }
 
 impl<CCR, AP> MainState<CCR, AP>
-    where
-        CCR: ControlCodeRepository,
-        AP: AssetProvider,
+where
+    CCR: ControlCodeRepository,
+    AP: AssetProvider,
 {
-    fn new(ctx: &mut Context, control_code_repo: CCR, asset_provider: AP) -> GameResult<MainState<CCR, AP>> {
+    fn new(
+        ctx: &mut Context,
+        control_code_repo: CCR,
+        asset_provider: AP,
+    ) -> GameResult<MainState<CCR, AP>> {
         let mut asset = Asset::load(ctx)?;
 
         Ok(MainState {
@@ -105,9 +110,9 @@ impl<CCR, AP> MainState<CCR, AP>
 }
 
 impl<CCR, AP> EventHandler for MainState<CCR, AP>
-    where
-        CCR: ControlCodeRepository,
-        AP: AssetProvider,
+where
+    CCR: ControlCodeRepository,
+    AP: AssetProvider,
 {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {

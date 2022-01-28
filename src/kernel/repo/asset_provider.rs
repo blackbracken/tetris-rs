@@ -1,4 +1,4 @@
-use ggez::{Context, GameResult, graphics::Image};
+use ggez::{graphics::Image, Context, GameResult};
 
 pub struct ImagePath<'a>(pub &'a str);
 
