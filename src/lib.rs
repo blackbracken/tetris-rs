@@ -11,13 +11,13 @@ extern crate num_derive;
 use std::{mem, time::Duration};
 
 use ggez::{
-    event,
-    event::{EventHandler, KeyCode, KeyMods},
-    input::{gamepad::gamepads, keyboard},
-    timer,
     Context,
     ContextBuilder,
+    event,
+    event::{EventHandler, KeyCode, KeyMods},
     GameResult,
+    input::{gamepad::gamepads, keyboard},
+    timer,
 };
 
 use crate::{
@@ -30,6 +30,8 @@ use crate::{
     scene::{scene_state::SceneState, ticket},
     ticket::{Next, Ticket},
 };
+use crate::infra::repo::default_asset_provider::DefaultAssetProvider;
+use crate::kernel::repo::asset_provider::AssetProvider;
 
 mod asset;
 mod infra;
@@ -42,24 +44,34 @@ pub const WINDOW_HEIGHT: f32 = 800.;
 
 pub fn start(cb: ContextBuilder) -> GameResult {
     let (mut ctx, event_loop) = cb.build()?;
-    let state = MainState::new(&mut ctx, DefaultControlCodeRepository)?;
+
+    let control_code_repo = DefaultControlCodeRepository::new();
+    let asset_provider = DefaultAssetProvider::new();
+
+    let state = MainState::new(&mut ctx, control_code_repo, asset_provider)?;
 
     event::run(ctx, event_loop, state);
 }
 
-struct MainState<CCR>
-where
-    CCR: ControlCodeRepository,
+struct MainState<CCR, AP>
+    where
+        CCR: ControlCodeRepository,
+        AP: AssetProvider,
 {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
     last_measured: Duration,
     input_cache: InputCache,
     control_code_repo: CCR,
+    asset_provider: AP,
 }
 
-impl<CCR: ControlCodeRepository> MainState<CCR> {
-    fn new(ctx: &mut Context, control_code_repo: CCR) -> GameResult<MainState<CCR>> {
+impl<CCR, AP> MainState<CCR, AP>
+    where
+        CCR: ControlCodeRepository,
+        AP: AssetProvider,
+{
+    fn new(ctx: &mut Context, control_code_repo: CCR, asset_provider: AP) -> GameResult<MainState<CCR, AP>> {
         let mut asset = Asset::load(ctx)?;
 
         Ok(MainState {
@@ -68,6 +80,7 @@ impl<CCR: ControlCodeRepository> MainState<CCR> {
             last_measured: timer::time_since_start(ctx),
             input_cache: InputCache::new(),
             control_code_repo,
+            asset_provider,
         })
     }
 
@@ -91,7 +104,11 @@ impl<CCR: ControlCodeRepository> MainState<CCR> {
     }
 }
 
-impl<CCR: ControlCodeRepository> EventHandler for MainState<CCR> {
+impl<CCR, AP> EventHandler for MainState<CCR, AP>
+    where
+        CCR: ControlCodeRepository,
+        AP: AssetProvider,
+{
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
             let scene_state = mem::take(&mut self.scene_state).unwrap();

@@ -40,3 +40,9 @@ impl AssetProvider for DefaultAssetProvider {
         }
     }
 }
+
+impl DefaultAssetProvider {
+    pub fn new() -> DefaultAssetProvider {
+        DefaultAssetProvider { image_map: Default::default() }
+    }
+}

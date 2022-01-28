@@ -5,6 +5,7 @@ use crate::kernel::{
     repo::control_code_repository::ControlCodeRepository,
 };
 
+#[derive(new)]
 pub struct DefaultControlCodeRepository;
 
 impl ControlCodeRepository for DefaultControlCodeRepository {
