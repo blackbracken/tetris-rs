@@ -64,7 +64,7 @@ where
     last_measured: Duration,
     input_cache: InputCache,
     control_code_repo: CCR,
-    asset_provider: Box<AP>,
+    asset_provider: AP,
 }
 
 impl<CCR, AP> MainState<CCR, AP>
@@ -85,7 +85,7 @@ where
             last_measured: timer::time_since_start(ctx),
             input_cache: InputCache::new(),
             control_code_repo,
-            asset_provider: Box::new(asset_provider),
+            asset_provider,
         })
     }
 
@@ -154,7 +154,7 @@ where
                         ctx,
                         state,
                         &mut self.asset,
-                        self.asset_provider.deref_mut(),
+                        &mut self.asset_provider,
                     )?;
                 }
             }
