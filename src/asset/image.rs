@@ -12,7 +12,7 @@ impl Image {
         Ok(Image {
             cursor: graphics::Image::new(ctx, "/image/cursor.png")?,
             title_particle: graphics::Image::new(ctx, "/image/particles/title.png")?,
-            uncolored_mino_block: graphics::Image::new(ctx, "/image/mino_block.png")?,
+            uncolored_mino_block: graphics::Image::new(ctx, "/image/mino_block/black.png")?,
             dropping_windbreak_particle: graphics::Image::new(
                 ctx,
                 "/image/particles/dropping_windbreak.png",
