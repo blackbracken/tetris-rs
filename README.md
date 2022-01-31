@@ -16,8 +16,17 @@ cargo install --force cargo-make
 cargo make run
 ```
 
-### Open docs
+## License and credits
 
-```shell
-cargo make docs
-```
+### Code
+
+MIT License
+
+### Sounds
+
+- FC音工場
+- 魔王魂
+
+### Font
+
+OFL License(Play, VT323)
