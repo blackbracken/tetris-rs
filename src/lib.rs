@@ -8,7 +8,7 @@ extern crate derive_new;
 #[macro_use]
 extern crate num_derive;
 
-use std::{mem, ops::DerefMut, time::Duration};
+use std::{mem, time::Duration};
 
 use ggez::{
     event,
