@@ -49,37 +49,48 @@ pub fn start(cb: ContextBuilder) -> GameResult {
     let control_code_repo = DefaultControlCodeRepository::new();
     let asset_provider = DefaultAssetProvider::new();
 
-    let state = MainState::new(&mut ctx, control_code_repo, asset_provider)?;
+    let state = MainStateHolder::new(&mut ctx, control_code_repo, asset_provider)?;
 
     event::run(ctx, event_loop, state);
 }
 
-struct MainState<CCR, AP>
+trait MainState
 where
-    CCR: ControlCodeRepository,
-    AP: AssetProvider,
+    Self: Sized,
 {
+    type CCR: ControlCodeRepository;
+    type AP: AssetProvider;
+
+    fn new(
+        ctx: &mut Context,
+        control_code_repo: Self::CCR,
+        asset_provider: Self::AP,
+    ) -> GameResult<Self>;
+
+    fn find_input(&self, ctx: &Context) -> Vec<ControlCode>;
+}
+
+struct MainStateHolder {
     scene_state: Option<SceneState>,
     asset: Box<Asset>,
     last_measured: Duration,
     input_cache: InputCache,
-    control_code_repo: CCR,
-    asset_provider: AP,
+    control_code_repo: DefaultControlCodeRepository,
+    asset_provider: DefaultAssetProvider,
 }
 
-impl<CCR, AP> MainState<CCR, AP>
-where
-    CCR: ControlCodeRepository,
-    AP: AssetProvider,
-{
+impl MainState for MainStateHolder {
+    type CCR = DefaultControlCodeRepository;
+    type AP = DefaultAssetProvider;
+
     fn new(
         ctx: &mut Context,
-        control_code_repo: CCR,
-        asset_provider: AP,
-    ) -> GameResult<MainState<CCR, AP>> {
+        control_code_repo: Self::CCR,
+        asset_provider: Self::AP,
+    ) -> GameResult<Self> {
         let mut asset = Asset::load(ctx)?;
 
-        Ok(MainState {
+        Ok(MainStateHolder {
             scene_state: Some(Ticket::ShowTitle.go(ctx, &mut asset)?),
             asset,
             last_measured: timer::time_since_start(ctx),
@@ -109,11 +120,7 @@ where
     }
 }
 
-impl<CCR, AP> EventHandler for MainState<CCR, AP>
-where
-    CCR: ControlCodeRepository,
-    AP: AssetProvider,
-{
+impl EventHandler for MainStateHolder {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while timer::check_update_time(ctx, FPS) {
             let scene_state = mem::take(&mut self.scene_state).unwrap();

@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use ggez::{
+    graphics::{Font, Image},
     Context,
     GameError,
     GameResult,
-    graphics::{Font, Image},
 };
 
 use crate::kernel::repo::asset_provider::{AssetProvider, FontPath, ImagePath};
