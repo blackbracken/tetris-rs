@@ -1,5 +1,6 @@
 use std::{collections::HashMap, mem::take, time::Duration};
 
+use derive_new::new;
 use ggez::{
     graphics,
     graphics::{Color, DrawParam, PxScale, Text, TextFragment},

@@ -3,11 +3,6 @@
 #![feature(variant_count)]
 #![feature(map_try_insert)]
 
-#[macro_use]
-extern crate derive_new;
-#[macro_use]
-extern crate num_derive;
-
 use std::{mem, time::Duration};
 
 use ggez::{

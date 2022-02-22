@@ -1,3 +1,5 @@
+use derive_new::new;
+
 pub type F32XYTuple = XYTuple<f32>;
 
 #[derive(new, Copy, Clone, Debug, Default)]

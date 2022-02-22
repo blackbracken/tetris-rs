@@ -1,3 +1,4 @@
+use derive_new::new;
 use ggez::event::{Button, KeyCode};
 
 use crate::kernel::{

@@ -1,4 +1,5 @@
 use enum_iterator::IntoEnumIterator;
+use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
 #[derive(FromPrimitive, ToPrimitive, IntoEnumIterator, Debug, PartialEq, Eq, Hash)]
