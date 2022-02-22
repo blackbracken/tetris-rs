@@ -1,3 +1,12 @@
+[tasks.install-udeps]
+install_script = "cargo install cargo-udeps --locked"
+
+[tasks.find-udeps]
+dependencies = [ "install-udeps" ]
+command = "cargo"
+install_crate = false
+args = ["+nightly", "udeps", "--all-targets"]
+
 [tasks.run]
 command = "cargo"
 args = ["run", "--package", "tetris-rs", "--bin", "tetris-rs"]
