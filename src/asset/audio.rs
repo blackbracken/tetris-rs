@@ -15,8 +15,8 @@ impl Audio {
         // for exhaustive checking on compile
         fn bgm_path(bgm: Bgm) -> &'static str {
             match bgm {
-                Bgm::Title => "/sound/bgm/bgm_classic_etc_scarboroughfair.wav",
-                Bgm::InGame => "/sound/bgm/bgm_classic_etc_korobushka.wav",
+                Bgm::Title => "/sound/bgm_classic_etc_scarboroughfair.mp3",
+                Bgm::InGame => "/sound/bgm_classic_etc_korobushka.mp3",
             }
         }
         let bgm_data_map = maplit::hashmap! {
@@ -27,14 +27,14 @@ impl Audio {
         // for exhaustive checking on compile
         fn se_path(se: Se) -> &'static str {
             match se {
-                Se::MenuClick => "/sound/se/se_maoudamashii_system26.mp3",
-                Se::CountdownTick => "/sound/se/se_maoudamashii_instruments_drum1_hat.mp3",
-                Se::GameStart => "/sound/se/se_maoudamashii_instruments_drum1_tom3.mp3",
-                Se::MinoMove => "/sound/se/thinkpad_shift_click.mp3",
-                Se::MinoSpin => "/sound/se/se_maoudamashii_se_pc03.mp3",
-                Se::MinoSoftDrop => "/sound/se/hhkb_fn_click.mp3",
-                Se::MinoHardDrop => "/sound/se/hhkb_fn_click.mp3",
-                Se::RemoveLine => "/sound/se/se_maoudamashii_onepoint09.mp3",
+                Se::MenuClick => "/sound/se_maoudamashii_system26.mp3",
+                Se::CountdownTick => "/sound/se_maoudamashii_instruments_drum1_hat.mp3",
+                Se::GameStart => "/sound/se_maoudamashii_instruments_drum1_tom3.mp3",
+                Se::MinoMove => "/sound/se_click_02.mp3",
+                Se::MinoSpin => "/sound/se_maoudamashii_se_pc03.mp3",
+                Se::MinoSoftDrop => "/sound/se_click_01.mp3",
+                Se::MinoHardDrop => "/sound/se_click_01_2.mp3",
+                Se::RemoveLine => "/sound/se_maoudamashii_onepoint09.mp3",
             }
         }
         let se_data_map = maplit::hashmap! {
@@ -66,17 +66,6 @@ impl Audio {
                 src.set_repeat(true);
                 src.set_query_interval(Duration::ZERO);
                 src
-            })
-            .map(|mut src| match bgm {
-                Bgm::Title => {
-                    src.set_volume(0.2);
-                    src.set_fade_in(Duration::from_secs(2));
-                    src
-                }
-                Bgm::InGame => {
-                    src.set_volume(0.25);
-                    src
-                }
             });
 
         if let Some(src) = src {
