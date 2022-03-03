@@ -7,9 +7,9 @@ use crate::kernel::{
 };
 
 #[derive(new)]
-pub struct DefaultControlCodeRepository;
+pub struct ControlCodeRepositoryImpl;
 
-impl ControlCodeRepository for DefaultControlCodeRepository {
+impl ControlCodeRepository for ControlCodeRepositoryImpl {
     fn key_codes(&self, code: &ControlCode) -> Vec<KeyCode> {
         use ControlCode::*;
         use KeyCode::*;

@@ -18,8 +18,8 @@ use ggez::{
 use crate::{
     asset::Asset,
     infra::repo::{
-        default_asset_provider::DefaultAssetProvider,
-        default_control_code_repository::DefaultControlCodeRepository,
+        asset_provider_impl::AssetProviderImpl,
+        control_code_repository_impl::ControlCodeRepositoryImpl,
     },
     kernel::{
         input::{control_code::ControlCode, input_cache::InputCache},
@@ -41,8 +41,8 @@ pub const WINDOW_HEIGHT: f32 = 800.;
 pub fn start(cb: ContextBuilder) -> GameResult {
     let (mut ctx, event_loop) = cb.build()?;
 
-    let control_code_repo = DefaultControlCodeRepository::new();
-    let asset_provider = DefaultAssetProvider::new();
+    let control_code_repo = ControlCodeRepositoryImpl::new();
+    let asset_provider = AssetProviderImpl::new();
 
     let state = MainStateHolder::new(&mut ctx, control_code_repo, asset_provider)?;
 
@@ -70,13 +70,13 @@ struct MainStateHolder {
     asset: Box<Asset>,
     last_measured: Duration,
     input_cache: InputCache,
-    control_code_repo: DefaultControlCodeRepository,
-    asset_provider: DefaultAssetProvider,
+    control_code_repo: ControlCodeRepositoryImpl,
+    asset_provider: AssetProviderImpl,
 }
 
 impl MainState for MainStateHolder {
-    type CCR = DefaultControlCodeRepository;
-    type AP = DefaultAssetProvider;
+    type CCR = ControlCodeRepositoryImpl;
+    type AP = AssetProviderImpl;
 
     fn new(
         ctx: &mut Context,

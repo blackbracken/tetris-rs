@@ -15,12 +15,12 @@ enum Asset<T> {
     Missing { error: GameError },
 }
 
-pub struct DefaultAssetProvider {
+pub struct AssetProviderImpl {
     image_map: HashMap<String, Asset<Image>>,
     font_map: HashMap<String, Asset<Font>>,
 }
 
-impl AssetProvider for DefaultAssetProvider {
+impl AssetProvider for AssetProviderImpl {
     fn image(&mut self, ctx: &mut Context, path: ImagePath) -> GameResult<&Image> {
         let path = path.0;
 
@@ -64,9 +64,9 @@ impl AssetProvider for DefaultAssetProvider {
     }
 }
 
-impl DefaultAssetProvider {
-    pub fn new() -> DefaultAssetProvider {
-        DefaultAssetProvider {
+impl AssetProviderImpl {
+    pub fn new() -> AssetProviderImpl {
+        AssetProviderImpl {
             image_map: Default::default(),
             font_map: Default::default(),
         }
