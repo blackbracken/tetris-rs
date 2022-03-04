@@ -1,6 +1,6 @@
 pub mod input {
     pub mod control_code;
-    pub mod device_input;
+    pub mod device_input_way;
     pub mod input_cache;
 }
 

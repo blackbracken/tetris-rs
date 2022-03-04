@@ -1,5 +1,6 @@
 use enum_iterator::IntoEnumIterator;
 
+/// このゲームに対してユーザから与えられる入力の種別コード.
 #[derive(IntoEnumIterator, Hash, PartialEq, Eq, Copy, Clone)]
 pub enum ControlCode {
     // In-game

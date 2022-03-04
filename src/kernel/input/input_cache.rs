@@ -1,16 +1,16 @@
 use std::{collections::HashMap, time::Duration};
 
-use crate::kernel::input::{control_code::ControlCode, device_input::DeviceInput};
+use crate::kernel::input::{control_code::ControlCode, device_input_way::DeviceInputWay};
 
 pub struct InputCache {
-    input_map: HashMap<ControlCode, DeviceInput>,
+    input_map: HashMap<ControlCode, DeviceInputWay>,
 }
 
 impl InputCache {
     pub fn new() -> InputCache {
         let input_map = ControlCode::all()
             .into_iter()
-            .map(|code| (code, DeviceInput::None))
+            .map(|code| (code, DeviceInputWay::None))
             .collect();
 
         InputCache { input_map }
@@ -20,7 +20,7 @@ impl InputCache {
         let new_input_map = ControlCode::all()
             .into_iter()
             .map(|code| {
-                let old_input = self.input_map.entry(code).or_insert(DeviceInput::None);
+                let old_input = self.input_map.entry(code).or_insert(DeviceInputWay::None);
 
                 (code, old_input.next_state(inputs.contains(&code), delta))
             })
@@ -30,11 +30,11 @@ impl InputCache {
     }
 
     pub fn has_none(&self, code: &ControlCode) -> bool {
-        matches!(self.input_map.get(code), Some(DeviceInput::None))
+        matches!(self.input_map.get(code), Some(DeviceInputWay::None))
     }
 
     pub fn has_pushed(&self, code: &ControlCode) -> bool {
-        matches!(self.input_map.get(code), Some(DeviceInput::Push))
+        matches!(self.input_map.get(code), Some(DeviceInputWay::Push))
     }
 
     pub fn handle_hold_if_unhandled_yet_after(
@@ -67,7 +67,7 @@ impl InputCache {
         matches!(
             self.input_map.get(code),
             Some(
-                DeviceInput::Hold {
+                DeviceInputWay::Hold {
                      delta_from_began,
                      delta_last_handled,
                 }
@@ -79,7 +79,7 @@ impl InputCache {
         matches!(
             self.input_map.get(code),
             Some(
-                DeviceInput::Hold {
+                DeviceInputWay::Hold {
                      delta_from_began,
                      delta_last_handled,
                 }
@@ -90,7 +90,7 @@ impl InputCache {
     fn handle_if_hold(&mut self, code: &ControlCode) {
         let input_map = &mut self.input_map;
 
-        if let Some(input @ DeviceInput::Hold { .. }) = input_map.get(code) {
+        if let Some(input @ DeviceInputWay::Hold { .. }) = input_map.get(code) {
             let new_input = input.handled_if_hold();
 
             input_map.insert(*code, new_input);
@@ -116,7 +116,7 @@ mod tests {
         assert_eq!(values.len(), ControlCode::all().len());
 
         for input in values {
-            assert_eq!(*input, DeviceInput::None);
+            assert_eq!(*input, DeviceInputWay::None);
         }
     }
 

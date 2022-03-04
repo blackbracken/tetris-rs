@@ -12,7 +12,8 @@ use rand::random;
 
 use crate::{
     asset::audio::Bgm,
-    kernel::{repo::asset_provider::IMG_TITLE_PARTICLE, xytuple::F32XYTuple},
+    infra::repo::asset_key::IMG_TITLE_PARTICLE,
+    kernel::xytuple::F32XYTuple,
     scene::{
         animation_property::{AnimationProperties, AnimationProperty},
         timer::Timer,
