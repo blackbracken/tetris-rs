@@ -2,31 +2,31 @@ use std::{collections::HashMap, mem::take, time::Duration};
 
 use derive_new::new;
 use ggez::{
-    graphics,
-    graphics::{Color, DrawParam, PxScale, Text, TextFragment},
     Context,
     GameResult,
+    graphics,
+    graphics::{Color, DrawParam, PxScale, Text, TextFragment},
 };
 use indoc::indoc;
 use rand::random;
 
 use crate::{
+    Asset,
     asset::audio::Bgm,
-    infra::repo::asset_key::IMG_TITLE_PARTICLE,
+    AssetProvider,
+    ControlCode,
+    InputCache,
     kernel::xytuple::F32XYTuple,
+    Next,
     scene::{
         animation_property::{AnimationProperties, AnimationProperty},
         timer::Timer,
         title::selected_item::SelectedItem,
     },
-    Asset,
-    AssetProvider,
-    ControlCode,
-    InputCache,
-    Next,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 };
+use crate::infra::asset_key::IMG_TITLE_PARTICLE;
 
 static TITLE_ASCII: &str = indoc!(
     r"
