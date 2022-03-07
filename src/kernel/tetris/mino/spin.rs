@@ -60,7 +60,7 @@ mod tests {
     fn rotate(direction: SpinDirection, ans: MinoRotation) {
         let rot = MinoRotation::Clockwise;
         let rot = rot.spin(&direction);
-        
+
         assert_eq!(rot, ans);
     }
 }
