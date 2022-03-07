@@ -1,7 +1,5 @@
 use derive_new::new;
 
-use crate::kernel::xy_pos::I16XYPos;
-
 /// テトリミノの形を表現する.
 ///
 /// 形を表現するのに必要な最小のNを要求し,
