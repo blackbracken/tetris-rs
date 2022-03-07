@@ -1,9 +1,13 @@
 use crate::kernel::{tetris::mino::mold::MinoMold, xy_pos::I16XYPos};
 
+pub mod block;
 pub mod mold;
 pub mod spin;
 
+pub type WallkickOffset = I16XYPos;
+
 /*
+ TODO:
    T,
    S,
    Z,
@@ -13,9 +17,14 @@ pub mod spin;
    I,
 */
 
-pub type WallkickOffset = I16XYPos;
+pub const MINO_T: Mino = Mino::T {
+    mold: todo!(),
+    wallkick_offset: todo!(),
+};
 
-pub struct Mino<const S: usize> {
-    pub mold: MinoMold<S>,
-    pub wallkick_offset: WallkickOffset,
+pub enum Mino {
+    T {
+        mold: MinoMold<3>,
+        wallkick_offset: WallkickOffset,
+    },
 }

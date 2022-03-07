@@ -12,23 +12,52 @@ where
     pub y: P,
 }
 
+/*
+impl<P> XYPos<P>
+where
+    P: Copy + Clone,
+{
+    fn of<Q: Into<P>>(x: Q, y: Q) -> Self {
+        XYPos::new(x.into(), y.into())
+    }
+}
+*/
+
 impl<T> From<XYPos<T>> for (T, T)
 where
     T: Copy + Clone,
 {
-    fn from(t: XYPos<T>) -> Self {
-        (t.x, t.y)
+    fn from(pos: XYPos<T>) -> Self {
+        (pos.x, pos.y)
     }
 }
 
-impl<T> Into<XYPos<T>> for (T, T)
+impl<T> From<(T, T)> for XYPos<T>
 where
     T: Copy + Clone,
 {
-    fn into(self) -> XYPos<T> {
-        XYPos {
-            x: self.0,
-            y: self.1,
-        }
+    fn from(tuple: (T, T)) -> Self {
+        let (x, y) = tuple;
+        XYPos::new(x, y)
     }
 }
+
+
+/*
+impl<T, F> TryFrom<(F, F)> for XYPos<T>
+where
+    T: Copy + Clone + TryFrom<F>,
+    F: Copy + Clone,
+{
+    type Error = ();
+
+    fn try_from(value: (F, F)) -> Result<Self, Self::Error> {
+        let (l, r) = value;
+
+        l.try_into()
+            .and_then(|l: T| r.try_into().map(|r: T| (l, r)))
+            .map(|(l, r)| XYPos::new(l, r))
+            .map_err(|_| ())
+    }
+}
+*/

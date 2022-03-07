@@ -13,4 +13,5 @@ pub mod repo {
 
 pub mod tetris {
     pub mod mino;
+    pub mod playfield;
 }
