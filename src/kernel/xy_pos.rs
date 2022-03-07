@@ -41,23 +41,3 @@ where
         XYPos::new(x, y)
     }
 }
-
-
-/*
-impl<T, F> TryFrom<(F, F)> for XYPos<T>
-where
-    T: Copy + Clone + TryFrom<F>,
-    F: Copy + Clone,
-{
-    type Error = ();
-
-    fn try_from(value: (F, F)) -> Result<Self, Self::Error> {
-        let (l, r) = value;
-
-        l.try_into()
-            .and_then(|l: T| r.try_into().map(|r: T| (l, r)))
-            .map(|(l, r)| XYPos::new(l, r))
-            .map_err(|_| ())
-    }
-}
-*/
