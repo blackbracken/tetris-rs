@@ -4,9 +4,14 @@ pub mod input {
     pub mod input_cache;
 }
 
-pub mod xytuple;
+pub mod xy_pos;
 
 pub mod repo {
     pub mod asset_provider;
     pub mod control_code_repository;
+}
+
+pub mod tetris {
+    pub mod mino;
+    pub mod mino_mold;
 }

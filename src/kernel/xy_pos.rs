@@ -1,9 +1,10 @@
 use derive_new::new;
 
-pub type F32XYTuple = XYTuple<f32>;
+pub type F32XYPos = XYPos<f32>;
+pub type I16XYPos = XYPos<i16>;
 
 #[derive(new, Copy, Clone, Debug, Default)]
-pub struct XYTuple<P>
+pub struct XYPos<P>
 where
     P: Copy + Clone,
 {
@@ -11,21 +12,21 @@ where
     pub y: P,
 }
 
-impl<T> From<XYTuple<T>> for (T, T)
+impl<T> From<XYPos<T>> for (T, T)
 where
     T: Copy + Clone,
 {
-    fn from(t: XYTuple<T>) -> Self {
+    fn from(t: XYPos<T>) -> Self {
         (t.x, t.y)
     }
 }
 
-impl<T> Into<XYTuple<T>> for (T, T)
+impl<T> Into<XYPos<T>> for (T, T)
 where
     T: Copy + Clone,
 {
-    fn into(self) -> XYTuple<T> {
-        XYTuple {
+    fn into(self) -> XYPos<T> {
+        XYPos {
             x: self.0,
             y: self.1,
         }

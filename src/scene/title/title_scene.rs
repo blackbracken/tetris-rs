@@ -2,31 +2,31 @@ use std::{collections::HashMap, mem::take, time::Duration};
 
 use derive_new::new;
 use ggez::{
-    Context,
-    GameResult,
     graphics,
     graphics::{Color, DrawParam, PxScale, Text, TextFragment},
+    Context,
+    GameResult,
 };
 use indoc::indoc;
 use rand::random;
 
 use crate::{
-    Asset,
     asset::audio::Bgm,
-    AssetProvider,
-    ControlCode,
-    InputCache,
-    kernel::xytuple::F32XYTuple,
-    Next,
+    infra::asset_key::IMG_TITLE_PARTICLE,
+    kernel::xy_pos::F32XYPos,
     scene::{
         animation_property::{AnimationProperties, AnimationProperty},
         timer::Timer,
         title::selected_item::SelectedItem,
     },
+    Asset,
+    AssetProvider,
+    ControlCode,
+    InputCache,
+    Next,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 };
-use crate::infra::asset_key::IMG_TITLE_PARTICLE;
 
 static TITLE_ASCII: &str = indoc!(
     r"
@@ -58,14 +58,14 @@ pub struct TitleDrawState {
 struct StarParticle {
     duration: Duration,
     limit: Duration,
-    start_pos: F32XYTuple,
+    start_pos: F32XYPos,
     start_rot: f32,
     y_spd: f32,
     rot_spd: f32,
 }
 
 impl StarParticle {
-    fn new(start_pos: F32XYTuple, start_rot: f32, y_spd: f32, rot_spd: f32) -> Self {
+    fn new(start_pos: F32XYPos, start_rot: f32, y_spd: f32, rot_spd: f32) -> Self {
         StarParticle {
             duration: Duration::ZERO,
             limit: Duration::from_secs(5),
@@ -90,7 +90,7 @@ impl StarParticle {
         StarParticle::new(pos, start_rot, y_spd, rot_spd)
     }
 
-    fn pos(&self) -> F32XYTuple {
+    fn pos(&self) -> F32XYPos {
         (
             self.start_pos.x,
             self.start_pos.y - self.y_spd * self.duration.as_secs_f32(),

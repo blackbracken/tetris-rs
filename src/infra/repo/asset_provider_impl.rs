@@ -43,7 +43,7 @@ impl AssetProvider for AssetProviderImpl {
     }
 
     fn font(&mut self, ctx: &mut Context, path: FontPath) -> GameResult<&Font> {
-        let ImagePath(path) = path;
+        let FontPath(path) = path;
 
         if !self.font_map.contains_key(path) {
             let asset = match Font::new(ctx, path) {
