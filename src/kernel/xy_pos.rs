@@ -12,17 +12,6 @@ where
     pub y: P,
 }
 
-/*
-impl<P> XYPos<P>
-where
-    P: Copy + Clone,
-{
-    fn of<Q: Into<P>>(x: Q, y: Q) -> Self {
-        XYPos::new(x.into(), y.into())
-    }
-}
-*/
-
 impl<T> From<XYPos<T>> for (T, T)
 where
     T: Copy + Clone,
