@@ -5,7 +5,7 @@ use derive_new::new;
 /// 形を表現するのに必要な最小のNを要求し,
 /// NxNの正方形の行列を用いて真偽値でそのマスにミノが存在するかを表す.
 #[derive(new, Clone, Copy)]
-pub struct MinoMold<const N: usize> {
+pub struct MinoMold<const N: usize = 3> {
     pub matrix: [[bool; N]; N],
 }
 

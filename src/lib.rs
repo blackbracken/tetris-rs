@@ -2,6 +2,7 @@
 #![feature(never_type)]
 #![feature(variant_count)]
 #![feature(map_try_insert)]
+#![feature(stmt_expr_attributes)]
 
 use std::{mem, time::Duration};
 
