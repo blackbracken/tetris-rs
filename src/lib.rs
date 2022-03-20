@@ -26,6 +26,7 @@ use crate::{
     kernel::{
         input::{control_code::ControlCode, input_cache::InputCache},
         repo::{asset_provider::AssetProvider, control_code_repository::ControlCodeRepository},
+        tetris::{board, mino, playfield},
     },
     scene::{scene_state::SceneState, ticket},
     ticket::{Next, Ticket},

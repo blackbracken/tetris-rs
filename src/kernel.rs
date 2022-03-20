@@ -12,6 +12,7 @@ pub mod repo {
 }
 
 pub mod tetris {
+    pub mod board;
     pub mod mino;
     pub mod playfield;
 }
