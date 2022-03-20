@@ -12,7 +12,7 @@ pub enum SpinDirection {
 
 /// テトリミノの回転した角度を表現する.
 /// 初期位置で12時の方向を示し, 時計回りに回転する.
-#[derive(FromPrimitive, ToPrimitive, PartialEq, Eq, Debug)]
+#[derive(FromPrimitive, ToPrimitive, PartialEq, Eq, Debug, Clone, Copy)]
 pub enum MinoRotation {
     Clockwise = 0,
     Clockwise90 = 90,

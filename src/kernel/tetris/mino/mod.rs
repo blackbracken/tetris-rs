@@ -18,6 +18,26 @@ pub enum WhichMold {
 }
 
 impl WhichMold {
+    pub fn matrix(&self) -> Vec<Vec<bool>> {
+        match self {
+            WhichMold::Square2(mold) => mold
+                .matrix
+                .iter()
+                .map(|line| line.iter().map(|b| *b).collect())
+                .collect(),
+            WhichMold::Square3(mold) => mold
+                .matrix
+                .iter()
+                .map(|line| line.iter().map(|b| *b).collect())
+                .collect(),
+            WhichMold::Square4(mold) => mold
+                .matrix
+                .iter()
+                .map(|line| line.iter().map(|b| *b).collect())
+                .collect(),
+        }
+    }
+
     fn square_2(matrix: [[u8; 2]; 2]) -> WhichMold {
         WhichMold::Square2(MinoMold::square_n(matrix))
     }
@@ -42,7 +62,7 @@ impl WhichMold {
    I,
 */
 
-static MINO_T: Lazy<Mino> = Lazy::new(|| {
+pub static MINO_T: Lazy<Mino> = Lazy::new(|| {
     Mino::new(
         #[rustfmt::skip]
         WhichMold::square_3([

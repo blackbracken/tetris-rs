@@ -1,34 +1,43 @@
+use std::{convert::From, fmt};
+
 use derive_new::new;
 
-use super::mino::{block::Block, spin::MinoRotation, Mino, WhichMold};
+use super::mino::{block::Block, spin::MinoRotation, Mino};
 use crate::kernel::xy_pos::I16XYPos;
 
 const FIELD_UNIT_WIDTH: usize = 10;
 const FIELD_UNIT_HEIGHT: usize = 20; // NOTE: 21行目以降を表示しないので20で済ませている
 
-#[derive(Clone)]
-struct Board([[Option<Block>; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT]);
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Board([[Option<Block>; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT]);
 
 impl Board {
-    pub fn demonstrated(mut self, drop: Drop) -> Self {
-        let mold = drop.mino.mold;
+    fn blank() -> Self {
+        Board([[None; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT])
+    }
 
-        fn f<const N: usize>() {
-            for (y, line) in mold.matrix.iter().enumerate() {
-                for (x, exists) in line.iter().enumerate() {
-                    board[y][x] = Some(self.dropping.block).filter(|_| *exists);
+    fn demonstrated(&self, drop: Drop) -> Self {
+        let mut board_mat = self.0.clone();
+        let drop_mat = drop.mino.mold.matrix();
+
+        for (y, line) in drop_mat.iter().enumerate() {
+            for (x, exists) in line.iter().enumerate() {
+                let (dx, dy) = drop.pos.into();
+                let x = x + dx as usize;
+                let y = y + dy as usize;
+
+                if let (0..10, 0..20) = (x, y) {
+                    board_mat[y][x] = Some(drop.mino.block).filter(|_| *exists);
                 }
             }
         }
 
-        self
+        Board(board_mat)
     }
-
-
 }
 
-#[derive(new)]
-struct Drop {
+#[derive(new, Clone)]
+pub struct Drop {
     pub mino: Mino,
     pub pos: I16XYPos,
     pub rot: MinoRotation,
@@ -43,7 +52,7 @@ pub struct Playfield {
 
 impl Playfield {
     pub fn new(dropping: Mino) -> Playfield {
-        let confirmed = Board([[None; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT]);
+        let confirmed = Board::blank();
 
         Playfield {
             confirmed,
@@ -52,32 +61,120 @@ impl Playfield {
     }
 
     pub fn board(&self) -> Board {
-        let mut board = self.confirmed;
+        self.confirmed.demonstrated(self.drop.clone())
+    }
+}
 
-        match self.dropping.mold {
-            WhichMold::Square2(mold) => {
-                for (y, line) in mold.matrix.iter().enumerate() {
-                    for (x, exists) in line.iter().enumerate() {
-                        board[y][x] = Some(self.dropping.block).filter(|_| *exists);
-                    }
-                }
-            }
-            WhichMold::Square3(mold) => {
-                for (y, line) in mold.matrix.iter().enumerate() {
-                    for (x, exists) in line.iter().enumerate() {
-                        board[y][x] = Some(self.dropping.block).filter(|_| *exists);
-                    }
-                }
-            }
-            WhichMold::Square4(mold) => {
-                for (y, line) in mold.matrix.iter().enumerate() {
-                    for (x, exists) in line.iter().enumerate() {
-                        board[y][x] = Some(self.dropping.block).filter(|_| *exists);
-                    }
-                }
-            }
-        }
+#[cfg(test)]
+mod board_tests {
+    use super::*;
+    use crate::kernel::tetris::mino::MINO_T;
 
-        board
+    #[test]
+    fn test_demonstrated_blank() {
+        let actual = Board::blank();
+
+        let expected_mat = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+        let expected = make_monocolor_board(Block::PURPLE, expected_mat);
+
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn test_demonstrated_initial() {
+        let board = Board::blank();
+        let drop = Drop::new(*MINO_T, (3, 1).into(), MinoRotation::Clockwise);
+
+        let actual = board.demonstrated(drop);
+
+        let expected_mat = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+        let expected = make_monocolor_board(Block::PURPLE, expected_mat);
+
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn test_demonstrated_out_of_board_partially() {
+        let board = Board::blank();
+        let drop = Drop::new(*MINO_T, (8, 1).into(), MinoRotation::Clockwise);
+
+        let actual = board.demonstrated(drop);
+
+        let expected_mat = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+        let expected = make_monocolor_board(Block::PURPLE, expected_mat);
+
+        assert_eq!(actual, expected)
+    }
+
+    fn make_monocolor_board(
+        block: Block,
+        matrix: [[usize; FIELD_UNIT_WIDTH]; FIELD_UNIT_HEIGHT],
+    ) -> Board {
+        let matrix = matrix.map(|line| line.map(|n| Some(block).filter(|_| n != 0)));
+
+        Board(matrix)
     }
 }

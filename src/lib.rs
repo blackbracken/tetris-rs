@@ -3,6 +3,7 @@
 #![feature(variant_count)]
 #![feature(map_try_insert)]
 #![feature(stmt_expr_attributes)]
+#![feature(exclusive_range_pattern)]
 
 use std::{mem, time::Duration};
 
